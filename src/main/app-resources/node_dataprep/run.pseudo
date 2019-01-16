@@ -1,0 +1,11 @@
+DATA PREPARATION
+
+load env and util
+
+for data_url in stdin:
+    1. getHypeAppInput query data_url to get type, enclosure [getHypeAppInput]
+        e.g. $opensearch-client 'https://catalog.terradue.com:443//fanfar-00001/series/results/search?format=atomeop&amp;uid=a3512aacbce69e2bec3cc5668a604d150956a4aa' identifier,cat,enclosure
+    2. download input [getEoData] 
+    3. readEoData
+    4. writeEoData
+    5. publish
