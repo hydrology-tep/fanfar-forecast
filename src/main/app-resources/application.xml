@@ -172,6 +172,13 @@
           </options>
         </parameter>
         <parameter abstract="Return periods (years)" id="returnPeriod" maxOccurs="10" minOccurs="1" scope="runtime" title="Return Periods (years)" type="LiteralData">2,5,30</parameter>
+        <parameter abstract="Backup behavior. Will extend the meteo data search." id="backupOn" maxOccurs="1" minOccurs="1" scope="runtime" title="Backup on/off" type="LiteralData">
+          <options>
+            <option>on</option>
+            <option>off</option>
+            <default>off</default>
+          </options>
+        </parameter>
       </defaultParameters>
       <defaultJobconf>
         <property id="mapred.task.timeout">6000000</property>
@@ -183,13 +190,13 @@
     <node id="data_preparation">
       <job id="dataprep"/>
       <sources>
-        <source refid="string:list">input-1</source>
+        <source refid="cas:series" id="data">https://catalog.terradue.com:443//fanfar-00001/series/results/search?format=atomeop&amp;uid=a3512aacbce69e2bec3cc5668a604d150956a4aa</source>
       </sources>
     </node>
     <node id="node_forecast">
       <job id="forecast"/>
       <sources>
-        <source refid="wf:node">eodata</source>
+        <source refid="wf:node">data_preparation</source>
       </sources>
     </node>
   </workflow>
