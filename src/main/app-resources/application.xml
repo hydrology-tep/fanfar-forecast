@@ -4,7 +4,7 @@
     <jobTemplate id="dataprep">
       <streamingExecutable>/application/node_dataprep/run.R</streamingExecutable>
       <defaultParameters>
-        <parameter abstract="CSV data from data catalogue (*.csv)" id="data" maxOccurs="10" minOccurs="0" scope="runtime" title="Water Level Time-series Data, EO or In-situ" type="LiteralData"/>
+        <parameter abstract="CSV data from data catalogue (*.csv)" id="data" maxOccurs="10" minOccurs="0" scope="runtime" title="Water Level Time-series Data, EO or In-situ" type="LiteralData">https://catalog.terradue.com/fanfar-00001/cat/AMWL/search</parameter>
         <parameter abstract="HYPE model identifier" id="modelVersion" maxOccurs="1" minOccurs="0" scope="runtime" title="HYPE model identifier" type="LiteralData">
           <options>
             <option>niger-hype-2.23</option>
@@ -190,7 +190,7 @@
     <node id="data_preparation">
       <job id="dataprep"/>
       <sources>
-        <source refid="cas:series" id="data">https://catalog.terradue.com:443//fanfar-00001/series/results/search?format=atomeop&amp;uid=a3512aacbce69e2bec3cc5668a604d150956a4aa</source>
+        <source id="data" scope="runtime" refid="string:list"></source>
       </sources>
     </node>
     <node id="node_forecast">
