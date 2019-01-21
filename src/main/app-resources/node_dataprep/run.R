@@ -2,6 +2,10 @@
 #
 # /hypeapps-eodata/src/main/app-resources/node_eodata/run.R
 
+
+# begin victor naslund
+
+
 # Copyright 2017 SMHI
 #
 # This file is part of H-TEP Hydrological Modelling Application, which is open source 
@@ -44,6 +48,51 @@ if(app.sys=="tep"){
   rciop.log("DEBUG", paste(" R session working directory set to ",TMPDIR,sep=""), "/node_eodata/run.R")
 }
 
+
+
+# wrap all code in a foor loop over the stdin
+
+# begin victor naslund
+f<-file('stdin', 'r')
+
+while(length(input <- readLines(f, n=1)) > 0) {
+
+    sysCmd=paste("opensearch-client '",input,"' cat,enclosure")
+    wlFile <- system(command = sysCmd,intern = T)
+
+    for (x in strsplit(wlFile, "\n")) {
+
+        t = strsplit(x, ",", fixed=TRUE)[[1]][1]
+        e = strsplit(x, ",", fixed=TRUE)[[1]][2]
+
+        if (toString(t) == "AMWL") {
+            dcmd = paste("ciop-copy '", e, "'")
+            dfile = system(dcmd, intern = T)
+            in_wlData <- e
+       }                
+        # if file exists..              
+    }
+    #print (row)
+
+    # <property id="ciop.job.max.tasks">1</property> to the metadata
+
+
+    # metalink false if we should publish the file as stdin to the next node
+    #print ("begining cmd arguments")
+    #rciop.publish(path=input, recursive=FALSE, metalink=FALSE)
+    
+    #rciop.publish(path="/application/test2.txt", recursive=FALSE, metalink=FALSE)
+    
+    #rciop.publish(path="/application/test3.txt", recursive=FALSE, metalink=FALSE)
+    #q()
+    # end victor naslund
+
+}
+
+#q()
+
+
+
 ## ------------------------------------------------------------------------------
 ## load the R hypeapps-environment and hypeapps-utils
 if(app.sys=="tep"){
@@ -60,7 +109,7 @@ logFile=appLogOpen(appName = app.name,tmpDir = getwd(),appDate = app.date, prefi
 ## 2 - Application user inputs
 ## ------------------------------------------------------------------------------
 ## application input parameters
-app.input <- getHypeAppInput(appName = app.name)
+app.input <- getHypeAppInput(appName = app.name, in_wlData)
 
 if(app.sys=="tep"){rciop.log ("DEBUG", paste("...hypeapps-eodata input parameters read"), "/node_eodata/run.R")}
 log.res=appLogWrite(logText = "Inputs and parameters read",fileConn = logFile$fileConn)
@@ -115,7 +164,7 @@ log.res=appLogWrite(logText = "eodata xobsfile written to output",fileConn = log
 if(app.sys=="tep"){
   #rciop.publish(path=paste(app.output$outDir,"/*",sep=""), recursive=FALSE, metalink=TRUE)
   for(k in 1:length(app.output$files)){
-    rciop.publish(path=app.output$files[k], recursive=FALSE, metalink=TRUE)
+    rciop.publish(path=app.output$files[k], recursive=FALSE, metalink=FALSE)
   }
   log.res=appLogWrite(logText = "application output published",fileConn = logFile$fileConn)
 }
@@ -127,7 +176,7 @@ if(app.sys=="tep"){
 ## close and publish the logfile
 log.file=appLogClose(appName = app.name,fileConn = logFile$fileConn)
 if(app.sys=="tep"){
-  rciop.publish(path=logFile$fileName, recursive=FALSE, metalink=TRUE)
+  rciop.publish(path=logFile$fileName, recursive=FALSE, metalink=FALSE)
 }
 
 ## ------------------------------------------------------------------------------

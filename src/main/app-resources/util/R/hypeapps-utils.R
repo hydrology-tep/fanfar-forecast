@@ -71,7 +71,7 @@ if(app.sys=="tep"){
 ## functions
 ## -------------------------------------------------------------------------------
 ## getHypeAppInput - function to load user parameter inputs, depending on application
-getHypeAppInput<-function(appName){
+getHypeAppInput<-function(appName, in_wlData){
   
   ## HISTORICAL ##  
   if(appName=="historical"){
@@ -79,8 +79,8 @@ getHypeAppInput<-function(appName){
       # get parameters with the rciop function when running on the TEP system
       cdate       <- rciop.getparam("cdate")       # start of results output
       edate       <- rciop.getparam("edate")       # end of simulation
-      outvarsIN   <- rciop.getparam("variables")   # output variables
-      basinselect <- rciop.getparam("basinselect") # output subbasins
+      outvarsIN   <- rciop.getparam("forecastVariables")   # output variables
+      basinselect <- rciop.getparam("basinSelect") # output subbasins
       basinset    <- rciop.getparam("basinset")    # output subbasins
       xobs        <- rciop.getparam("xobs")        # EO/Insitu data Xobs file(s)
       assimOn     <- rciop.getparam("assimOn")     # Assimilation on/off
@@ -276,9 +276,9 @@ getHypeAppInput<-function(appName){
     if(app.sys=="tep"){
       # get parameters with rciop function when running on the TEP system
       idate       <- rciop.getparam("idate")       # Forecast issue date
-      outvarsIN   <- rciop.getparam("variables")   # output variables
-      basinselect <- rciop.getparam("basinselect") # output subbasins
-      basinset    <- rciop.getparam("basinset")    # output subbasins
+      outvarsIN   <- rciop.getparam("forecastVariables")   # output variables
+      basinselect <- rciop.getparam("basinSelect") # output subbasins
+      basinset    <- rciop.getparam("basinSet")    # output subbasins
       rpcout      <- rciop.getparam("rpcout")      # Return periods levels file
       xobs        <- rciop.getparam("xobs")        # EO/Insitu data Xobs file
       
@@ -511,7 +511,7 @@ getHypeAppInput<-function(appName){
     if(app.sys=="tep"){
       # get parameters and data files
       wlDataIn   <- as.character(rciop.getparam("wlData"))     # Water level data
-      wlSubid    <- as.character(rciop.getparam("wlSubid"))    # water level data subbasin identifiers
+      wlSubid    <- as.character(rciop.getparam("basinSet"))    # water level data subbasin identifiers
       wlVariable <- as.character(rciop.getparam("wlVariable")) # water level Xobs variable name
       wlOffset   <- as.character(rciop.getparam("wlOffset"))   # water level offset correction (m)
       
@@ -522,7 +522,7 @@ getHypeAppInput<-function(appName){
       #      flVariable <- as.character(rciop.getparam("flVariable"))  # flood map Xobs variable name
       
       # parse the water level inputs, first the data URLs:
-      if(wlDataIn!="-9999" & nchar(wlDataIn)>0){
+      if(!is.null(wlDataIn) && length(wlDataIn) > 0 && wlDataIn!="-9999" && nchar(wlDataIn)>0){
         wlData = strsplit(x = wlDataIn,split = ",")[[1]]
         wlDataNum=0
         for(i in 1:length(wlData)){
@@ -811,7 +811,7 @@ getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,mode
 
     rciop.log ("DEBUG", paste(" appInput$rpfile= ", appInput$rpfile, sep=""), "getHypeSetup")
     
-    if(appInput$rpfile=="default"){
+    if( is.null(appInput$rpfile) || length(appInput$rpfile) == 0 || appInput$rpfile=="default"){
       # download default file from data storage
       rpFileURL = paste(modelFilesURL,"returnlevels",paste(modelName,"-rp-cout.txt",sep=""),sep="/")
       # download rpfile to forecast output folder - using rciop.copy since we already have the URL to the file
