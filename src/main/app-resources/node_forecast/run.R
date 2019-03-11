@@ -93,6 +93,9 @@ while(length(input <- readLines(f, n=1)) > 0) {
 if(app.sys=="tep"){
   source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/hypeapps-environment.R",sep="/"))
   source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/hypeapps-utils.R", sep="/"))
+
+  source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/TriggerDistribution.r", sep="/"))
+
   rciop.log ("DEBUG", paste(" libraries loaded and utilities sourced"), "/node_forecast/run.R")
 }else if(app.sys=="win"){
   source("application/util/R/hypeapps-environment.R")  
@@ -234,6 +237,15 @@ if(length(app.outfiles)>1){
 }
 log.res=appLogWrite(logText = "HypeApp outputs prepared",fileConn = logFile$fileConn)
 
+# Prepare for trigger distribution
+# Written by jafet.andersson@smhi.se
+for (i in app.outfiles) {
+    if (grepl("forecast_mapWarningLevel.txt", i)) {
+        map_file <- i
+        }
+}
+trigger_distribution_outfiles <- TriggerDistribution(dirname(map_file), app.input$idate)
+
 ## ------------------------------------------------------------------------------
 ## publish postprocessed results
 if(app.sys=="tep"){
@@ -243,8 +255,13 @@ if(app.sys=="tep"){
     for(k in 1:length(app.outfiles)){
       rciop.publish(path=app.outfiles[k], recursive=FALSE, metalink=TRUE)
     }
-  
   log.res=appLogWrite(logText = "HypeApp outputs published",fileConn = logFile$fileConn)
+
+    for(k in 1:length(trigger_distribution_outfiles)){
+      rciop.publish(path=trigger_distribution_outfiles[k], recursive=FALSE, metalink=TRUE)
+    }  
+  log.res=appLogWrite(logText = "trigger distribution outputs published",fileConn = logFile$fileConn)
+
 }
 
 ## close and publish the logfile
