@@ -74,6 +74,37 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         setwd(TMPDIR)
         rciop.log("DEBUG", paste(" R session working directory set to ",TMPDIR,sep=""), "/node_forecast/run.R")
         }
+
+    # victor naslund
+    f<-file('stdin', 'r')
+    #open(f)
+    #row <- readLines(f, n=1)
+
+    #print (row)
+
+    while(length(input <- readLines(f, n=1)) > 0) {
+    
+        # print
+        rciop.log("INFO", paste("processing input:", input, sep=" "))
+    
+        # Download the file
+        res <- rciop.copy(input, TMPDIR, uncompress=TRUE)
+    
+        if (res$exit.code==0) {
+            local.url <- res$output
+        }
+    
+        #local.url)
+        my_data <- read.delim(local.url)
+        print (my_data)
+    }
+
+
+    #q()
+
+    # end victor naslund
+
+
     ## ------------------------------------------------------------------------------
     ## load hypeapps environment and additional R utility functions
     if(app.sys=="tep"){
