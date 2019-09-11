@@ -78,27 +78,20 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
     ## Read the main input
     ## This is the reference link to the model configuration
-    while(length(input <- readLines(f, n=1)) > 0) {
     
-        # print
-        rciop.log("INFO", paste("Processing input:", input, sep=" "))
-    
-        # Download the file
-        model_file <- rciop.copy(input, TMPDIR, uncompress=TRUE)
-    
-        if (res$exit.code==0) {
-            local.url <- model_file$output
-        }
-    
-        #local.url)
-        my_data <- read.delim(local.url)
-        print (my_data)
+    # print
+    rciop.log("INFO", paste("Processing input:", input, sep=" "))
+
+    # Download the file
+    model_file <- rciop.copy(input, TMPDIR, uncompress=TRUE)
+
+    if (res$exit.code==0) {
+        local.url <- model_file$output
     }
 
-
-    #q()
-
-    # end victor naslund
+    #local.url)
+    my_data <- read.delim(local.url)
+    print (my_data)
 
 
     ## ------------------------------------------------------------------------------
@@ -144,7 +137,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                  appDir    = app.app_path,
                                  appName   = app.name,
                                  appInput  = app.input,
-                                 modelFilesURL = model.files.url,
+                                 modelFilesURL = model.files.url, ## TO BE CHANGED to read from downloaded zip (model_file)
                                  forcingArchiveURL = forcing.archive.url,
                                  stateFilesURL = state.files.url,
                                  stateFilesIN = state.files)
@@ -193,6 +186,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     if(hindcast.input==0){
         if(app.sys=="tep"){rciop.log ("DEBUG", " ...starting hindcast model run", "/node_forecast/run.R")}
         log.res=appLogWrite(logText = "starting hindcast model run ...",fileConn = logFile$fileConn)
+
+        # TOD add try catch on execution to exit in case of error
 
         hindcast.run = system(command = app.setup$runCommand,intern = T)
         
