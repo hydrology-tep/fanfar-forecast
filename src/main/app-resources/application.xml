@@ -182,16 +182,17 @@
   </jobTemplates>
   <workflow abstract="Make 1-10 days hydrometeorological forecasts for Western Africa basins with a selection of HYPE model. More info at http://hypeweb.smhi.se/niger-hype/forecast and http://www.smhi.net/hype/wiki." id="workflow" title="HYPE Forecast">
     <workflowVersion>1.0</workflowVersion>
-    <node id="data_preparation">
+    <!-- <node id="data_preparation">
       <job id="dataprep"/>
       <sources>
         <source id="data" scope="runtime" refid="string:list"></source>
       </sources>
-    </node>
+    </node> -->
     <node id="node_forecast">
       <job id="forecast"/>
       <sources>
-        <source refid="wf:node">data_preparation</source>
+        <!-- <source refid="wf:node">data_preparation</source> -->
+        <source id="model" scope="runtime" refid="string:list"></source>
       </sources>
     </node>
   </workflow>

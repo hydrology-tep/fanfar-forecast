@@ -84,10 +84,10 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         rciop.log("INFO", paste("Processing input:", input, sep=" "))
     
         # Download the file
-        res <- rciop.copy(input, TMPDIR, uncompress=TRUE)
+        model_file <- rciop.copy(input, TMPDIR, uncompress=TRUE)
     
         if (res$exit.code==0) {
-            local.url <- res$output
+            local.url <- model_file$output
         }
     
         #local.url)
