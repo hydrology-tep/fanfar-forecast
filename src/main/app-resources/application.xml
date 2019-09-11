@@ -20,13 +20,7 @@
     <jobTemplate id="forecast">
       <streamingExecutable>/application/node_forecast/run.R</streamingExecutable>
       <defaultParameters>
-        <parameter abstract="HYPE model identifier" id="modelVersion" maxOccurs="1" minOccurs="0" scope="runtime" title="HYPE model identifier" type="LiteralData">
-          <options>
-            <option>niger-hype-2.23</option>
-            <option>westafrica-hype-1.3.1</option>
-            <default>niger-hype-2.23</default>
-          </options>
-        </parameter>
+        <parameter abstract="HYPE model config" id="model" maxOccurs="1" minOccurs="0" scope="runtime" title="HYPE model" type="LiteralData">https://recast.terradue.com/t2api/search/hydro-smhi/models?uid=230286758E25FD953AF736DE85F01CDF9C539EC7</parameter>
         <parameter abstract="Data available since 2016-06-01" id="idate" maxOccurs="1" minOccurs="1" scope="runtime" title="Forecast issue date (yyyy-mm-dd)" type="LiteralData">2018-09-01</parameter>
         <parameter abstract="Select output sub-basins" id="basinSelect" maxOccurs="100" minOccurs="1" scope="runtime" title="Output sub-basins" type="LiteralData">
           <options>
