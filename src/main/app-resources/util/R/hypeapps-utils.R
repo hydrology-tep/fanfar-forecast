@@ -667,6 +667,12 @@ getHypeAppInput<-function(appName){
 ## prepare work directories and copy basic model files
 getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,modelFilesURL,forcingArchiveURL=NULL,stateFilesURL=NULL,stateFilesIN=NULL){
   
+  ## TO DO
+  ## In this function, the routine to 
+  ## - select hydrogfd data
+  ## - download them
+  ## - convert them in model files (netcdf-to-obs)
+
   ## model files run directory (for all applications, except returnperiod)
   if(appName=="historical"|appName=="forecast"|appName=="eodata"|appName=="returnperiod"){
     modelFilesRunDir=paste(tmpDir,'model',appName, modelName,sep="/")
