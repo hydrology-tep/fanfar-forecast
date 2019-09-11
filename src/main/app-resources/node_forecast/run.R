@@ -44,8 +44,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     # in hypeapps-utils.R at line 843
     # remove that code since netcdf to obs replace that
     # publish the netcdf-to-obs pictures
-    system(paste0("source activate cdo-env; Rscript ", Sys.getenv("_CIOP_APPLICATION_PATH"), "/util/R/netcdf-to-obs/netcdf-to-obs-run.R"), intern=T)
-    system("source deactivate cdo-env", intern=T)
+    ## 20190911 - Workshop at SMHI with T2
+    #system(paste0("source activate cdo-env; Rscript ", Sys.getenv("_CIOP_APPLICATION_PATH"), "/util/R/netcdf-to-obs/netcdf-to-obs-run.R"), intern=T)
+    #system("source deactivate cdo-env", intern=T)
 
     # RUN ID give the code a random number to see how many times the code was run based on the random number in the output filenames
     # run_id <- runif(n=1, min=1, max=10)
@@ -71,6 +72,32 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         setwd(TMPDIR)
         rciop.log("DEBUG", paste(" R session working directory set to ",TMPDIR,sep=""), "/node_forecast/run.R")
         }
+
+    ## Read the main input
+    ## This is the reference link to the model configuration
+    while(length(input <- readLines(f, n=1)) > 0) {
+    
+        # print
+        rciop.log("INFO", paste("Processing input:", input, sep=" "))
+    
+        # Download the file
+        res <- rciop.copy(input, TMPDIR, uncompress=TRUE)
+    
+        if (res$exit.code==0) {
+            local.url <- res$output
+        }
+    
+        #local.url)
+        my_data <- read.delim(local.url)
+        print (my_data)
+    }
+
+
+    #q()
+
+    # end victor naslund
+
+
     ## ------------------------------------------------------------------------------
     ## load hypeapps environment and additional R utility functions
     if(app.sys=="tep"){
