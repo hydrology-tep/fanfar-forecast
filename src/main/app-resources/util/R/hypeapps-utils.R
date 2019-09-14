@@ -71,7 +71,7 @@ if(app.sys=="tep"){
 ## functions
 ## -------------------------------------------------------------------------------
 ## getHypeAppInput - function to load user parameter inputs, depending on application
-getHypeAppInput<-function(appName, in_wlData){
+getHypeAppInput<-function(appName){
   
   ## HISTORICAL ##  
   if(appName=="historical"){
@@ -79,8 +79,8 @@ getHypeAppInput<-function(appName, in_wlData){
       # get parameters with the rciop function when running on the TEP system
       cdate       <- rciop.getparam("cdate")       # start of results output
       edate       <- rciop.getparam("edate")       # end of simulation
-      outvarsIN   <- rciop.getparam("forecastVariables")   # output variables
-      basinselect <- rciop.getparam("basinSelect") # output subbasins
+      outvarsIN   <- rciop.getparam("variables")   # output variables
+      basinselect <- rciop.getparam("basinselect") # output subbasins
       basinset    <- rciop.getparam("basinset")    # output subbasins
       xobs        <- rciop.getparam("xobs")        # EO/Insitu data Xobs file(s)
       assimOn     <- rciop.getparam("assimOn")     # Assimilation on/off
@@ -276,9 +276,9 @@ getHypeAppInput<-function(appName, in_wlData){
     if(app.sys=="tep"){
       # get parameters with rciop function when running on the TEP system
       idate       <- rciop.getparam("idate")       # Forecast issue date
-      outvarsIN   <- rciop.getparam("forecastVariables")   # output variables
-      basinselect <- rciop.getparam("basinSelect") # output subbasins
-      basinset    <- rciop.getparam("basinSet")    # output subbasins
+      outvarsIN   <- rciop.getparam("variables")   # output variables
+      basinselect <- rciop.getparam("basinselect") # output subbasins
+      basinset    <- rciop.getparam("basinset")    # output subbasins
       rpcout      <- rciop.getparam("rpcout")      # Return periods levels file
       xobs        <- rciop.getparam("xobs")        # EO/Insitu data Xobs file
       
@@ -511,7 +511,7 @@ getHypeAppInput<-function(appName, in_wlData){
     if(app.sys=="tep"){
       # get parameters and data files
       wlDataIn   <- as.character(rciop.getparam("wlData"))     # Water level data
-      wlSubid    <- as.character(rciop.getparam("basinSet"))    # water level data subbasin identifiers
+      wlSubid    <- as.character(rciop.getparam("wlSubid"))    # water level data subbasin identifiers
       wlVariable <- as.character(rciop.getparam("wlVariable")) # water level Xobs variable name
       wlOffset   <- as.character(rciop.getparam("wlOffset"))   # water level offset correction (m)
       
@@ -522,7 +522,7 @@ getHypeAppInput<-function(appName, in_wlData){
       #      flVariable <- as.character(rciop.getparam("flVariable"))  # flood map Xobs variable name
       
       # parse the water level inputs, first the data URLs:
-      if(!is.null(wlDataIn) && length(wlDataIn) > 0 && wlDataIn!="-9999" && nchar(wlDataIn)>0){
+      if(wlDataIn!="-9999" & nchar(wlDataIn)>0){
         wlData = strsplit(x = wlDataIn,split = ",")[[1]]
         wlDataNum=0
         for(i in 1:length(wlData)){
@@ -669,7 +669,7 @@ getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,mode
   
   ## model files run directory (for all applications, except returnperiod)
   if(appName=="historical"|appName=="forecast"|appName=="eodata"|appName=="returnperiod"){
-    modelFilesRunDir=paste(tmpDir,'model',modelName,sep="/")
+    modelFilesRunDir=paste(tmpDir,'model',appName, modelName,sep="/")
     dir.create(modelFilesRunDir,recursive = T,showWarnings = F)
   }else{
     modelFilesRunDir=NULL
@@ -793,12 +793,21 @@ getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,mode
     for(i in 1:length(shapefile.ext)){
       rciop.copy(paste(paste(shapefile.url,shapefile.layer,sep="/"),shapefile.ext[i],sep=""), shapefileDir)
     }
-    
+
+    # Disable version tag for now 20190312
+    # shape_ver <- strsplit(shapefile.url, "/")[[1]][8]
+    shape_ver <- ""
+
+    rciop.log ("DEBUG", shapefileDir, "getHypeSetup")
+    syscmd = paste("zip -j ", shapefileDir, "/", "subbasin_shp", shape_ver, ".zip ", shapefileDir, "/", shapefile.layer, "*", sep="")
+    system(command = syscmd,intern = T)
+    rciop.publish(path=paste(shapefileDir, "/", "subbasin_shp", shape_ver, ".zip", sep=""), recursive=FALSE, metalink=TRUE)
+
     # open and save shapefile as Rdata
     shapefileData = readOGR(dsn = shapefileDir, layer = shapefile.layer)
     shapefileRdata = paste(shapefileDir,"/",shapefile.layer,".Rdata",sep="")
-    save(list = "shapefileData",file = shapefileRdata)
-    
+    save(list = "shapefileData",file = shapefileRdata)    
+
   }else{
     shapefileRdata=NULL
     shapefileData=NULL
@@ -811,7 +820,7 @@ getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,mode
 
     rciop.log ("DEBUG", paste(" appInput$rpfile= ", appInput$rpfile, sep=""), "getHypeSetup")
     
-    if( is.null(appInput$rpfile) || length(appInput$rpfile) == 0 || appInput$rpfile=="default"){
+    if(appInput$rpfile=="default"){
       # download default file from data storage
       rpFileURL = paste(modelFilesURL,"returnlevels",paste(modelName,"-rp-cout.txt",sep=""),sep="/")
       # download rpfile to forecast output folder - using rciop.copy since we already have the URL to the file
@@ -844,7 +853,20 @@ getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,mode
     if(!file.exists(rpFileCOUT)){
       rpFileCOUT=NULL
     }
-    
+
+    #rpFileCOUT_target <- paste0(tail(n=1, strsplit(rpFileCOUT, "/", fixed=T)[[1]]))
+    #rpFileCOUT_target <- paste0(dirname(rpFileCOUT), "/", rpFileCOUT_target)
+
+    #rciop.log ("DEBUG", paste(" rpFileCOUT = ", rpFileCOUT, sep=""), "getHypeSetup")
+    #rciop.log ("DEBUG", paste(" rpFileCOUT_target = ", rpFileCOUT_target, sep=""), "getHypeSetup")
+
+    # publish return period file
+    #file.copy(rpFileCOUT, rpFileCOUT_target, overwrite=T)
+
+    #rciop.log ("DEBUG", paste(" rpFileCOUT_target exist = ", as.character(file.exists(rpFileCOUT_target)), sep=""), "getHypeSetup")
+    #rciop.publish(path=rpFileCOUT_target, recursive=FALSE, metalink=TRUE)
+    rciop.publish(path=rpFileCOUT, recursive=FALSE, metalink=TRUE)
+
   }else{
     rpFileCOUT=NULL
   }
@@ -1240,7 +1262,7 @@ getGFDzipFromTep<-function(issueDateNum=as.POSIXct("2017-01-01", tz = "GMT"),
   if(file.exists(localFile)){file.remove(localFile)}
   
   # system command to download remote file to local path
-  sysCmd=paste("curl -o",localFile,remoteFile,sep=" ")
+  sysCmd=paste("curl ", "-o", localFile,remoteFile,sep=" ")
   
   # download by system call
   if(app.sys=="tep"){rciop.log ("DEBUG", paste(" trying command >> ",sysCmd,sep=""), "/util/R/hypeapps-utils.R")}
@@ -1296,7 +1318,7 @@ getHindcastForcingData<-function(startDate,endDate,appSetup,obsFiles,outDir,useR
       archiveFound = T
     }else{
       # download archive from data catalogue
-      sysCmd=paste("curl -o ", appSetup$tmpDir,"/archive.zip https://store.terradue.com//smhi/gfd/niger-hype/hindcast/files/v1/archive.zip",sep="")
+      sysCmd=paste("curl ", " -o ",appSetup$tmpDir,"/archive.zip https://store.terradue.com//smhi/gfd/niger-hype/hindcast/files/v1/archive.zip",sep="")
       a=system(sysCmd,intern=T)
       # unzip to forcing/archive
       archiveFile=paste(appSetup$tmpDir,"archive.zip",sep="/")
@@ -1601,13 +1623,13 @@ getModelForcing<-function(appSetup,appInput,dataSource="local",hindcast=T){
         archiveFound = T
       }else{
         # download archive from data catalogue
-        sysCmd=paste("curl -o ", appSetup$tmpDir,"/archive.zip https://store.terradue.com//smhi/gfd/niger-hype/hindcast/files/v1/archive.zip",sep="")
+        sysCmd=paste("curl ", " -o ", appSetup$tmpDir,"/archive.zip https://store.terradue.com//smhi/gfd/niger-hype/hindcast/files/v1/archive.zip",sep="")
         if(app.sys=="tep"){rciop.log ("DEBUG", paste(" trying command >> ",sysCmd,sep=""), "/util/R/hypeapps-utils.R")}
         a=system(sysCmd,intern=T)
         # unzip to forcing/archive
         archiveFile=paste(appSetup$tmpDir,"archive.zip",sep="/")
         if(file.exists(archiveFile)){
-          if(app.sys=="tep"){rciop.log ("DEBUG", paste("archiveFile from https://catalogue.terradue.com/hydro-smhi/ = ",archiveFile,sep=""), "/util/R/hypeapps-utils.R")}
+          if(app.sys=="tep"){rciop.log ("DEBUG", paste("archiveFile from https://catalogue.terradue.com/smhi/ = ",archiveFile,sep=""), "/util/R/hypeapps-utils.R")}
           unzip(zipfile = archiveFile,overwrite = T,exdir = archiveDir)
           archiveFound = T
         }else{
@@ -2577,6 +2599,7 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
                                appSetup$shapefileRdata,prefix.img,cdateTXT,edateTXT,sep=" ")
                 if(app.sys=="tep"){rciop.log ("DEBUG", paste(" trying map output plot script:  ",syscmd,sep=""), "/util/R/hypeapps-utils.R")}
                 plotres = system(command = syscmd,intern = T)
+                system("source deactive cairo-env")
                 if(app.sys=="tep"){rciop.log ("DEBUG", paste(" map output plot result:  ",plotres,sep=""), "/util/R/hypeapps-utils.R")}
               }
             }
@@ -2605,14 +2628,12 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
       }
         
       # copy log-files from rundir to outdirs (only when k==1)
-      if(k==1){
+      if (k==2) {
         hyssLogFile = dir(path = appSetup$runDir, pattern =".log")
         if(app.sys=="tep"){
           if(length(hyssLogFile)>=0){
-            for(j in 1:length(hyssLogFile)){
-              file.copy(from = paste(appSetup$runDir,hyssLogFile[j],sep="/"), 
-                        to = paste(outDir[k],paste(prefix.log,hyssLogFile[j],sep="_"),sep="/"))
-            }
+               file.copy(from = paste(appSetup$runDir,tail(hyssLogFile, 1),sep="/"),
+                         to = paste(outDir[k],paste(prefix.log,prodTag,tail(hyssLogFile, 1),sep="_"),sep="/"))
           }
         }
       }
@@ -2762,6 +2783,8 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
                            sep=" ")
             if(app.sys=="tep"){rciop.log ("DEBUG", paste(" trying warning level map plot script:  ",syscmd,sep=""), "/util/R/hypeapps-utils.R")}
             plotres = system(command = syscmd,intern = T)
+            system("source deactive cairo-env")
+
             if(app.sys=="tep"){rciop.log ("DEBUG", paste(" plot result:  ",plotres,sep=""), "/util/R/hypeapps-utils.R")}
           }
         }
@@ -2783,7 +2806,7 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
 }
 
 # functions for application logfile that will be published as part of application results
-appLogOpen<-function(appName,tmpDir,appDate,prefix=NULL){
+appLogOpen<-function(appName, tmpDir,appDate,prefix=NULL){
   fileName=paste(appDate,"_","hypeapps-",appName,".log",sep="")
   if(!is.null(prefix)){
     fileName = paste(prefix,"_",fileName,sep="")
