@@ -78,17 +78,39 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
     # print
     rciop.log("INFO", paste("Processing input:", input, sep=" "))
-    
+
+    # Query the input reference
+    opensearchCmd=paste("opensearch-client '",input,"' enclosure")
+    input_enclosure <- system(command = opensearchCmd,intern = T)
+    rciop.log("INFO", input_enclosure)
+
     # Download the file
-    model_file <- rciop.copy(input, TMPDIR, uncompress=TRUE)
+    model_config_dir <- rciop.copy(input_enclosure, TMPDIR, uncompress=TRUE)
     
-    if (model_file$exit.code==0) {
-        local.url <- model_file$output
+    if (model_config_dir$exit.code==0) {
+        local.dir <- model_config_dir$output
     }
-    
-    #local.url)
-    my_data <- read.delim(local.url)
-    print (my_data)
+    else {
+        rciop.log("ERROR Could not access the model configuration file.")
+        q(99)
+    }
+
+    # Filenames
+    model_config_file <- "dependencies.txt"
+    #hype_config_file <- "info-forecast.txt"
+
+    path_to_file <- paste(local.dir, model_config_file, sep="/")
+
+    # Read contents of file into a df
+    model_config_data <- read.csv2(path_to_file, header=FALSE, sep=";")
+    names(model_config_data) <- c('subdir','url','querypattern') # Newer in notebook file
+    #for (r in 1:nrow(model_config_data)) {
+        #subdir <- model_config_data[r,'subdir']
+        #if (subdir == 'od-daily') {
+        #    message(paste0("Found od-daily at row index:", r))
+        #}
+    #}
+  
     ## ------------------------------------------------------------------------------
     ## load hypeapps environment and additional R utility functions
     if(app.sys=="tep"){
@@ -126,6 +148,24 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## 3 - Application setup
     ## ------------------------------------------------------------------------------
     ## Prepare basic model setup (static input files and hype model executable copied to working folder)
+
+    # Parse contents of some file in model.zip to be able to retrieve opensearch calls for these:
+    # Function getHypeAppSetup performs the rciop.copy as before.
+    if(app.sys!="tep"){
+        # Use these values defined in hypeapps-model-settings.R:
+        #   model.files.url = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23" # model files root index
+        #   forcing.archive.url  = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23/forcingarchive"
+        #   state.files.url = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23/statefiles"
+    }
+    else if (app.sys=="tep") {
+        # These urls shall later be read from the model config file (some file in model.zip) that has been downloaded in section 1 above.
+        # Query the reference (from some file in model.zip)
+        rciop.log("INFO Processing info for model.files.url")
+        opensearchCmd = paste("opensearch-client '", somevar, "' enclosure") # somevar/someurl
+        model.files.url = system(command = opensearchCmd, intern = T)
+        rciop.log("INFO", model.files.url)
+    }
+
     app.setup <- getHypeAppSetup(modelName = model.name,
                                  modelBin  = model.bin,
                                  tmpDir    = app.tmp_path,
@@ -133,8 +173,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                  appName   = app.name,
                                  appInput  = app.input,
                                  modelFilesURL = model.files.url, ## TO BE CHANGED to read from downloaded zip (model_file)
-                                 forcingArchiveURL = forcing.archive.url,
-                                 stateFilesURL = state.files.url,
+                                 forcingArchiveURL = forcing.archive.url, # Used by getHindcastForcingData, getModelForcing
+                                 stateFilesURL = state.files.url, # Used by getModelForcing
                                  stateFilesIN = state.files)
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste("HypeApp setup read"), "/node_forecast/run.R")}

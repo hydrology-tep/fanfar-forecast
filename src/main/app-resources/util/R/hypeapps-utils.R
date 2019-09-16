@@ -666,7 +666,10 @@ getHypeAppInput<-function(appName){
 ## -------------------------------------------------------------------------------
 ## prepare work directories and copy basic model files
 getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,modelFilesURL,forcingArchiveURL=NULL,stateFilesURL=NULL,stateFilesIN=NULL){
-  
+
+# 
+# forcingArchiveURL and stateFilesURL are only assigned to output
+
   ## TO DO
   ## In this function, the routine to 
   ## - select hydrogfd data
@@ -732,11 +735,11 @@ getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,mode
       }
     }
     
-    for(i in 1:length(fileNames)){
+    for(i in 1:length(fileNames)){ # Todo
       if(app.sys=="tep"){
-        res <- rciop.copy(paste(modelFilesURL,fileNames[i],sep="/"), modelFilesRunDir, uncompress=TRUE)
+        res <- rciop.copy(paste(modelFilesURL,fileNames[i],sep="/"), modelFilesRunDir, uncompress=TRUE) # Downloading files to modelFilesRunDir
       }else{
-        file.copy(from=paste(modelFilesURL,fileNames[i],sep="/"),
+        file.copy(from=paste(modelFilesURL,fileNames[i],sep="/"),  # or copying files from the corresponding download dir whe not on TEP?
                   to =paste(modelFilesRunDir,fileNames[i],sep="/"),
                   overwrite = T)
       }
@@ -797,7 +800,7 @@ getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,mode
     
     #download shapefile from storage
     for(i in 1:length(shapefile.ext)){
-      rciop.copy(paste(paste(shapefile.url,shapefile.layer,sep="/"),shapefile.ext[i],sep=""), shapefileDir)
+      rciop.copy(paste(paste(shapefile.url,shapefile.layer,sep="/"),shapefile.ext[i],sep=""), shapefileDir) # Downloading shape files
     }
 
     # Disable version tag for now 20190312
@@ -828,9 +831,9 @@ getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,mode
     
     if(appInput$rpfile=="default"){
       # download default file from data storage
-      rpFileURL = paste(modelFilesURL,"returnlevels",paste(modelName,"-rp-cout.txt",sep=""),sep="/")
+      rpFileURL = paste(modelFilesURL,"returnlevels",paste(modelName,"-rp-cout.txt",sep=""),sep="/") # Download files
       # download rpfile to forecast output folder - using rciop.copy since we already have the URL to the file
-      rciop.copy(rpFileURL, modelResDir[2])
+      rciop.copy(rpFileURL, modelResDir[2]) # Downloading rp files
       # path to downloaded rpfile
       rpFileCOUT = paste(modelResDir[2],paste(paste(modelName,"-rp-cout.txt",sep="")),sep="/")
     }else{
@@ -902,7 +905,7 @@ getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,mode
                   "shapefileData"=shapefileData,
                   "rpFileCOUT"=rpFileCOUT)
   return(appSetup)
-}
+} # getHypeAppSetup
 
 ## -------------------------------------------------------------------------------
 ## get eo data from URL
@@ -1318,7 +1321,7 @@ getHindcastForcingData<-function(startDate,endDate,appSetup,obsFiles,outDir,useR
       # copy forcing files from local archive
       for(i in 1:length(forcing.files)){
         # copy text files, if only archive is needed
-        rciop.copy(url = paste(appSetup$forcingArchiveURL,obsFiles[i],sep="/"),
+        rciop.copy(url = paste(appSetup$forcingArchiveURL,obsFiles[i],sep="/"), # Downloading files: forcing to archiveDir
                    target = archiveDir)
       }
       archiveFound = T
@@ -1623,7 +1626,7 @@ getModelForcing<-function(appSetup,appInput,dataSource="local",hindcast=T){
       if(appSetup$forcingArchiveExist){
         # copy forcing files from local archive
         for(i in 1:length(forcing.files)){
-          rciop.copy(url = paste(appSetup$forcingArchiveURL,forcing.files[i],sep="/"),
+          rciop.copy(url = paste(appSetup$forcingArchiveURL,forcing.files[i],sep="/"), # Downloading files: forcing to archiveDir
                      target = archiveDir)
         }
         archiveFound = T
@@ -1840,7 +1843,7 @@ getModelForcing<-function(appSetup,appInput,dataSource="local",hindcast=T){
     ##
     iState = which(appSetup$stateDates==bdate.Num)
     if(length(iState)>0){
-      rciop.copy(url = paste(appSetup$stateFilesURL,appSetup$stateFiles[iState],sep="/"), 
+      rciop.copy(url = paste(appSetup$stateFilesURL,appSetup$stateFiles[iState],sep="/"), # Downloading files: statefiles to appSetup$runDir
                  target = appSetup$runDir)
     }else{
       dateError=T
@@ -2014,7 +2017,7 @@ getModelForcing<-function(appSetup,appInput,dataSource="local",hindcast=T){
       if(hindcast){
         iState = which(appSetup$stateDates==bdate.Num)
         if(length(iState)>0){
-          rciop.copy(url = paste(appSetup$stateFilesURL,appSetup$stateFiles[iState],sep="/"), 
+          rciop.copy(url = paste(appSetup$stateFilesURL,appSetup$stateFiles[iState],sep="/"),  # Downloading files: statefilesappSetup$runDir
                      target = appSetup$runDir)
           stateFile = paste(appSetup$runDir,appSetup$stateFiles[iState],sep="/")
           stateError=F
@@ -2314,7 +2317,7 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
   
   ## get hype2csv file from its URL
   if(!is.null(appSetup$hype2csvURL)){
-    rciop.copy(url = appSetup$hype2csvURL, target = appSetup$tmpDir)
+    rciop.copy(url = appSetup$hype2csvURL, target = appSetup$tmpDir) # Downloading hype csv files
     if(file.exists(paste(appSetup$tmpDir,appSetup$hype2csvFile,sep="/"))){
       hype2csvFile = paste(appSetup$tmpDir,appSetup$hype2csvFile,sep="/")
       hype2csvExists=T
@@ -2336,7 +2339,7 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
       hyssLogFile = dir(path = appSetup$runDir , pattern =".log")
       if(length(hyssLogFile)>0){
         if(app.sys=="tep"){
-          #          res <- rciop.copy(paste(appSetup$runDir,hyssLogFile[1],sep="/"), outDir, uncompress=TRUE)
+          #          res <- rciop.copy(paste(appSetup$runDir,hyssLogFile[1],sep="/"), outDir, uncompress=TRUE) # Local file copy
           res <- file.copy(from = paste(appSetup$runDir,hyssLogFile[1],sep="/"), 
                            to = paste(outDir,paste(prefix.log,hyssLogFile[1],sep="_"),sep="/"), 
                            overwrite = T)
@@ -2349,7 +2352,7 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
       hyssLogFile = dir(path = appSetup$runDir , pattern =".log")
       if(length(hyssLogFile)>0){
         if(app.sys=="tep"){
-          #          res <- rciop.copy(paste(appSetup$runDir,hyssLogFile[1],sep="/"), outDir, uncompress=TRUE)
+          #          res <- rciop.copy(paste(appSetup$runDir,hyssLogFile[1],sep="/"), outDir, uncompress=TRUE) # Local file copy
           res <- file.copy(from = paste(appSetup$runDir,hyssLogFile[1],sep="/"), 
                            to = paste(outDir,paste(prefix.log,hyssLogFile[1],sep="_"),sep="/"), 
                            overwrite = T)
@@ -2367,7 +2370,7 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
       if(length(timeFiles)>0){
         for(i in 1:length(timeFiles)){
           if(app.sys=="tep"){
-            #            rciop.copy(paste(appSetup$resDir,timeFiles[i],sep="/"), outDir, uncompress=TRUE)
+            #            rciop.copy(paste(appSetup$resDir,timeFiles[i],sep="/"), outDir, uncompress=TRUE) # Local file copy
             if(appInput$assimOn=="off"){
               file.copy(from = paste(appSetup$resDir,timeFiles[i],sep="/"),
                         to = paste(outDir,paste(prefix.tim,timeFiles[i],sep="_"),sep="/"),
@@ -2395,7 +2398,7 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
       if(length(mapFiles)>0){
         for(i in 1:length(mapFiles)){
           if(app.sys=="tep"){
-            #            rciop.copy(paste(appSetup$resDir,mapFiles[i],sep="/"), outDir, uncompress=TRUE)
+            #            rciop.copy(paste(appSetup$resDir,mapFiles[i],sep="/"), outDir, uncompress=TRUE) # Local file copy
             if(appInput$assimOn=="off"){
               file.copy(from = paste(appSetup$resDir,mapFiles[i],sep="/"),
                         to = paste(outDir,paste(prefix.map,mapFiles[i],sep="_"),sep="/"),
@@ -2423,7 +2426,7 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
       if(length(subassFiles)>0){
         for(i in 1:length(subassFiles)){
           if(app.sys=="tep"){
-            #            rciop.copy(paste(appSetup$resDir,subassFiles[i],sep="/"), outDir, uncompress=TRUE)
+            #            rciop.copy(paste(appSetup$resDir,subassFiles[i],sep="/"), outDir, uncompress=TRUE) # Local file copy
             file.copy(from = paste(appSetup$resDir,subassFiles[i],sep="/"),
                       to = paste(outDir,paste(prefix.oth,subassFiles[i],sep="_"),sep="/"),
                       overwrite = T)
@@ -2433,7 +2436,7 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
       # copy simass files
       if(length(simassFile)>0){
         if(app.sys=="tep"){
-          #          rciop.copy(paste(appSetup$resDir,simassFile[1],sep="/"), outDir, uncompress=TRUE)
+          #          rciop.copy(paste(appSetup$resDir,simassFile[1],sep="/"), outDir, uncompress=TRUE) # Local file copy
           file.copy(from = paste(appSetup$resDir,simassFile[1],sep="/"),
                     to = paste(outDir,paste(prefix.oth,simassFile[1],sep="_"),sep="/"),
                     overwrite = T)
@@ -2455,7 +2458,7 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
                 if(nj>ni){
                   if(substr(allFiles[j],1,nj-ni)==substr(zeroString,1,nj-ni)){
                     if(app.sys=="tep"){
-                      #                      rciop.copy(paste(appSetup$resDir,allFiles[j],sep="/"), outDir, uncompress=TRUE)
+                      #                      rciop.copy(paste(appSetup$resDir,allFiles[j],sep="/"), outDir, uncompress=TRUE) # Local file copy
                       if(appInput$assimOn=="off"){
                         # Normal run
                         file.copy(from = paste(appSetup$resDir,allFiles[j],sep="/"),
@@ -2487,7 +2490,7 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
                   }
                 }else{
                   if(app.sys=="tep"){
-                    #                    rciop.copy(paste(appSetup$resDir,allFiles[j],sep="/"), outDir, uncompress=TRUE)
+                    #                    rciop.copy(paste(appSetup$resDir,allFiles[j],sep="/"), outDir, uncompress=TRUE) # Local file copy
                     if(appInput$assimOn=="off"){
                       # Normal run
                       file.copy(from = paste(appSetup$resDir,allFiles[j],sep="/"),

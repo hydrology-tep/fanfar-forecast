@@ -6,7 +6,8 @@
   <jobTemplate id="template_hypeapps">
    <streamingExecutable>/application/node_forecast/run.R</streamingExecutable>
    <defaultParameters>
-     <parameter abstract="HYPE model config" id="model" maxOccurs="1" minOccurs="0" scope="runtime" title="HYPE model" type="LiteralData">https://recast.terradue.com/t2api/search/hydro-smhi/models?uid=230286758E25FD953AF736DE85F01CDF9C539EC7</parameter>
+     <!-- <parameter abstract="HYPE model config" id="model" maxOccurs="1" minOccurs="0" scope="runtime" title="HYPE model" type="LiteralData">https://recast.terradue.com/t2api/search/hydro-smhi/models?uid=230286758E25FD953AF736DE85F01CDF9C539EC7</parameter> -->
+     <parameter abstract="HYPE model config" id="model" maxOccurs="1" minOccurs="0" scope="runtime" title="HYPE model" type="LiteralData">https://recast.terradue.com/t2api/search/hydro-smhi/models?uid=9345ED73B72F49E6FF31B07B57013BC519210E24</parameter>
 
      <parameter id="idate" type="LiteralData" scope="runtime" title="Forecast issue date (yyyy-mm-dd)" abstract="Data available since 2016-06-01" minOccurs="1" maxOccurs="1">2018-09-01</parameter>
 
