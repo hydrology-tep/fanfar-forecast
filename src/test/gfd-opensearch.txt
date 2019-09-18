@@ -1,0 +1,26 @@
+opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' -p count=unlimited -p cat=[ecoper,tas] -p start='201903' -p stop='201905'  enclosure,identifier
+opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' -p count=unlimited -p cat=[ecoper,tas] -p start='2019-03' -p stop='2019-05'  enclosure,identifier
+opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' -p count=unlimited -p cat=[ecoper,tas] -p start='2019-03-01' -p stop='2019-05-31'  enclosure,identifier
+opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' -p count=unlimited -p cat=[ecoper,tas] -p start='2019-03-01T00:00:00' -p stop='2019-05-31T00:00:00'  enclosure,identifier
+opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' -p count=unlimited -p cat=[ecoper,tas] -p start=2019-03-01 -p stop=2019-05-31  enclosure,identifier
+opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' -p count=unlimited -p start=2019-03-01 -p stop=2019-05-31  enclosure,identifier
+opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' -p count=unlimited -p=cat -p start=2019-03-01 -p stop=2019-03-31  enclosure,identifier
+opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' -p count=unlimited -p start=2019-03-01 -p stop=2019-03-31  enclosure,identifier
+opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' -p count=unlimited -p cat=ecoper -p start=2019-03-01 -p stop=2019-03-31  enclosure,identifier
+opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' -p count=unlimited -p cat=[ecoper] -p start=2019-03-01 -p stop=2019-03-31  enclosure,identifier
+opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' -p count=unlimited -p cat=[hydrogfdod] -p start=2019-03-01 -p stop=2019-03-31  enclosure,identifier
+opensearch-client 'https://recast.terradue.com/t2api/search/hydro-smhi/models' enclosure,identifier
+opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' enclosure,identifier
+opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' enclosure,identifier -p cat=[SMHI]
+opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' enclosure,identifier -p cat=[SMHI,operational]
+#opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' -p count=unlimited -p cat=[hydrogfdod] -p start=2019-03-01 -p stop=2019-03-31  enclosure,identifier
+opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' enclosure,identifier -p count=unlimited -p cat=[SMHI,operational]
+opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' enclosure,identifier -p count=unlimited -p cat=[SMHI,operational,daily]
+opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' enclosure,identifier -p count=unlimited -p cat=[SMHI,operational,daily,ei]
+opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' enclosure,identifier -p count=unlimited -p cat=[SMHI,operational,daily,od]
+opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' enclosure,identifier -p count=unlimited -p cat=[SMHI,operational,monthly,od]
+opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' enclosure,identifier -p count=unlimited -p cat=[SMHI,operational,monthly,ei]
+opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' enclosure,identifier -p count=unlimited -p cat=[models]
+opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' enclosure,identifier -p count=unlimited -p cat=[model]
+opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' enclosure,identifier -p count=unlimited -p cat=[fanfar]
+
