@@ -33,6 +33,8 @@
 #################################################################################
 ## 1 - Initialization
 ## ------------------------------------------------------------------------------
+nameOfSrcFile <- "/node_forecast/run.R"
+
 ## create a date tag to include in output filenames
 
 # Handle HTEP fake input to only run the code in one run slot
@@ -66,11 +68,11 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     if(app.sys=="tep"){
         library("rciop")
         
-        rciop.log ("DEBUG", " *** hypeapps-forecast *** TEP hydrological modelling applications ***", "/node_forecast/run.R")
-        rciop.log ("DEBUG", " rciop library loaded", "/node_forecast/run.R")
+        rciop.log ("DEBUG", " *** hypeapps-forecast *** TEP hydrological modelling applications ***", nameOfSrcFile)
+        rciop.log ("DEBUG", " rciop library loaded", nameOfSrcFile)
         
         setwd(TMPDIR)
-        rciop.log("DEBUG", paste(" R session working directory set to ",TMPDIR,sep=""), "/node_forecast/run.R")
+        rciop.log("DEBUG", paste(" R session working directory set to ",TMPDIR,sep=""), nameOfSrcFile)
         }
 
     ## Read the main input
@@ -119,7 +121,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/TriggerDistribution.r", sep="/"))
 
-        rciop.log ("DEBUG", paste(" libraries loaded and utilities sourced"), "/node_forecast/run.R")
+        rciop.log ("DEBUG", paste(" libraries loaded and utilities sourced"), nameOfSrcFile)
         }else if(app.sys=="win"){
         source("application/util/R/hypeapps-environment.R")  
         source("application/util/R/hypeapps-utils.R")
@@ -141,7 +143,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## application input parameters
     app.input <- getHypeAppInput(appName = app.name)
 
-    if(app.sys=="tep"){rciop.log ("DEBUG", paste(" hypeapps inputs and parameters read"), "/node_forecast/run.R")}
+    if(app.sys=="tep"){rciop.log ("DEBUG", paste(" hypeapps inputs and parameters read"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "Inputs and parameters read",fileConn = logFile$fileConn)
 
     #################################################################################
@@ -177,7 +179,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                  stateFilesURL = state.files.url, # Used by getModelForcing
                                  stateFilesIN = state.files)
 
-    if(app.sys=="tep"){rciop.log ("DEBUG", paste("HypeApp setup read"), "/node_forecast/run.R")}
+    if(app.sys=="tep"){rciop.log ("DEBUG", paste("HypeApp setup read"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "HypeApp setup read",fileConn = logFile$fileConn)
 
     #################################################################################
@@ -189,21 +191,21 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                         dataSource = forcing.data.source,
                                         hindcast   = T)
 
-    if(app.sys=="tep"){rciop.log ("DEBUG", paste("hindcast forcing set"), "/node_forecast/run.R")}
+    if(app.sys=="tep"){rciop.log ("DEBUG", paste("hindcast forcing set"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "Hindcast forcing data downloaded and prepared",fileConn = logFile$fileConn)
 
     ## ------------------------------------------------------------------------------
     ## get Xobs input file(s) from open catalogue
     xobs.data <- getXobsData(appInput = app.input,
                              appSetup = app.setup)
-    if(app.sys=="tep"){rciop.log ("DEBUG", paste("xobs data downloaded from catalogue"), "/node_historical/run.R")}
+    if(app.sys=="tep"){rciop.log ("DEBUG", paste("xobs data downloaded from catalogue"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "xobs data (if any) downloaded from catalogue",fileConn = logFile$fileConn)
 
     ## ------------------------------------------------------------------------------
     ## read downloaded Xobs input file(s) - merge into one Xobs.txt in the model run folder
     xobs.input <- readXobsData(appSetup = app.setup,
                                xobsData = xobs.data)
-    if(app.sys=="tep"){rciop.log ("DEBUG", paste("xobs data merged to model rundir"), "/node_historical/run.R")}
+    if(app.sys=="tep"){rciop.log ("DEBUG", paste("xobs data merged to model rundir"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "Xobs data (if any) merged into model directory",fileConn = logFile$fileConn)
 
     ## ------------------------------------------------------------------------------
@@ -211,7 +213,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     hindcast.input <- updateModelInput(appSetup = app.setup, appInput = app.input, 
                                        hindcast = T, modelForcing = hindcast.forcing, xobsInput = xobs.input)
 
-    if(app.sys=="tep"){rciop.log ("DEBUG", paste("hindcast inputs modified"), "/node_forecast/run.R")}
+    if(app.sys=="tep"){rciop.log ("DEBUG", paste("hindcast inputs modified"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "hindcast model inputs modified",fileConn = logFile$fileConn)
 
     #################################################################################
@@ -219,7 +221,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## ------------------------------------------------------------------------------
     ##  run hindcast
     if(hindcast.input==0){
-        if(app.sys=="tep"){rciop.log ("DEBUG", " ...starting hindcast model run", "/node_forecast/run.R")}
+        if(app.sys=="tep"){rciop.log ("DEBUG", " ...starting hindcast model run", nameOfSrcFile)}
         log.res=appLogWrite(logText = "starting hindcast model run ...",fileConn = logFile$fileConn)
 
         # TOD add try catch on execution to exit in case of error
@@ -235,7 +237,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         }
 
         log.res=appLogWrite(logText = "... hindcast model run ready",fileConn = logFile$fileConn)
-        if(app.sys=="tep"){rciop.log ("DEBUG", " ...hindcast model run ready", "/node_forecast/run.R")}
+        if(app.sys=="tep"){rciop.log ("DEBUG", " ...hindcast model run ready", nameOfSrcFile)}
         
         }else{
         log.res=appLogWrite(logText = "something wrong with hindcast model inputs (no run)",fileConn = logFile$fileConn)
@@ -250,7 +252,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                         dataSource = forcing.data.source,
                                         hindcast   = F)
 
-    if(app.sys=="tep"){rciop.log ("DEBUG", paste("...forecast forcing set"), "/node_forecast/run.R")}
+    if(app.sys=="tep"){rciop.log ("DEBUG", paste("...forecast forcing set"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "forecast model forcing data downloaded and prepared",fileConn = logFile$fileConn)
 
     ## ------------------------------------------------------------------------------
@@ -258,7 +260,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     forecast.input <- updateModelInput(appSetup = app.setup, appInput = app.input, 
                                        hindcast = F, modelForcing = forecast.forcing, xobsInput = NULL)
 
-    if(app.sys=="tep"){rciop.log ("DEBUG", paste("...forecast inputs modified"), "/node_forecast/run.R")}
+    if(app.sys=="tep"){rciop.log ("DEBUG", paste("...forecast inputs modified"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "forecast model input files modified",fileConn = logFile$fileConn)
 
     #################################################################################
@@ -266,13 +268,13 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## ------------------------------------------------------------------------------
     ##  run model
     if(forecast.input==0){
-        if(app.sys=="tep"){rciop.log ("DEBUG", " ...starting forecast model run", "/node_forecast/run.R")}
+        if(app.sys=="tep"){rciop.log ("DEBUG", " ...starting forecast model run", nameOfSrcFile)}
         log.res=appLogWrite(logText = "starting forecast model run ...",fileConn = logFile$fileConn)
 
         forecast.run = system(command = app.setup$runCommand,intern = T)
 
         log.res=appLogWrite(logText = "... forecast model run ready",fileConn = logFile$fileConn)
-        if(app.sys=="tep"){rciop.log ("DEBUG", " ...forecast model run ready", "/node_forecast/run.R")}
+        if(app.sys=="tep"){rciop.log ("DEBUG", " ...forecast model run ready", nameOfSrcFile)}
         }else{
         log.res=appLogWrite(logText = "something wrong with forecast model inputs (no run)",fileConn = logFile$fileConn)
         }
