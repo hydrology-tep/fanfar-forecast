@@ -8,7 +8,6 @@
    <defaultParameters>
      <!-- <parameter abstract="HYPE model config" id="model" maxOccurs="1" minOccurs="0" scope="runtime" title="HYPE model" type="LiteralData">https://recast.terradue.com/t2api/search/hydro-smhi/models?uid=230286758E25FD953AF736DE85F01CDF9C539EC7</parameter> -->
      <parameter abstract="HYPE model config" id="model" maxOccurs="1" minOccurs="0" scope="runtime" title="HYPE model" type="LiteralData">https://recast.terradue.com/t2api/search/hydro-smhi/models?uid=9345ED73B72F49E6FF31B07B57013BC519210E24</parameter>
-
      <parameter id="idate" type="LiteralData" scope="runtime" title="Forecast issue date (yyyy-mm-dd)" abstract="Data available since 2016-06-01" minOccurs="1" maxOccurs="1">2018-09-01</parameter>
 
      <parameter id="variables" type="LiteralData" scope="runtime" title="Output variables" abstract="Select output variables" minOccurs="1" maxOccurs="8">
@@ -162,7 +161,7 @@
 
  
  
- <workflow id="workflow" title="Niger-HYPE Forecast" abstract="Make 1-10 days hydrometeorological forecasts for the Niger River basin with the Niger-HYPE model. More info at http://hypeweb.smhi.se/niger-hype/forecast and http://www.smhi.net/hype/wiki.">
+ <workflow id="workflow" title="nb1 Niger-HYPE Forecast" abstract="Make 1-10 days hydrometeorological forecasts for the Niger River basin with the Niger-HYPE model. More info at http://hypeweb.smhi.se/niger-hype/forecast and http://www.smhi.net/hype/wiki.">
 
   <workflowVersion>1.0</workflowVersion>
  

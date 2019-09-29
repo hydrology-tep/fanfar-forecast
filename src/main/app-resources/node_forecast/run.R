@@ -117,7 +117,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     #        message(paste0("model-data at row index:", r))
     #    }
     #}
-  
+    rciop.log("INFO", model_config_data)
+    #q(save="no", status = 32)
+
     ## ------------------------------------------------------------------------------
     ## load hypeapps environment and additional R utility functions
     if(app.sys=="tep"){
@@ -196,6 +198,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
         # Query the input reference
         opensearchCmd=paste("opensearch-client '", url, query, "' enclosure")
+        message(opensearchCmd)
         input_enclosure <- system(command = opensearchCmd,intern = T)
         rciop.log("INFO", input_enclosure)
 
@@ -209,22 +212,30 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             q(99)
         }
 
-        model.files.path     <- paste0(local.model_data_dirs,"v2.23",sep="/") # Instead of model.files.url
-        forcing.archive.path <- paste0(model.files.path,"forcingarchive",sep="/") # Instead of forcing.archive.url
-        state.files.path     <- paste0(model.files.path,"statefiles",sep="/") # Instead of state.files.url
+        model.files.path     <- paste(local.model_data_dirs,"v2.23",sep="/") # Instead of model.files.url
+        forcing.archive.path <- paste(model.files.path,"forcingarchive",sep="/") # Instead of forcing.archive.url
+        state.files.path     <- paste(model.files.path,"statefiles",sep="/") # Instead of state.files.url
         #..... Replace rciop.copy with file copy from these paths (changes needed in hypeapps-utils.R)
+        rciop.log("INFO path", model.files.path)
+        rciop.log("INFO path", forcing.archive.path)
+        rciop.log("INFO path", state.files.path)
 
         ## ------------------------------------------------------------------------------
         # For now, if needed, pass url from model_config_data['model-data-old-url'] to let present R code continue to do rciop.copy locally.
         modelDataOldUrl <- model_config_data[indexModelDataOldUrl,'url']
 
         # Overwrite variables normally set in hypeapps-model-settings.R with url from the model configuration object
-        model.files.url     <- paste0(modelDataOldUrl,"v2.23",sep="/")
-        forcing.archive.url <- paste0(model.files.url,"forcingarchive",sep="/")
-        state.files.url     <- paste0(model.files.url,"statefiles",sep="/")
+        model.files.url     <- paste(modelDataOldUrl,"v2.23",sep="/")
+        forcing.archive.url <- paste(model.files.url,"forcingarchive",sep="/")
+        state.files.url     <- paste(model.files.url,"statefiles",sep="/")
         # Check if other source code sources the file hypeapps-model-settings.R separately and are using any of these variables/constants.
         # If its some other type of x-cast then it should not be of any problem.
+        rciop.log("INFO path", modelDataOldUrl)
+        rciop.log("INFO path", model.files.url)
+        rciop.log("INFO path", forcing.archive.url)
+        rciop.log("INFO path", state.files.url)
     }
+    #q(save="no", status = 33)
 
     app.setup <- getHypeAppSetup(modelName = model.name,
                                  modelBin  = model.bin,
