@@ -6,9 +6,14 @@
   <jobTemplate id="template_hypeapps">
    <streamingExecutable>/application/node_forecast/run.R</streamingExecutable>
    <defaultParameters>
+	<!-- The model config object may or may not differ between niger-hype and west-africa-hype. If they differ we need to handle this. Now this can manually be selected on H-TEP via drag and drop. -->
      <!-- <parameter abstract="HYPE model config" id="model" maxOccurs="1" minOccurs="0" scope="runtime" title="HYPE model" type="LiteralData">https://recast.terradue.com/t2api/search/hydro-smhi/models?uid=230286758E25FD953AF736DE85F01CDF9C539EC7</parameter> -->
-     <parameter abstract="HYPE model config" id="model" maxOccurs="1" minOccurs="0" scope="runtime" title="HYPE model" type="LiteralData">https://recast.terradue.com/t2api/search/hydro-smhi/models?uid=9345ED73B72F49E6FF31B07B57013BC519210E24</parameter>
-     <parameter id="idate" type="LiteralData" scope="runtime" title="Forecast issue date (yyyy-mm-dd)" abstract="Data available since 2016-06-01" minOccurs="1" maxOccurs="1">2018-09-01</parameter>
+     <parameter id="model" abstract="HYPE model config" maxOccurs="1" minOccurs="0" scope="runtime" title="HYPE model" type="LiteralData">https://recast.terradue.com/t2api/search/hydro-smhi/models?uid=9345ED73B72F49E6FF31B07B57013BC519210E24</parameter>
+     
+	 <parameter id="methc" abstract="Meterological hindcast" maxOccurs="1" minOccurs="0" scope="runtime" title="Meterological hindcast" type="LiteralData"></parameter>
+	 <parameter id="metfc" abstract="Meterological forcast" maxOccurs="1" minOccurs="0" scope="runtime" title="Meterological forcast" type="LiteralData"></parameter>
+     <parameter id="idate" abstract="Data available since 2016-06-01" scope="runtime" title="Forecast issue date (yyyy-mm-dd)" minOccurs="1" maxOccurs="1" type="LiteralData">2019-10-03</parameter>
+     <parameter id="hcperiodlen" abstract="Data available since xxxx-xx-xx" scope="runtime" title="Hindcast period length (days)" minOccurs="1" maxOccurs="1" type="LiteralData">123</parameter>
 
      <parameter id="variables" type="LiteralData" scope="runtime" title="Output variables" abstract="Select output variables" minOccurs="1" maxOccurs="8">
       <options>
@@ -161,7 +166,7 @@
 
  
  
- <workflow id="workflow" title="nb1 Niger-HYPE Forecast" abstract="Make 1-10 days hydrometeorological forecasts for the Niger River basin with the Niger-HYPE model. More info at http://hypeweb.smhi.se/niger-hype/forecast and http://www.smhi.net/hype/wiki.">
+ <workflow id="workflow" title="conf1 Niger-HYPE Forecast" abstract="Make 1-10 days hydrometeorological forecasts for the Niger River basin with the Niger-HYPE model. More info at http://hypeweb.smhi.se/niger-hype/forecast and http://www.smhi.net/hype/wiki.">
 
   <workflowVersion>1.0</workflowVersion>
  

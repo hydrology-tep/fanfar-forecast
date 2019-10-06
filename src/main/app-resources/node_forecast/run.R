@@ -73,53 +73,60 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         
         rciop.log ("DEBUG", " *** hypeapps-forecast *** TEP hydrological modelling applications ***", nameOfSrcFile)
         rciop.log ("DEBUG", " rciop library loaded", nameOfSrcFile)
-        
+            
         setwd(TMPDIR)
         rciop.log("DEBUG", paste(" R session working directory set to ",TMPDIR,sep=""), nameOfSrcFile)
-        }
+        
+        # Source non-HYPE files
+        source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-configuration.R",sep="/"))
+        source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-netcdf.R",sep="/"))
+    }
 
     ## Read the main input
     ## This is the reference link to the model configuration
-
-    # print
     rciop.log("INFO", paste("Processing input:", input, sep=" "))
+    modelConfigData <- process_input_model_configuration(input,TMPDIR)    
+    #print(modelConfigData)
+    #q(save="no", status = 0)
 
-    # Query the input reference
-    opensearchCmd=paste("opensearch-client '",input,"' enclosure")
-    input_enclosure <- system(command = opensearchCmd,intern = T)
-    rciop.log("INFO", input_enclosure)
-
-    # Download the dir(s)
-    model_config_dir <- rciop.copy(input_enclosure, TMPDIR, uncompress=TRUE)
-    if (model_config_dir$exit.code==0) {
-        local.model_config_dir <- model_config_dir$output # Returns path to local dir or file, dir in this case
-    }
-    else {
-        rciop.log("ERROR Could not access the model configuration file.")
-        q(99)
-    }
-
-    # Filenames
-    model_config_file <- "dependencies.txt"
-    #hype_config_file <- "info-forecast.txt"
-
-    path_to_file <- paste(local.model_config_dir, model_config_file, sep="/")
-
-    # Read contents of config file, handling separators ';'
-    model_config_data <- read.csv2(path_to_file, header=FALSE, sep=";")
-    names(model_config_data) <- c('subdir','url','querypattern','info')
-    #for (r in 1:nrow(model_config_data)) {
-    #    subdir <- model_config_data[r,'subdir']
-    #    if (subdir == 'od-daily') {
-    #        message(paste0("od-daily at row index:", r))
-    #    }
-    #    if (subdir == 'model-data') {
-    #        message(paste0("model-data at row index:", r))
-    #    }
-    #}
-    rciop.log("INFO", model_config_data)
+    # # Query the input reference
+    # opensearchCmd=paste("opensearch-client '",input,"' enclosure")
+    # input_enclosure <- system(command = opensearchCmd,intern = T)
+    # rciop.log("INFO", input_enclosure)
+    # 
+    # # Download the dir(s)
+    # model_config_dir <- rciop.copy(input_enclosure, TMPDIR, uncompress=TRUE)
+    # if (model_config_dir$exit.code==0) {
+    #     local.model_config_dir <- model_config_dir$output # Returns path to local dir or file, dir in this case
+    # }
+    # else {
+    #     rciop.log("ERROR Could not access the model configuration file.")
+    #     q(99)
+    # }
+    # 
+    # # Filenames
+    # model_config_file <- "dependencies.txt"
+    # #hype_config_file <- "info-forecast.txt"
+    # 
+    # path_to_file <- paste(local.model_config_dir, model_config_file, sep="/")
+    # 
+    # # Read contents of config file, handling separators ';'
+    # model_config_data <- read.csv2(path_to_file, header=FALSE, sep=";")
+    # names(model_config_data) <- c('subdir','url','querypattern','info')
+    # #for (r in 1:nrow(model_config_data)) {
+    # #    subdir <- model_config_data[r,'subdir']
+    # #    if (subdir == 'od-daily') {
+    # #        message(paste0("od-daily at row index:", r))
+    # #    }
+    # #    if (subdir == 'model-data') {
+    # #        message(paste0("model-data at row index:", r))
+    # #    }
+    # #}
+    #rciop.log("INFO", model_config_data)
     #q(save="no", status = 32)
-
+    
+    rciop.log("INFO", modelConfigData)
+    
     ## ------------------------------------------------------------------------------
     ## load hypeapps environment and additional R utility functions
     if(app.sys=="tep"){
@@ -147,7 +154,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     #################################################################################
     ## 2 - Application user inputs
     ## ------------------------------------------------------------------------------
-    ## application input parameters
+    ## Handle application input parameters, rciop.get_param()
     app.input <- getHypeAppInput(appName = app.name)
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste(" hypeapps inputs and parameters read"), nameOfSrcFile)}
@@ -173,57 +180,76 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
         rciop.log("INFO", "Processing config for model data", nameOfSrcFile)
 
-        #rowIndex=0
-        indexModelData=0
-        indexModelDataOldUrl=0
-        for (r in 1:nrow(model_config_data)) {
-            subdir <- model_config_data[r,'subdir']
-            if (subdir == 'model-data') {
-                indexModelData=r
-                message(paste0("model-data at row index:", r))
-            }
-            if (subdir == 'model-data-old-url') {
-                indexModelDataOldUrl=r
-                message(paste0("model-data-old-url at row index:", r))
-            }
-        }
-        if (indexModelData == 0) {
-            q(98)
-        }
+        # # Flyttat...
+        # 
+        # #rowIndex=0
+        # indexModelData=0
+        # indexModelDataOldUrl=0
+        # for (r in 1:nrow(model_config_data)) {
+        #     subdir <- model_config_data[r,'subdir']
+        #     if (subdir == 'model-data') {
+        #         indexModelData=r
+        #         message(paste0("model-data at row index:", r))
+        #     }
+        #     if (subdir == 'model-data-old-url') {
+        #         indexModelDataOldUrl=r
+        #         message(paste0("model-data-old-url at row index:", r))
+        #     }
+        # }
+        # if (indexModelData == 0) {
+        #     q(98)
+        # }
+        # 
+        # #subdir <- model_config_data[indexModelData,'subdir'] # Intended to be used as dir name for rciop.copy TMPDIR/subdir/
+        # url <- model_config_data[indexModelData,'url']
+        # query <- model_config_data[indexModelData,'querypattern']
+        # #comment <- model_config_data[indexModelData,'info']
+        # 
+        # #...flyttat
 
-        #subdir <- model_config_data[indexModelData,'subdir'] # Intended to be used as dir name for rciop.copy TMPDIR/subdir/
-        url <- model_config_data[indexModelData,'url']
-        query <- model_config_data[indexModelData,'querypattern']
-        #comment <- model_config_data[indexModelData,'info']
+        # # Flyttat...
+        # url <- modelConfigData$modelDataUrl
+        # query <- modelConfigData$modelDataQuery
+        # 
+        # # Query the input reference
+        # opensearchCmd=paste("opensearch-client '", url, query, "' enclosure")
+        # message(opensearchCmd)
+        # input_enclosure <- system(command = opensearchCmd,intern = T)
+        # rciop.log("INFO", input_enclosure)
+        # 
+        # # Download the Hype model data dir(s)
+        # model_data_dirs <- rciop.copy(input_enclosure, TMPDIR, uncompress=TRUE) # or TMPDIR/subdir
+        # if (model_data_dirs$exit.code==0) {
+        #     local.model_data_dirs <- model_data_dirs$output
+        # }
+        # else {
+        #     rciop.log("ERROR Could not access the model data dirs.")
+        #     q(99)
+        # }
+        # #...flyttat
+        modelDataPaths <- process_input_model_data(modelConfigData,TMPDIR)
+	print(modelDataPaths)
 
-        # Query the input reference
-        opensearchCmd=paste("opensearch-client '", url, query, "' enclosure")
-        message(opensearchCmd)
-        input_enclosure <- system(command = opensearchCmd,intern = T)
-        rciop.log("INFO", input_enclosure)
-
-        # Download the Hype model data dir(s)
-        model_data_dirs <- rciop.copy(input_enclosure, TMPDIR, uncompress=TRUE) # or TMPDIR/subdir
-        if (model_data_dirs$exit.code==0) {
-            local.model_data_dirs <- model_data_dirs$output
-        }
-        else {
-            rciop.log("ERROR Could not access the model data dirs.")
-            q(99)
-        }
-
-        model.files.path     <- paste(local.model_data_dirs,"v2.23",sep="/") # Instead of model.files.url
-        forcing.archive.path <- paste(model.files.path,"forcingarchive",sep="/") # Instead of forcing.archive.url
-        state.files.path     <- paste(model.files.path,"statefiles",sep="/") # Instead of state.files.url
-        #..... Replace rciop.copy with file copy from these paths (changes needed in hypeapps-utils.R)
+        #model.files.path     <- paste(local.model_data_dirs,"v2.23",sep="/") # Instead of model.files.url
+        #forcing.archive.path <- paste(model.files.path,"forcingarchive",sep="/") # Instead of forcing.archive.url
+        #state.files.path     <- paste(model.files.path,"statefiles",sep="/") # Instead of state.files.url
+        model.files.path     <- modelDataPaths$pathModelFiles     # Instead of model.files.url
+        forcing.archive.path <- modelDataPaths$pathForcingArchive # Instead of forcing.archive.url
+        state.files.path     <- modelDataPaths$pathStateFiles     # Instead of state.files.url
+        #ToDo: Replace rciop.copy with file copy from these paths (changes needed in hypeapps-utils.R)
+                                
         rciop.log("INFO path", model.files.path)
         rciop.log("INFO path", forcing.archive.path)
         rciop.log("INFO path", state.files.path)
 
         ## ------------------------------------------------------------------------------
         # For now, if needed, pass url from model_config_data['model-data-old-url'] to let present R code continue to do rciop.copy locally.
-        modelDataOldUrl <- model_config_data[indexModelDataOldUrl,'url']
-
+        
+        ## Flyttat...
+        #modelDataOldUrl <- model_config_data[indexModelDataOldUrl,'url']
+        ##...flyttat
+        modelDataOldUrl <- modelConfigData$modelDataOldUrl
+        
         # Overwrite variables normally set in hypeapps-model-settings.R with url from the model configuration object
         model.files.url     <- paste(modelDataOldUrl,"v2.23",sep="/")
         forcing.archive.url <- paste(model.files.url,"forcingarchive",sep="/")
@@ -235,7 +261,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         rciop.log("INFO path", forcing.archive.url)
         rciop.log("INFO path", state.files.url)
     }
-    #q(save="no", status = 33)
+    #q(save="no", status = 0)
 
     app.setup <- getHypeAppSetup(modelName = model.name,
                                  modelBin  = model.bin,
@@ -260,13 +286,26 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                         dataSource = forcing.data.source,
                                         hindcast   = T)
 
+    dirNCFiles <- paste(TMPDIR,"ncfiles",sep="/")
+    
+    # ToDo: Here or move up
+    #       Several calls here for POBS,QOBS,TOBS or within (it the same time interval so within most likely)
+    #process_netcdf2obs(modelConfigData)
+    process_netcdf2obs(modelConfigData,
+                       app.input$idate,
+                       app.input$hcperiodlen,
+                       dirNCFiles)
+    # ToDo: Add path to store obs files, localDirOBS?
+    
     if(app.sys=="tep"){rciop.log ("DEBUG", paste("hindcast forcing set"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "Hindcast forcing data downloaded and prepared",fileConn = logFile$fileConn)
 
+    #q(save="no", status = 0)
+
     ## ------------------------------------------------------------------------------
-    ## get Xobs input file(s) from open catalogue
-    xobs.data <- getXobsData(appInput = app.input,
-                             appSetup = app.setup)
+
+    xobs.data <- getXobsData(appInput = app.input, # xobsNum, xobs, xobsURL
+                             appSetup = app.setup) # model run dir, res dir etc.
     if(app.sys=="tep"){rciop.log ("DEBUG", paste("xobs data downloaded from catalogue"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "xobs data (if any) downloaded from catalogue",fileConn = logFile$fileConn)
 
@@ -293,7 +332,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         if(app.sys=="tep"){rciop.log ("DEBUG", " ...starting hindcast model run", nameOfSrcFile)}
         log.res=appLogWrite(logText = "starting hindcast model run ...",fileConn = logFile$fileConn)
 
-        # TOD add try catch on execution to exit in case of error
+        # TODO add try catch on execution to exit in case of error
+        # Next Hype model should return exit code 0 instead of 84
 
         hindcast.run = system(command = app.setup$runCommand,intern = T)
         

@@ -281,7 +281,8 @@ getHypeAppInput<-function(appName){
       basinset    <- rciop.getparam("basinset")    # output subbasins
       rpcout      <- rciop.getparam("rpcout")      # Return periods levels file
       xobs        <- rciop.getparam("xobs")        # EO/Insitu data Xobs file
-      
+      hcperiodlen <- rciop.getparam("hcperiodlen")   # Hindcast period length (days)
+
       # temporarily commenting out the assimilation in the forecast application (David 20170827)
       assimOn     <- rciop.getparam("assimOn")     # Assimilation on/off
       assimVarIN  <- rciop.getparam("assimVars")   # Assimilation variables
@@ -413,7 +414,8 @@ getHypeAppInput<-function(appName){
          !exists("win.statfile")|
          !exists("win.xobs")|
          !exists("win.assimOn")|
-         !exists("win.assimVar")){
+         !exists("win.assimVar")|
+         !exists("hcperiodlen")){
         idate     <- "2017-01-01"  # Forecast issue date
         outvars   <- "cout"        # Output variables
         outbasins <- "37"          # Output basins
@@ -423,6 +425,7 @@ getHypeAppInput<-function(appName){
         xobsURL=NULL
         assimOn   <- "off"         # Assimilation on/off
         assimVar  <- "9999,9999"   # Assimilation variables (pairs, obs/sim)
+        hcperiodlen <- "123"
       }else{
         idate     <- win.idate  # Forecast issue date
         outvars   <- win.outvars  # Output variables
@@ -433,6 +436,7 @@ getHypeAppInput<-function(appName){
         xobsURL=NULL
         assimOn   <- win.assimOn  # Assimilation on/off
         assimVar  <- win.assimVar  # Assimilation variables (pairs, obs/sim)
+        hcperiodlen <- win.hcperiodlen
       }
     }else{
       idate     <- NULL  # Forecast issue date
@@ -444,6 +448,7 @@ getHypeAppInput<-function(appName){
       xobsURL   <- NULL
       assimOn   <- NULL  # Assimilation on/off
       assimVar  <- NULL  # Assimilation variables (pairs, obs/sim)
+      hcperiodlen <- 123
       
       print("WARNING: hypeapps.sys not set, allowed values are 'tep' or 'win' ")
     }
@@ -463,7 +468,8 @@ getHypeAppInput<-function(appName){
                   "xobsNum"   = xobsNum,
                   "xobsURL"   = xobsURL,
                   "assimOn"   = assimOn,   # Assimilation on/off
-                  "assimVar"  = assimVar)  # Assimilation variables (pairs, obs/sim)
+                  "assimVar"  = assimVar,  # Assimilation variables (pairs, obs/sim)
+                  "hcperiodlen" = hcperiodlen) # Intended to be used together with netcdf2obs
     
   }else if(appName=="returnperiod"){
     if(app.sys=="tep"){

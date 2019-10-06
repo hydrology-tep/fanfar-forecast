@@ -24,3 +24,7 @@ opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' enclosur
 opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' enclosure,identifier -p count=unlimited -p cat=[model]
 opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' enclosure,identifier -p count=unlimited -p cat=[fanfar]
 
+
+#
+# 2019-10-02
+#
