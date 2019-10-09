@@ -671,7 +671,8 @@ getHypeAppInput<-function(appName){
 
 ## -------------------------------------------------------------------------------
 ## prepare work directories and copy basic model files
-getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,modelFilesURL,forcingArchiveURL=NULL,stateFilesURL=NULL,stateFilesIN=NULL){
+#getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,modelFilesURL,forcingArchiveURL=NULL,stateFilesURL=NULL,stateFilesIN=NULL){
+getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,modelFilesPath,forcingArchivePath=NULL,stateFilesPath=NULL,stateFilesIN=NULL){
 
 # 
 # forcingArchiveURL and stateFilesURL are only assigned to output
@@ -742,13 +743,14 @@ getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,mode
     }
     
     for(i in 1:length(fileNames)){ # Todo
-      if(app.sys=="tep"){
-        res <- rciop.copy(paste(modelFilesURL,fileNames[i],sep="/"), modelFilesRunDir, uncompress=TRUE) # Downloading files to modelFilesRunDir
-      }else{
-        file.copy(from=paste(modelFilesURL,fileNames[i],sep="/"),  # or copying files from the corresponding download dir whe not on TEP?
-                  to =paste(modelFilesRunDir,fileNames[i],sep="/"),
-                  overwrite = T)
-      }
+      #if(app.sys=="tep"){
+        #res <- rciop.copy(paste(modelFilesURL,fileNames[i],sep="/"), modelFilesRunDir, uncompress=TRUE) # Downloading files to modelFilesRunDir
+      #}else{
+      file.copy(from=paste(modelFilesPath,fileNames[i],sep="/"),  # or copying files from the corresponding download dir whe not on TEP?
+                to=paste(modelFilesRunDir,fileNames[i],sep="/"),
+                overwrite=T)
+      rciop.log ("DEBUG", paste0("cp ",modelFilesPath,"/",fileNames[i]," to ",modelFilesRunDir,"/",fileNames[i]),"/util/R/hypeapps-utils.R")
+      #}
     }
   }
   
@@ -787,7 +789,8 @@ getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,mode
   }
   
   ## check existance of forcing archive, and if existing, it's first and last date.
-  if(!is.null(forcingArchiveURL)){
+  #if(!is.null(forcingArchiveURL)){
+  if(!is.null(forcingArchivePath)){
     forcingArchiveExist=T
   }else{
     forcingArchiveExist=F
@@ -837,11 +840,16 @@ getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,mode
     
     if(appInput$rpfile=="default"){
       # download default file from data storage
-      rpFileURL = paste(modelFilesURL,"returnlevels",paste(modelName,"-rp-cout.txt",sep=""),sep="/") # Download files
+      #rpFileURL = paste(modelFilesURL,"returnlevels",paste(modelName,"-rp-cout.txt",sep=""),sep="/") # Download files
+      rpFilePath = paste(modelFilesPath,"returnlevels",paste(modelName,"-rp-cout.txt",sep=""),sep="/") # Download files
       # download rpfile to forecast output folder - using rciop.copy since we already have the URL to the file
-      rciop.copy(rpFileURL, modelResDir[2]) # Downloading rp files
+      #rciop.copy(rpFileURL, modelResDir[2]) # Downloading rp files
       # path to downloaded rpfile
       rpFileCOUT = paste(modelResDir[2],paste(paste(modelName,"-rp-cout.txt",sep="")),sep="/")
+
+      file.copy(from=rpFilePath,to=rpFileCOUT,overwrite=T)
+      rciop.log ("DEBUG", paste0("cp ",rpFilePath," to ",rpFileCOUT),"/util/R/hypeapps-utils.R")
+
     }else{
       # download the file specified by user input
       #
@@ -897,10 +905,12 @@ getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,mode
                   "appName"=appName,
                   "modelName"=modelName,
                   "modelBin"=modelBin,
-                  "stateFilesURL"=stateFilesURL,
+                  #"stateFilesURL"=stateFilesURL,
+                  "stateFilesPath"=stateFilesPath,
                   "stateFiles"=stateFiles,
                   "stateDates"=stateDates,
-                  "forcingArchiveURL"=forcingArchiveURL,
+                  #"forcingArchiveURL"=forcingArchiveURL,
+                  "forcingArchivePath"=forcingArchivePath,
                   "forcingArchiveExist"=forcingArchiveExist,
                   "hype2csvURL"=hype2csv.url,
                   "hype2csvFile"=hype2csv.file,
@@ -1327,8 +1337,12 @@ getHindcastForcingData<-function(startDate,endDate,appSetup,obsFiles,outDir,useR
       # copy forcing files from local archive
       for(i in 1:length(forcing.files)){
         # copy text files, if only archive is needed
-        rciop.copy(url = paste(appSetup$forcingArchiveURL,obsFiles[i],sep="/"), # Downloading files: forcing to archiveDir
-                   target = archiveDir)
+        #rciop.copy(url = paste(appSetup$forcingArchiveURL,obsFiles[i],sep="/"), # Downloading files: forcing to archiveDir
+        #           target = archiveDir)
+        file.copy(from=paste(appSetup$forcingArchivePath,obsFiles[i],sep="/"),
+                  to=paste(archiveDir,obsFiles[i],sep="/"),
+                  overwrite=T)
+        rciop.log ("DEBUG", paste0("cp ",appSetup$forcingArchivePath,"/",obsFiles[i]," to ",archiveDir,"/",obsFiles[i]),"/util/R/hypeapps-utils.R")
       }
       archiveFound = T
     }else{
@@ -1632,8 +1646,12 @@ getModelForcing<-function(appSetup,appInput,dataSource="local",hindcast=T){
       if(appSetup$forcingArchiveExist){
         # copy forcing files from local archive
         for(i in 1:length(forcing.files)){
-          rciop.copy(url = paste(appSetup$forcingArchiveURL,forcing.files[i],sep="/"), # Downloading files: forcing to archiveDir
-                     target = archiveDir)
+          #rciop.copy(url = paste(appSetup$forcingArchiveURL,forcing.files[i],sep="/"), # Downloading files: forcing to archiveDir
+          #           target = archiveDir)
+          file.copy(from=paste(appSetup$forcingArchivePath,forcing.files[i],sep="/"),
+                    to=paste(archiveDir,forcing.files[i],sep="/"),
+                    overwrite=T)
+          rciop.log ("DEBUG", paste0("cp ",appSetup$forcingArchivePath,"/",forcing.files[i]," to ",archiveDir,"/",forcing.files[i]),"/util/R/hypeapps-utils.R")
         }
         archiveFound = T
       }else{
@@ -1849,8 +1867,13 @@ getModelForcing<-function(appSetup,appInput,dataSource="local",hindcast=T){
     ##
     iState = which(appSetup$stateDates==bdate.Num)
     if(length(iState)>0){
-      rciop.copy(url = paste(appSetup$stateFilesURL,appSetup$stateFiles[iState],sep="/"), # Downloading files: statefiles to appSetup$runDir
-                 target = appSetup$runDir)
+      #rciop.copy(url = paste(appSetup$stateFilesURL,appSetup$stateFiles[iState],sep="/"), # Downloading files: statefiles to appSetup$runDir
+      #           target = appSetup$runDir)
+      file.copy(from=paste(appSetup$stateFilesPath,appSetup$stateFiles[iState],sep="/"),
+                to=paste(appSetup$runDir,appSetup$stateFiles[iState],sep="/"),
+                overwrite=T)
+      rciop.log ("DEBUG", paste0("cp ",appSetup$stateFilesPath,"/",appSetup$stateFiles[iState]," to ",appSetup$runDir,"/",appSetup$stateFiles[iState]),"/util/R/hypeapps-utils.R")
+
     }else{
       dateError=T
     }
@@ -2023,8 +2046,13 @@ getModelForcing<-function(appSetup,appInput,dataSource="local",hindcast=T){
       if(hindcast){
         iState = which(appSetup$stateDates==bdate.Num)
         if(length(iState)>0){
-          rciop.copy(url = paste(appSetup$stateFilesURL,appSetup$stateFiles[iState],sep="/"),  # Downloading files: statefilesappSetup$runDir
-                     target = appSetup$runDir)
+          #rciop.copy(url = paste(appSetup$stateFilesURL,appSetup$stateFiles[iState],sep="/"),  # Downloading files: statefilesappSetup$runDir
+          #           target = appSetup$runDir)
+          file.copy(from=paste(appSetup$stateFilesPath,appSetup$stateFiles[iState],sep="/"),
+                    to=paste(appSetup$runDir,appSetup$stateFiles[iState],sep="/"),
+                    overwrite=T)
+          rciop.log ("DEBUG", paste0("cp ",appSetup$stateFilesPath,"/",appSetup$stateFiles[iState]," to ",appSetup$runDir,"/",appSetup$stateFiles[iState]),"/util/R/hypeapps-utils.R")
+
           stateFile = paste(appSetup$runDir,appSetup$stateFiles[iState],sep="/")
           stateError=F
         }else{

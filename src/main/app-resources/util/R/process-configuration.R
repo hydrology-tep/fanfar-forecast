@@ -1,13 +1,76 @@
 #!/opt/anaconda/bin/Rscript --vanilla --slave --quiet
 
 # Constants
+nameOfSrcFile <- "/util/R/process-configuration.R"
+
 verbose <- TRUE
 #verbose <- FALSE
+
+# Constants application.xml (tag option)
+cHydModelVariant1 <- "WestAfrica-HYPE"
+cHydModelVariant2 <- "Niger-HYPE"
+cHydModelVariants <- c(cHydModelVariant1,cHydModelVariant2)
+
+cMetHCVariant1 <- "GFD 1.3 (SMHI)"
+cMetHCVariant2 <- "HydroGFD 2.0 (SMHI)"
+cMetHCVariants <- c(cMetHCVariant1,cMetHCVariant2)
+
+cMetFCVariant1 <- "ECOPER (SMHI)"
+cMetFCVariants <- c(cMetFCVariant1)
+
+cRunTypeVariant1 <- "Operational"
+cRunTypeVariant2 <- "Reforecast"
+cRunTypeVariants <- c(cRunTypeVariant1,cRunTypeVariant2)
+
+
+process_application_runtime_options <- function()
+{
+    hydModelIn <- rciop.getparam("hydmodel")
+    if (hydModelIn == cHydModelVariant1){ hydModel <- cHydModelVariant1 }
+    if (hydModelIn == cHydModelVariant2){ hydModel <- cHydModelVariant2 }
+#    for(i in 1:length(cHydModelVariants)){
+#        if (hydModelIn == cHydModelvar){
+#            hydModel <- 1
+#        }
+#    }
+
+    metHCIn <- rciop.getparam("methc")
+    if (metHCIn == cMetHCVariant1){ metHC <- cMetHCVariant1 }
+    if (metHCIn == cMetHCVariant2){ metHC <- cMetHCVariant2 }
+
+    metFCIn <- rciop.getparam("metfc")
+    if (metFCIn == cMetFCVariant1){ metFC <- cMetFCVariant1 }
+
+    runTypeIn <- rciop.getparam("runtype")
+    if (runTypeIn == cRunTypeVariant1){ runType <- cRunTypeVariant1 }
+    if (runTypeIn == cRunTypeVariant2){ runType <- cRunTypeVariant2 }
+
+    # ToDo: Remove when date parsed from HYPE state filename etc.
+    hypeStateDate <- rciop.getparam("hypeStateDate")
+
+    rciop.log("INFO", "-------Global configuration options:-------", nameOfSrcFile)
+    rciop.log("INFO", paste0("hydModel:      ",hydModel), nameOfSrcFile)
+    rciop.log("INFO", paste0("metHC:         ",metHC), nameOfSrcFile)
+    rciop.log("INFO", paste0("metFC:         ",metFC), nameOfSrcFile)
+    rciop.log("INFO", paste0("runType:       ",runType), nameOfSrcFile)
+    #rciop.log("INFO", paste0("hypeStateDate: ", hypeStateDate), nameOfSrcFile)
+    rciop.log("INFO", "-------------------------------------------", nameOfSrcFile)
+
+
+    outputApplRuntimeOptions <- list("hydModel"=hydModel,
+                                     "metHC"=metHC,
+                                     "metFC"=metFC,
+                                     "runType"=runType,
+                                     "hypeStateDate"=hypeStateDate
+  )
+
+} # process_application_runtime_options
+
 
 process_input_model_configuration <- function(applInput, # Input to application
                                               tmpDir)    # Local temporary dir
 {
-  # Read input from application
+  # Download and read model config object from the applications input
   # Parse file dependencies.txt
   # Return all data in a list (skip the data frame)
   
@@ -43,7 +106,7 @@ process_input_model_configuration <- function(applInput, # Input to application
   gfdEcoperDailyComment <- NULL
   
   # Query the input reference
-  opensearchCmd=paste("opensearch-client '",applInput,"' enclosure")
+  opensearchCmd=paste0("opensearch-client '",applInput,"' enclosure")
   message(opensearchCmd)
   input_enclosure <- system(command = opensearchCmd,intern = T)
   rciop.log("INFO", input_enclosure)
@@ -145,8 +208,8 @@ process_input_model_configuration <- function(applInput, # Input to application
 }
 
 
-process_input_model_data <- function(modelConfig,
-                                     tmpDir)    # Local temporary dir
+process_input_hype_model_data <- function(modelConfig,
+                                          tmpDir)    # Local temporary dir
 {
   # Outputs
   pathModelFiles <- NULL
@@ -157,7 +220,7 @@ process_input_model_data <- function(modelConfig,
   query <- modelConfig$modelDataQuery
   
   # Query the input reference
-  opensearchCmd=paste("opensearch-client '", url, query, "' enclosure")
+  opensearchCmd=paste0("opensearch-client '", url, query, "' enclosure")
   message(opensearchCmd)
   input_enclosure <- system(command = opensearchCmd,intern = T)
   rciop.log("INFO", input_enclosure)
@@ -187,4 +250,4 @@ process_input_model_data <- function(modelConfig,
   #print(outputModelData)
   rciop.log("INFO", outputModelData)
   return (outputModelData)
-}
+} # process_input_hype_model_data

@@ -4,14 +4,14 @@
 
 # Copyright 2017 SMHI
 #
-# This file is part of H-TEP Hydrological Modelling Application, which is open source 
+# This file is part of H-TEP Hydrological Modelling Application, which is open source
 # and distributed under the terms of the Lesser GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or (at your option) 
-# any later version. The Hydrology TEP Hydrological Modelling Application is distributed 
+# the Free Software Foundation, either version 3 of the License, or (at your option)
+# any later version. The Hydrology TEP Hydrological Modelling Application is distributed
 # in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
-# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the Lesser GNU 
-# General Public License for more details. You should have received a copy of the Lesser 
-# GNU General Public License along with the Hydrology TEP Hydrological Modelling Application. 
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the Lesser GNU
+# General Public License for more details. You should have received a copy of the Lesser
+# GNU General Public License along with the Hydrology TEP Hydrological Modelling Application.
 # If not, see <http://www.gnu.org/licenses/>.
 
 # Application 1: "Niger-HYPE 10 day forecast" (hypeapps-forecast)
@@ -34,6 +34,22 @@
 ## 1 - Initialization
 ## ------------------------------------------------------------------------------
 nameOfSrcFile <- "/node_forecast/run.R"
+
+# Constants application.xml (tag option)
+#cHydModelVariant1 <- "WestAfrica-HYPE"
+#cHydModelVariant2 <- "Niger-HYPE"
+#cHydModelVariants <- c(cHydModelVariant1,cHydModelVariant2)
+
+#cMetHCVariant1 <- "GFD 1.3 (SMHI)"
+#cMetHCVariant2 <- "HydroGFD 2.0 (SMHI)"
+#cMetHCVariants <- c(cMetHCVariant1,cMetHCVariant2)
+
+#cMetFCVariant1 <- "ECOPER (SMHI)"
+#cMetFCVariants <- c(cMetFCVariant1)
+
+#cRunTypeVariant1 <- "Operational"
+#cRunTypeVariant2 <- "Reforecast"
+#cRunTypeVariants <- c(cRunTypeVariant1,cRunTypeVariant2)
 
 ## create a date tag to include in output filenames
 
@@ -67,16 +83,16 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         app.sys ="tep"
         }
     ## ------------------------------------------------------------------------------
-    ## load rciop package and set working directory to TMPDIR when running on TEP 
+    ## load rciop package and set working directory to TMPDIR when running on TEP
     if(app.sys=="tep"){
         library("rciop")
-        
+
         rciop.log ("DEBUG", " *** hypeapps-forecast *** TEP hydrological modelling applications ***", nameOfSrcFile)
         rciop.log ("DEBUG", " rciop library loaded", nameOfSrcFile)
-            
+
         setwd(TMPDIR)
         rciop.log("DEBUG", paste(" R session working directory set to ",TMPDIR,sep=""), nameOfSrcFile)
-        
+
         # Source non-HYPE files
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-configuration.R",sep="/"))
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-netcdf.R",sep="/"))
@@ -85,48 +101,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## Read the main input
     ## This is the reference link to the model configuration
     rciop.log("INFO", paste("Processing input:", input, sep=" "))
-    modelConfigData <- process_input_model_configuration(input,TMPDIR)    
-    #print(modelConfigData)
-    #q(save="no", status = 0)
-
-    # # Query the input reference
-    # opensearchCmd=paste("opensearch-client '",input,"' enclosure")
-    # input_enclosure <- system(command = opensearchCmd,intern = T)
-    # rciop.log("INFO", input_enclosure)
-    # 
-    # # Download the dir(s)
-    # model_config_dir <- rciop.copy(input_enclosure, TMPDIR, uncompress=TRUE)
-    # if (model_config_dir$exit.code==0) {
-    #     local.model_config_dir <- model_config_dir$output # Returns path to local dir or file, dir in this case
-    # }
-    # else {
-    #     rciop.log("ERROR Could not access the model configuration file.")
-    #     q(99)
-    # }
-    # 
-    # # Filenames
-    # model_config_file <- "dependencies.txt"
-    # #hype_config_file <- "info-forecast.txt"
-    # 
-    # path_to_file <- paste(local.model_config_dir, model_config_file, sep="/")
-    # 
-    # # Read contents of config file, handling separators ';'
-    # model_config_data <- read.csv2(path_to_file, header=FALSE, sep=";")
-    # names(model_config_data) <- c('subdir','url','querypattern','info')
-    # #for (r in 1:nrow(model_config_data)) {
-    # #    subdir <- model_config_data[r,'subdir']
-    # #    if (subdir == 'od-daily') {
-    # #        message(paste0("od-daily at row index:", r))
-    # #    }
-    # #    if (subdir == 'model-data') {
-    # #        message(paste0("model-data at row index:", r))
-    # #    }
-    # #}
-    #rciop.log("INFO", model_config_data)
-    #q(save="no", status = 32)
-    
+    modelConfigData <- process_input_model_configuration(input,TMPDIR)
     rciop.log("INFO", modelConfigData)
-    
+
     ## ------------------------------------------------------------------------------
     ## load hypeapps environment and additional R utility functions
     if(app.sys=="tep"){
@@ -137,7 +114,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
         rciop.log ("DEBUG", paste(" libraries loaded and utilities sourced"), nameOfSrcFile)
         }else if(app.sys=="win"){
-        source("application/util/R/hypeapps-environment.R")  
+        source("application/util/R/hypeapps-environment.R")
         source("application/util/R/hypeapps-utils.R")
         }
     ## open application logfile
@@ -156,6 +133,39 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## ------------------------------------------------------------------------------
     ## Handle application input parameters, rciop.get_param()
     app.input <- getHypeAppInput(appName = app.name)
+
+    ## ------------------------------------------------------------------------------
+    # Handle options for run-time configuration, e.g. switch between HYPE models etc.
+    # Global options defined in application.xml
+    #hydModelIn <- rciop.getparam("hydmodel")
+    #if (hydModelIn == cHydModelVariant1){ hydModel <- cHydModelVariant1 }
+    #if (hydModelIn == cHydModelVariant2){ hydModel <- cHydModelVariant2 }
+#    for(i in 1:length(cHydModelVariants)){
+#        if (hydModelIn == cHydModelvar){
+#            hydModel <- 1
+#        }
+#    }
+
+    #metHCIn <- rciop.getparam("methc")
+    #if (metHCIn == cMetHCVariant1){ metHC <- cMetHCVariant1 }
+    #if (metHCIn == cMetHCVariant2){ metHC <- cMetHCVariant2 }
+
+    #metFCIn <- rciop.getparam("metfc")
+    #if (metFCIn == cMetFCVariant1){ metFC <- cMetFCVariant1 }
+
+    #runTypeIn <- rciop.getparam("runtype")
+    #if (runTypeIn == cRunTypeVariant1){ runType <- cRunTypeVariant1 }
+    #if (runTypeIn == cRunTypeVariant2){ runType <- cRunTypeVariant2 }
+
+    #rciop.log ("INFO", -------Global configuration options-------), nameOfSrcFile)
+    #rciop.log ("INFO", paste0("hydModel: ",hydModel), nameOfSrcFile)
+    #rciop.log ("INFO", paste0("metHC: ",metHC), nameOfSrcFile)
+    #rciop.log ("INFO", paste0("metFC: ",metFC), nameOfSrcFile)
+    #rciop.log ("INFO", paste0("runType: ",runType), nameOfSrcFile)
+    #rciop.log ("INFO", ------------------------------------------), nameOfSrcFile)
+
+    applRuntimeOptions <- process_application_runtime_options()
+    print(applRuntimeOptions)
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste(" hypeapps inputs and parameters read"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "Inputs and parameters read",fileConn = logFile$fileConn)
@@ -179,77 +189,22 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         ##### Other R code not yet updated to handle paths (file copy from tmp dir to run dir etc.) instead of urls.
 
         rciop.log("INFO", "Processing config for model data", nameOfSrcFile)
+        modelDataPaths <- process_input_hype_model_data(modelConfigData,TMPDIR)
+        #print(modelDataPaths)
 
-        # # Flyttat...
-        # 
-        # #rowIndex=0
-        # indexModelData=0
-        # indexModelDataOldUrl=0
-        # for (r in 1:nrow(model_config_data)) {
-        #     subdir <- model_config_data[r,'subdir']
-        #     if (subdir == 'model-data') {
-        #         indexModelData=r
-        #         message(paste0("model-data at row index:", r))
-        #     }
-        #     if (subdir == 'model-data-old-url') {
-        #         indexModelDataOldUrl=r
-        #         message(paste0("model-data-old-url at row index:", r))
-        #     }
-        # }
-        # if (indexModelData == 0) {
-        #     q(98)
-        # }
-        # 
-        # #subdir <- model_config_data[indexModelData,'subdir'] # Intended to be used as dir name for rciop.copy TMPDIR/subdir/
-        # url <- model_config_data[indexModelData,'url']
-        # query <- model_config_data[indexModelData,'querypattern']
-        # #comment <- model_config_data[indexModelData,'info']
-        # 
-        # #...flyttat
-
-        # # Flyttat...
-        # url <- modelConfigData$modelDataUrl
-        # query <- modelConfigData$modelDataQuery
-        # 
-        # # Query the input reference
-        # opensearchCmd=paste("opensearch-client '", url, query, "' enclosure")
-        # message(opensearchCmd)
-        # input_enclosure <- system(command = opensearchCmd,intern = T)
-        # rciop.log("INFO", input_enclosure)
-        # 
-        # # Download the Hype model data dir(s)
-        # model_data_dirs <- rciop.copy(input_enclosure, TMPDIR, uncompress=TRUE) # or TMPDIR/subdir
-        # if (model_data_dirs$exit.code==0) {
-        #     local.model_data_dirs <- model_data_dirs$output
-        # }
-        # else {
-        #     rciop.log("ERROR Could not access the model data dirs.")
-        #     q(99)
-        # }
-        # #...flyttat
-        modelDataPaths <- process_input_model_data(modelConfigData,TMPDIR)
-	print(modelDataPaths)
-
-        #model.files.path     <- paste(local.model_data_dirs,"v2.23",sep="/") # Instead of model.files.url
-        #forcing.archive.path <- paste(model.files.path,"forcingarchive",sep="/") # Instead of forcing.archive.url
-        #state.files.path     <- paste(model.files.path,"statefiles",sep="/") # Instead of state.files.url
         model.files.path     <- modelDataPaths$pathModelFiles     # Instead of model.files.url
         forcing.archive.path <- modelDataPaths$pathForcingArchive # Instead of forcing.archive.url
         state.files.path     <- modelDataPaths$pathStateFiles     # Instead of state.files.url
         #ToDo: Replace rciop.copy with file copy from these paths (changes needed in hypeapps-utils.R)
-                                
+
         rciop.log("INFO path", model.files.path)
         rciop.log("INFO path", forcing.archive.path)
         rciop.log("INFO path", state.files.path)
 
         ## ------------------------------------------------------------------------------
         # For now, if needed, pass url from model_config_data['model-data-old-url'] to let present R code continue to do rciop.copy locally.
-        
-        ## Flyttat...
-        #modelDataOldUrl <- model_config_data[indexModelDataOldUrl,'url']
-        ##...flyttat
         modelDataOldUrl <- modelConfigData$modelDataOldUrl
-        
+
         # Overwrite variables normally set in hypeapps-model-settings.R with url from the model configuration object
         model.files.url     <- paste(modelDataOldUrl,"v2.23",sep="/")
         forcing.archive.url <- paste(model.files.url,"forcingarchive",sep="/")
@@ -269,9 +224,12 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                  appDir    = app.app_path,
                                  appName   = app.name,
                                  appInput  = app.input,
-                                 modelFilesURL = model.files.url, ## TO BE CHANGED to read from downloaded zip (model_file)
-                                 forcingArchiveURL = forcing.archive.url, # Used by getHindcastForcingData, getModelForcing
-                                 stateFilesURL = state.files.url, # Used by getModelForcing
+                                 #modelFilesURL = model.files.url, #ToDo: TO BE CHANGED to read from downloaded zip (model_file)
+                                 modelFilesPath = model.files.path,
+                                 #forcingArchiveURL = forcing.archive.url, # Used by getHindcastForcingData, getModelForcing
+                                 forcingArchivePath = forcing.archive.path,
+                                 #stateFilesURL = state.files.url, # Used by getModelForcing
+                                 stateFilesPath = state.files.path,
                                  stateFilesIN = state.files)
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste("HypeApp setup read"), nameOfSrcFile)}
@@ -286,8 +244,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                         dataSource = forcing.data.source,
                                         hindcast   = T)
 
-    dirNCFiles <- paste(TMPDIR,"ncfiles",sep="/")
-    
+    dirNCFiles <- paste(TMPDIR,"xyz",sep="/")
+
     # ToDo: Here or move up
     #       Several calls here for POBS,QOBS,TOBS or within (it the same time interval so within most likely)
     #process_netcdf2obs(modelConfigData)
@@ -296,7 +254,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                        app.input$hcperiodlen,
                        dirNCFiles)
     # ToDo: Add path to store obs files, localDirOBS?
-    
+
     if(app.sys=="tep"){rciop.log ("DEBUG", paste("hindcast forcing set"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "Hindcast forcing data downloaded and prepared",fileConn = logFile$fileConn)
 
@@ -318,7 +276,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
     ## ------------------------------------------------------------------------------
     ## modify some model files based on input parameters
-    hindcast.input <- updateModelInput(appSetup = app.setup, appInput = app.input, 
+    hindcast.input <- updateModelInput(appSetup = app.setup, appInput = app.input,
                                        hindcast = T, modelForcing = hindcast.forcing, xobsInput = xobs.input)
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste("hindcast inputs modified"), nameOfSrcFile)}
@@ -336,7 +294,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         # Next Hype model should return exit code 0 instead of 84
 
         hindcast.run = system(command = app.setup$runCommand,intern = T)
-        
+
         hyssLogFile = dir(path = app.setup$runDir, pattern =".log")
         if(length(hyssLogFile)>=0){
             for(j in 1:length(hyssLogFile)){
@@ -347,7 +305,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
         log.res=appLogWrite(logText = "... hindcast model run ready",fileConn = logFile$fileConn)
         if(app.sys=="tep"){rciop.log ("DEBUG", " ...hindcast model run ready", nameOfSrcFile)}
-        
+
         }else{
         log.res=appLogWrite(logText = "something wrong with hindcast model inputs (no run)",fileConn = logFile$fileConn)
         }
@@ -366,7 +324,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
     ## ------------------------------------------------------------------------------
     ## modify some model files based on input parameters
-    forecast.input <- updateModelInput(appSetup = app.setup, appInput = app.input, 
+    forecast.input <- updateModelInput(appSetup = app.setup, appInput = app.input,
                                        hindcast = F, modelForcing = forecast.forcing, xobsInput = NULL)
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste("...forecast inputs modified"), nameOfSrcFile)}
@@ -393,12 +351,12 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## ------------------------------------------------------------------------------
     ## post-process output data
     #if(attr(forecast.run,"status")==1){
-    #  rciop.publish(paste(app.setup$runDir,"/*",sep=""),recursive=TRUE,metalink=TRUE) 
+    #  rciop.publish(paste(app.setup$runDir,"/*",sep=""),recursive=TRUE,metalink=TRUE)
     #}else{
-    #app.outdir <- prepareHypeAppsOutput(appSetup  = app.setup, appInput = app.input, 
+    #app.outdir <- prepareHypeAppsOutput(appSetup  = app.setup, appInput = app.input,
     #                                    modelInput = forecast.input, modelForcing = forecast.forcing,
     #                                    runRes = attr(forecast.run,"status"))
-    app.outfiles <- prepareHypeAppsOutput(appSetup  = app.setup, appInput = app.input, 
+    app.outfiles <- prepareHypeAppsOutput(appSetup  = app.setup, appInput = app.input,
                                           modelInput = forecast.input, modelForcing = forecast.forcing,
                                           runRes = attr(forecast.run,"status"),
                                           appDate = app.date)
@@ -429,7 +387,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
         for(k in 1:length(trigger_distribution_outfiles)){
             rciop.publish(path=trigger_distribution_outfiles[k], recursive=FALSE, metalink=TRUE)
-            }  
+            }
         log.res=appLogWrite(logText = "trigger distribution outputs published",fileConn = logFile$fileConn)
 
         }

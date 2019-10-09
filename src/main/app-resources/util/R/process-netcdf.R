@@ -3,6 +3,8 @@
 # Constants
 verbose <- TRUE
 #verbose <- FALSE
+#verboseX2 <- TRUE
+verboseX2 <- FALSE
 
 # Return TRUE if leap year, else FALSE
 leap_year <- function(year)
@@ -23,7 +25,7 @@ days_per_month <- function(year, month)
     month_days[2] <- 29
   }
   day <- month_days[month]
-  if (verbose == TRUE) {
+  if (verboseX2 == TRUE) {
     print('days_per_month: year month lastdayofmonth')
     print(year)
     print(month)
@@ -337,6 +339,45 @@ prepare_casts_intervals <- function(in_hindcastDays, # positive integer
 # }
 
 
+search_and_download_netcdf <- function(urlNC,query,startDate,stopDate,ncRootDir,ncSubDir)
+{
+  # Constants
+  osClientApp <- "opensearch-client"
+  secStartDay <- "T00:00:01"
+  secEndDay   <- "T23:59:59"
+  variables   <- c("pr", "tas", "tasmin", "tasmax")
+
+  for (var in 1:length(variables)){
+      if (ncSubDir == TRUE){
+          local.netcdfDir <- paste(ncRootDir,variables[var],sep="/")
+          # Append query with variable
+          varQuery <- paste0(',',variables[var],']')
+          catQuery <- gsub(']',varQuery,query)
+      }else{
+          local.netcdfDir <- ncRootDir
+          # All files into one dir
+          catQuery <- query
+      }
+      if (! dir.exists(local.netcdfDir)) { dir.create(local.netcdfDir) }
+      opensearchCmd=paste0(osClientApp," '",urlNC,"'"," -p ","'count=unlimited'"," -p ","'cat=",catQuery,"'"," -p ","'start=",startDate,secStartDay,"'"," -p ","'stop=",stopDate,secEndDay,"'"," enclosure")
+      message(opensearchCmd)
+      input_enclosure <- system(command = opensearchCmd,intern = T)
+      if (length(input_enclosure >= 1)) {
+          #if (! dir.exists(local.netcdfDir)) { dir.create(local.netcdfDir) }
+          for (url in 1:length(input_enclosure)) {
+              rciop.copy(input_enclosure[url],local.netcdfDir)
+          }
+      }
+      if (ncSubDir == FALSE){
+          if (var == 1){
+            break # for loop
+          }
+      }
+  }
+
+} # search_and_download_netcdf
+
+
 # This handles the sequence for each x obs  file (iterates opensearch, download each meterological GFD, call function to convert to obs) 
 convert_netcdf2obs <- function(modelConfig,    # sub-dir to use for local download dir, url, query pattern etc 
                                xCastsInterval, # dates for search start/stop, expected date in filename to check against
@@ -360,8 +401,14 @@ convert_netcdf2obs <- function(modelConfig,    # sub-dir to use for local downlo
   osClientApp <- "opensearch-client"
   secStartDay <- "T00:00:01"
   secEndDay   <- "T23:59:59"
-  variables = c("pr", "tas", "tasmin", "tasmax")
-  
+  variables   <- c("pr", "tas", "tasmin", "tasmax")
+  #ncSubDir    <- FALSE
+  ncSubDir    <- TRUE
+
+  if (! dir.exists(netcdfDir)){
+    dir.create(netcdfDir)
+  }
+
   ## ------------------------------------------------------------------------------
   # Handle hydrogfdei
   
@@ -391,21 +438,54 @@ convert_netcdf2obs <- function(modelConfig,    # sub-dir to use for local downlo
   #opensearchCmd=paste("opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' -p 'count=4' -p 'cat=[SMHI,operational,hydrogfdei]' -p 'start=2019-01-01T00:00:01' -p 'stop=2019-01-01T23:59:59' enclosure") # ok, files for 201901 (pr,tas,tasmin,tasmax)
   # ok...
   #tmp
+
+  urlNC     <- modelConfig$gfdHydrogfdeiUrl
+  query     <- modelConfig$gfdHydrogfdeiQuery
+  startDate <- xCastsInterval$hydrogfdeiStartDateSearch
+  stopDate  <- xCastsInterval$hydrogfdeiEndDateSearch
+
+  # for (var in 1:length(variables)){
+  #     if (ncSubDir == TRUE){
+  #         local.netcdfDir <- paste(netcdfDir,variables[var],sep="/")
+  #         # Append query with variable
+  #         varQuery <- paste0(',',variables[var],']')
+  #         catQuery <- gsub(']',varQuery,query)
+
+  #     }else{
+  #         local.netcdfDir <- netcdfDir
+  #         # All files into one dir
+  #         catQuery <- query
+  #     }
+  #     #if (! dir.exists(local.netcdfDir)) { dir.create(local.netcdfDir) }
+  #     opensearchCmd=paste0(osClientApp," '",urlNC,"'"," -p ","'count=unlimited'"," -p ","'cat=",catQuery,"'"," -p ","'start=",startDate,secStartDay,"'"," -p ","'stop=",stopDate,secEndDay,"'"," enclosure")
+  #     message(opensearchCmd)
+  #     input_enclosure <- system(command = opensearchCmd,intern = T)
+  #     if (length(input_enclosure >= 1)) {
+  #         if (! dir.exists(local.netcdfDir)) { dir.create(local.netcdfDir) }
+  #         for (url in 1:length(input_enclosure)) {
+  #             rciop.copy(input_enclosure[url],local.netcdfDir)
+  #         }
+  #     }
+  #     if (ncSubDir == FALSE){
+  #         if (var == 1){
+  #           break # for loop
+  #         }
+  #     }
+  # }
   
-  #opensearchCmd=paste0(osClientApp," '",modelConfig$gfdHydrogfdeiUrl,"'"," -p ","'count=4'"," -p ","'cat=",modelConfig$gfdHydrogfdeiQuery,"'"," -p ","'start=",xCastsInterval$hydrogfdeiStartDateSearch,secStartDay,"'"," -p ","'stop=",xCastsInterval$hydrogfdeiEndDateSearch,secEndDay,"'"," enclosure")
-  opensearchCmd=paste0(osClientApp," '",modelConfig$gfdHydrogfdeiUrl,"'"," -p ","'count=unlimited'"," -p ","'cat=",modelConfig$gfdHydrogfdeiQuery,"'"," -p ","'start=",xCastsInterval$hydrogfdeiStartDateSearch,secStartDay,"'"," -p ","'stop=",xCastsInterval$hydrogfdeiEndDateSearch,secEndDay,"'"," enclosure")
-  message(opensearchCmd)
-  input_enclosure <- system(command = opensearchCmd,intern = T)
-  message(input_enclosure)
-  if (length(input_enclosure >= 1)) {
-    #nc_tmpdir <- paste(netcdfDir,"nc-files",sep="/")
-    #if (! dir.exists(nc_tmpdir)) { dir.create(nc_tmpdir) }
-    if (! dir.exists(netcdfDir)) { dir.create(netcdfDir) }
-    for (url in 1:length(input_enclosure)) {
-      #rciop.copy(input_enclosure[url],nc_tmpdir)
-      rciop.copy(input_enclosure[url],netcdfDir)
-    }
-  }
+  search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
+
+  #org:
+  #opensearchCmd=paste0(osClientApp," '",urlNC,"'"," -p ","'count=unlimited'"," -p ","'cat=",catQuery,"'"," -p ","'start=",startDate,secStartDay,"'"," -p ","'stop=",stopDate,secEndDay,"'"," enclosure")
+  #message(opensearchCmd)
+  #input_enclosure <- system(command = opensearchCmd,intern = T)
+  #message(input_enclosure)
+  #if (length(input_enclosure >= 1)) {
+  #  if (! dir.exists(netcdfDir)) { dir.create(netcdfDir) }
+  #  for (url in 1:length(input_enclosure)) {
+  #    rciop.copy(input_enclosure[url],netcdfDir)
+  #  }
+  #}
 
   print("Test: Download complete hydrogfdei...")  
 
@@ -439,61 +519,70 @@ convert_netcdf2obs <- function(modelConfig,    # sub-dir to use for local downlo
   
   ## ------------------------------------------------------------------------------
   # Handle hydrogfdod
+  urlNC     <- modelConfig$gfdHydrogfdodUrl
+  #catQuery  <- modelConfig$gfdHydrogfdodQuery
+  query  <- modelConfig$gfdHydrogfdodQuery
+  startDate <- xCastsInterval$hydrogfdodStartDateSearch
+  stopDate  <- xCastsInterval$hydrogfdodEndDateSearch
   
-  #opensearchCmd=paste0(osClientApp," '",modelConfig$gfdHydrogfdodUrl,"'"," -p ","'count=4'"," -p ","'cat=",modelConfig$gfdHydrogfdodQuery,"'"," -p ","'start=",xCastsInterval$hydrogfdodStartDateSearch,secStartDay,"'"," -p ","'stop=",xCastsInterval$hydrogfdodEndDateSearch,secEndDay,"'"," enclosure")
-  opensearchCmd=paste0(osClientApp," '",modelConfig$gfdHydrogfdodUrl,"'"," -p ","'count=unlimited'"," -p ","'cat=",modelConfig$gfdHydrogfdodQuery,"'"," -p ","'start=",xCastsInterval$hydrogfdodStartDateSearch,secStartDay,"'"," -p ","'stop=",xCastsInterval$hydrogfdodEndDateSearch,secEndDay,"'"," enclosure")
-  message(opensearchCmd)
-  input_enclosure <- system(command = opensearchCmd,intern = T)
-  message(input_enclosure)
-  if (length(input_enclosure >= 1)) {
-    #nc_tmpdir <- paste(netcdfDir,"nc-files",sep="/")
-    #if (! dir.exists(nc_tmpdir)) { dir.create(nc_tmpdir) }
-    if (! dir.exists(netcdfDir)) { dir.create(netcdfDir) }
-    for (url in 1:length(input_enclosure)) {
-      #rciop.copy(input_enclosure[url],nc_tmpdir)
-      rciop.copy(input_enclosure[url],netcdfDir)
-    }
-  }
+  # opensearchCmd=paste0(osClientApp," '",urlNC,"'"," -p ","'count=unlimited'"," -p ","'cat=",catQuery,"'"," -p ","'start=",startDate,secStartDay,"'"," -p ","'stop=",stopDate,secEndDay,"'"," enclosure")
+  # message(opensearchCmd)
+  # input_enclosure <- system(command = opensearchCmd,intern = T)
+  # message(input_enclosure)
+  # if (length(input_enclosure >= 1)) {
+  #   if (! dir.exists(netcdfDir)) { dir.create(netcdfDir) }
+  #   for (url in 1:length(input_enclosure)) {
+  #     rciop.copy(input_enclosure[url],netcdfDir)
+  #   }
+  # }
+
+  search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
   
   # Check retrieved filenames
   
   ## ------------------------------------------------------------------------------
   # Handle od (od-daily)
+  urlNC     <- modelConfig$gfdOdDailyUrl
+  #catQuery  <- modelConfig$gfdOdDailyQuery
+  query  <- modelConfig$gfdOdDailyQuery
+  startDate <- xCastsInterval$odStartDateSearch
+  stopDate  <- xCastsInterval$odEndDateSearch
   
-  #opensearchCmd=paste0(osClientApp," '",modelConfig$gfdOdDailyUrl,"'"," -p ","'count=4'"," -p ","'cat=",modelConfig$gfdOdDailyQuery,"'"," -p ","'start=",xCastsInterval$odStartDateSearch,secStartDay,"'"," -p ","'stop=",xCastsInterval$odEndDateSearch,secEndDay,"'"," enclosure")
-  opensearchCmd=paste0(osClientApp," '",modelConfig$gfdOdDailyUrl,"'"," -p ","'count=unlimited'"," -p ","'cat=",modelConfig$gfdOdDailyQuery,"'"," -p ","'start=",xCastsInterval$odStartDateSearch,secStartDay,"'"," -p ","'stop=",xCastsInterval$odEndDateSearch,secEndDay,"'"," enclosure")
-  message(opensearchCmd)
-  input_enclosure <- system(command = opensearchCmd,intern = T)
-  message(input_enclosure)
-  if (length(input_enclosure >= 1)) {
-    #nc_tmpdir <- paste(netcdfDir,"nc-files",sep="/")
-    #if (! dir.exists(nc_tmpdir)) { dir.create(nc_tmpdir) }
-    if (! dir.exists(netcdfDir)) { dir.create(netcdfDir) }
-    for (url in 1:length(input_enclosure)) {
-      #rciop.copy(input_enclosure[url],nc_tmpdir)
-      rciop.copy(input_enclosure[url],netcdfDir)
-    }
-  }
+  # opensearchCmd=paste0(osClientApp," '",urlNC,"'"," -p ","'count=unlimited'"," -p ","'cat=",catQuery,"'"," -p ","'start=",startDate,secStartDay,"'"," -p ","'stop=",stopDate,secEndDay,"'"," enclosure")
+  # message(opensearchCmd)
+  # input_enclosure <- system(command = opensearchCmd,intern = T)
+  # message(input_enclosure)
+  # if (length(input_enclosure >= 1)) {
+  #   if (! dir.exists(netcdfDir)) { dir.create(netcdfDir) }
+  #   for (url in 1:length(input_enclosure)) {
+  #     rciop.copy(input_enclosure[url],netcdfDir)
+  #   }
+  # }
+
+  search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
   
   # Check retrieved filenames
   
   ## ------------------------------------------------------------------------------
   # Handle ecoper (ToDo: add 00 in expected filename)
+  urlNC     <- modelConfig$gfdEcoperUrl
+  #catQuery  <- modelConfig$gfdEcoperQuery
+  query  <- modelConfig$gfdEcoperQuery
+  startDate <- xCastsInterval$ecoperStartDateSearch
+  stopDate  <- xCastsInterval$ecoperEndDateSearch
   
-  #opensearchCmd=paste0(osClientApp," '",modelConfig$gfdEcoperUrl,"'"," -p ","'count=4'"," -p ","'cat=",modelConfig$gfdEcoperQuery,"'"," -p ","'start=",xCastsInterval$ecoperStartDateSearch,secStartDay,"'"," -p ","'stop=",xCastsInterval$ecoperEndDateSearch,secEndDay,"'"," enclosure")
-  opensearchCmd=paste0(osClientApp," '",modelConfig$gfdEcoperUrl,"'"," -p ","'count=unlimited'"," -p ","'cat=",modelConfig$gfdEcoperQuery,"'"," -p ","'start=",xCastsInterval$ecoperStartDateSearch,secStartDay,"'"," -p ","'stop=",xCastsInterval$ecoperEndDateSearch,secEndDay,"'"," enclosure")
-  message(opensearchCmd)
-  input_enclosure <- system(command = opensearchCmd,intern = T)
-  message(input_enclosure)
-  if (length(input_enclosure >= 1)) {
-    #nc_tmpdir <- paste(netcdfDir,"nc-files",sep="/")
-    #if (! dir.exists(nc_tmpdir)) { dir.create(nc_tmpdir) }
-    if (! dir.exists(netcdfDir)) { dir.create(netcdfDir) }
-    for (url in 1:length(input_enclosure)) {
-      #rciop.copy(input_enclosure[url],nc_tmpdir)
-      rciop.copy(input_enclosure[url],netcdfDir)
-    }
-  }
+  # opensearchCmd=paste0(osClientApp," '",urlNC,"'"," -p ","'count=unlimited'"," -p ","'cat=",catQuery,"'"," -p ","'start=",startDate,secStartDay,"'"," -p ","'stop=",stopDate,secEndDay,"'"," enclosure")
+  # message(opensearchCmd)
+  # input_enclosure <- system(command = opensearchCmd,intern = T)
+  # message(input_enclosure)
+  # if (length(input_enclosure >= 1)) {
+  #   if (! dir.exists(netcdfDir)) { dir.create(netcdfDir) }
+  #   for (url in 1:length(input_enclosure)) {
+  #     rciop.copy(input_enclosure[url],netcdfDir)
+  #   }
+  # }
+
+  search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
   
   # Check retrieved filenames
 
@@ -505,8 +594,8 @@ convert_netcdf2obs <- function(modelConfig,    # sub-dir to use for local downlo
 } # convert_netcdf2obs 
  
 
-# Wrapper for netcdf2obs
-#process_netcdf2obs <- function(modelConfig)
+# External function
+# Wrapper for netcdf2obs sequence
 process_netcdf2obs <- function(modelConfig,
                                forecastIssueDate,
                                hindcastPeriodLength,
@@ -523,7 +612,7 @@ process_netcdf2obs <- function(modelConfig,
   prepCastInterval <- prepare_casts_intervals(hindcastPeriodLength,
                                              forecastIssueDate,
                                              in_reforecast = TRUE,
-                                             "19700101")
+                                             "19700101") # ToDo: Get date from latest Hype state filename
   print("Call convert_netcdf2obs")
   convert_netcdf2obs(modelConfig,
                      xCastsInterval = prepCastInterval,
