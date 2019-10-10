@@ -6,6 +6,160 @@ verbose <- TRUE
 #verboseX2 <- TRUE
 verboseX2 <- FALSE
 
+## ------------------------------------------------------------------------------
+# For information on local variables and call sequence within this function,
+# see 'test/netcdf_to_obs_example.R'
+prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
+                                          ncRootDir, # Path to netcdf files
+                                          ncSubDir, # False-one dir, True-separate dir for each variable
+                                          resourceDir, # Path to resources (shapefiles with (gfd) grid points and polygons)
+                                          gridElevPath, # Path to netcdf file with elevation
+                                          shapeFilePath, # Path to model shapefile
+                                          outPath, # Path for output files, calling function to handle publish?
+                                          startDate, # yyyy-mm-dd
+                                          endDate # yyyy-mm-dd
+                                          )
+{
+    if (verbose == TRUE) {
+        print('prepare_and_run_netcdf_to_obs():')
+        print(paste0("workDir: ",workDir))
+        print(paste0("ncRootDir: ",ncRootDir))
+        print(paste0("ncSubDir: ",ncSubDir))
+        print(paste0("resourceDir: ",resourceDir))
+        print(paste0("gridElevPath: ",gridElevPath))
+        print(paste0("shapeFilePath: ",shapeFilePath))
+        print(paste0("startDate: ",startDate))
+        print(paste0("endDate: ",endDate))
+    }
+
+    # Output
+    status <- 0
+
+#     # Change to workDir
+#     if (! dir.exists(workDir)){
+#         dir.create(workDir)
+#     }
+#     setwd(workDir)
+
+#     # Source the utility file
+#     fileToSource <- paste0(Sys.getenv("_CIOP_APPLICATION_PATH"), "/util/R/netcdf_to_obs_utils.R")
+#     if (! file.exists(fileToSource){
+#         rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",fileToSource)
+#         q(save="no", status = 77)
+#     }
+#     source(fileToSource)
+
+#     # Define input/output data
+#     if (ncSubDir == TRUE){
+#         grid_dir_path <- c(paste0(ncRootDir,"/pr"),
+#                            paste0(ncRootDir,"/tas"),
+#                            paste0(ncRootDir,"/tasmin"),
+#                            paste0(ncRootDir,"/tasmax")
+#                           )
+#     }else{
+#         grid_dir_path <- ncRootDir
+#     }
+
+#     resource_dir_path <- resourceDir
+#     if (! file.exists(resource_dir_path){
+#         rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",resource_dir_path)
+#         q(save="no", status = 77)
+#     }
+    
+#     grid_elev_path <- gridElevPath
+#     if (! file.exists(grid_elev_path){
+#         rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",grid_elev_path)
+#         q(save="no", status = 77)
+#     }
+
+#     nc_var_name     <- c("pr","tas","tasmin","tasmax")
+#     hype_obs_type   <- c("Pobs","Tobs","TMINobs","TMAXobs")
+#     nc_file_pattern <- c("pr_","tas_","tasmin_","tasmax_")
+
+#     obsScale  <- c(86400,1,1,1)
+#     obsOffset <- c(0,-273.15,-273.15,-273.15)
+#     obsDigits <- c(3,1,1,1)
+
+#     # Model input
+#     shape_file_path <- shapeFilePath
+#     if (! file.exists(shape_file_path){
+#         rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",shape_file_path)
+#         q(save="no", status = 77)
+#     }
+
+#     # Output options
+#     out_path <- outPath
+#     if (! dir.exists(out_path)){
+#         dir.create(out_path)
+#     }
+    
+#     # Processing options
+#     # force re-generation of gridLink (it will always be generated if [out_path]/gridLink.Rdata is missing)
+#     redoGridLink = F
+    
+#     # force re-generation of grid.point.shp and grid.polygon.shp
+#     redoGridLayers = F
+    
+#     # prefered projected crs to use for calculating areal weights and distances
+#     #  - if not given, UTM will be used, with UTM zone adapted for each subbasin
+#     crsProjProc = NULL
+
+#     # Check and clean subbasin polygons for corrupted geometries? 
+#     #  - preferably this should be done in advance and not as part of operational use
+#     cleanGeometry = F
+    
+#     # nearest(1) or weighted(0)
+#     weightedOrNearest=0
+
+#     # Time period options (optional)
+#     timeStart.1=as.POSIXct(startDate,tz = "GMT")
+#     timeEnd.1=as.POSIXct(endDate,tz = "GMT")
+
+#     # Check/re-generate gridLink
+#     isGridLink = gridLinkPreparation(grid.path = grid_dir_path[1]
+#                                     ,grid.pattern = nc_file_pattern[1]
+#                                     ,grid.elev = grid_elev_path
+#                                     ,var.name = nc_var_name[1]
+#                                     ,grid.meta = resource_dir_path
+#                                     ,output.path = out_path
+#                                     ,redoGridLink = redoGridLink
+#                                     ,model.shape = shape_file_path
+#                                     ,cleanGeometry = cleanGeometry
+#                                     ,crsProj = crsProjProc)
+#     if (isGridLink > 0){
+#         rciop.log("INFO", paste0("Aborting netcdf to obs - gridLinkPreparation(): ",isGridLink)
+#         #q(save="no", status = 76)
+#         status <- status + 1
+#     }
+
+#     # Read netcdf data from the grid.data folder and generate (new) PT-obs files and ForcKey.txt using a gridLink.Rdata
+#     # Also possible to read a new time period and merge with existing data (see file mentioned above)
+#     readWriteResult = readGridsAndWriteObs(
+#                            grid.path         = grid_dir_path
+#                           ,grid.pattern      = nc_file_pattern
+#                           ,var.name          = nc_var_name
+#                           ,obs.type          = hype_obs_type
+#                           ,obs.scale         = obsScale
+#                           ,obs.offset        = obsOffset
+#                           ,obs.digits        = obsDigits
+#                           ,gridLink.path     = paste(out_path,"/gridLink.Rdata",sep="")
+#                           ,output.path       = out_path
+#                           ,overwrite         = T
+#                           ,doForcKey         = T
+#                           ,elev.digits       = 1
+#                           ,time.start        = timeStart.1
+#                           ,time.end          = timeEnd.1
+#                           ,weightedOrNearest = weightedOrNearest)
+#     if (readWriteResult > 0){
+#         rciop.log("INFO", paste0("Aborting netcdf to obs - readGridsAndWriteObs(): ",readWriteResult)
+#         #q(save="no", status = 76)
+#         status <- status + 2
+#     }
+
+    return (status)
+} # prepare_and_run_netcdf_to_obs
+## ------------------------------------------------------------------------------
+
 # Return TRUE if leap year, else FALSE
 leap_year <- function(year)
 {
@@ -433,11 +587,12 @@ check_date_interval_netcdf <- function(startDate,
           }
 
           expFilename <- paste0(variables[var],filePrefix,fileDate,fileSuffix)
-          print(expFilename)
-          if (! file.exists(paste(local.netcdfDir,expFilename,sep="/"))){
+          #print(expFilename)
+          localPath <- paste(local.netcdfDir,expFilename,sep="/")
+          if (! file.exists(localPath)){
               nMissingFiles <- nMissingFiles + 1
-              print(paste0("File missing: ", expFilename))
-              print(paste0("File missing: ", paste(local.netcdfDir,expFilename,sep="/"))
+              #print(paste0("File missing: ",expFilename))
+              print(paste0("File missing: ",localPath))
           }
       }
   }
@@ -452,7 +607,8 @@ check_date_interval_netcdf <- function(startDate,
 # for pr, tas, tasmin and tasmax.
 download_netcdf <- function(modelConfig,    # sub-dir to use for local download dir, url, query pattern etc 
                             xCastsInterval, # dates for search start/stop, expected date in filename to check against
-                            netcdfDir)      # base dir to download files too
+                            netcdfDir,      # base dir to download files too
+                            ncSubDir)       # False-one dir, True-separate dir for each variable
 {
   # Other inputs are:
   # path_to_store_netcdf_files - temporary dir
@@ -471,7 +627,7 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
   #secEndDay   <- "T23:59:59"
   variables   <- c("pr","tas","tasmin","tasmax")
   #ncSubDir    <- FALSE
-  ncSubDir    <- TRUE # False-one dir, True-separate dir for each variable
+  #ncSubDir    <- TRUE # False-one dir, True-separate dir for each variable
   fileSuffix <- "_fanfar_SMHI.nc"
 
   if (! dir.exists(netcdfDir)){
@@ -489,8 +645,8 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
   nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
                                          "_hydrogfdei_",fileSuffix)
   if (nMissing > 0){
-      print(paste0(nMissingFiles," file(s) missing for hydrogfdei"))
-      rciop.log("INFO",paste0(nMissingFiles," file(s) missing for hydrogfdei"))
+      print(paste0(nMissing," file(s) missing for hydrogfdei"))
+      rciop.log("INFO",paste0(nMissing," file(s) missing for hydrogfdei"))
   }
   
   ## ------------------------------------------------------------------------------
@@ -505,8 +661,8 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
   nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
                                          "_hydrogfdod_",fileSuffix)
   if (nMissing > 0){
-      print(paste0(nMissingFiles," file(s) missing for hydrogfdod"))
-      rciop.log("INFO",paste0(nMissingFiles," file(s) missing for hydrogfdod"))
+      print(paste0(nMissing," file(s) missing for hydrogfdod"))
+      rciop.log("INFO",paste0(nMissing," file(s) missing for hydrogfdod"))
   }
   
   ## ------------------------------------------------------------------------------
@@ -520,8 +676,8 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
   nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
                                          "_od-daily_",fileSuffix)
   if (nMissing > 0){
-      print(paste0(nMissingFiles," file(s) missing for od-daily"))
-      rciop.log("INFO",paste0(nMissingFiles," file(s) missing for od-daily"))
+      print(paste0(nMissing," file(s) missing for od-daily"))
+      rciop.log("INFO",paste0(nMissing," file(s) missing for od-daily"))
   }
   
   ## ------------------------------------------------------------------------------
@@ -535,8 +691,8 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
   nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
                                          "_ecoper_",paste0("00",fileSuffix))
   if (nMissing > 0){
-      print(paste0(nMissingFiles," file(s) missing for ecoper"))
-      rciop.log("INFO",paste0(nMissingFiles," file(s) missing for ecoper"))
+      print(paste0(nMissing," file(s) missing for ecoper"))
+      rciop.log("INFO",paste0(nMissing," file(s) missing for ecoper"))
   }
 
   ## ------------------------------------------------------------------------------
@@ -547,31 +703,47 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
 
 # External function
 # Wrapper for netcdf2obs sequence
-process_netcdf2obs <- function(modelConfig,
-                               forecastIssueDate,
-                               hindcastPeriodLength,
-                               netcdfDir)
+process_netcdf2obs <- function(modelConfig, # Misc config data, now 
+                               modelDataConfig, # Misc model config data, paths to state files, forcing, shape files
+                               forecastIssueDate, # yyyy-mm-dd
+                               hindcastPeriodLength, # Days
+                               netcdfDir, # Dir to store netcdf files
+                               ncSubDir, # False-one dir, True-separate dir for each variable
+                               obsDir) # Dir to store obs files
 {
   # Prepare hindcast and forecast intervals, start and end dates
   prepCastInterval <- prepare_casts_intervals(hindcastPeriodLength,
                                               forecastIssueDate,
                                               in_reforecast = TRUE,
                                               "19700101") # ToDo: Get date from latest Hype state filename
-  print("Call download_netcdf")
+  # For the calculated time interval, search and download hydrogfd netcdf files
   download_netcdf(modelConfig,
                   xCastsInterval = prepCastInterval,
-                  netcdfDir)
-  print("After download_netcdf")
+                  netcdfDir,
+                  ncSubDir)
   
-  # Call Davids func with path etc. and path (run dir?) to let him store the result files
-  # ToDo:
+  # Produce the files Pobs.txt, Tobs.txt, TMINobs.txt and TMAXobs.txt
+  # Depending on selected dir, copy the files to run dir
+  startDate <- prepCastInterval$hydrogfdeiStartDateSearch
+  endDate   <- prepCastInterval$ecoperEndDateSearch
+  
+  res <- prepare_and_run_netcdf_to_obs(workDir=paste0(TMPDIR,"/netcdf_to_obs"),
+                                       ncRootDir=netcdfDir,
+                                       ncSubDir=ncSubDir,
+                                       resourceDir=NULL, # ToDo
+                                       gridElevPath=NULL,
+                                       shapeFilePath=NULL,
+                                       outPath=obsDir,
+                                       startDate,
+                                       endDate
+                                       )
+  if (res > 0){
+      rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs, exit code=",res))
+  }
 
-  # For Tobs:
-
-  # For Pobs:
-
-  # For Qobs:
-
+  #if (obsDir != runDir){
+  #  # Copy obs files to run dir
+  #}
 
 } # process_netcdf2obs
 

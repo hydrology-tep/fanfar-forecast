@@ -23,16 +23,13 @@ cRunTypeVariant2 <- "Reforecast"
 cRunTypeVariants <- c(cRunTypeVariant1,cRunTypeVariant2)
 
 
+# Process user options/selections to later select between different variants
+# of models, datasets etc.
 process_application_runtime_options <- function()
 {
     hydModelIn <- rciop.getparam("hydmodel")
     if (hydModelIn == cHydModelVariant1){ hydModel <- cHydModelVariant1 }
     if (hydModelIn == cHydModelVariant2){ hydModel <- cHydModelVariant2 }
-#    for(i in 1:length(cHydModelVariants)){
-#        if (hydModelIn == cHydModelvar){
-#            hydModel <- 1
-#        }
-#    }
 
     metHCIn <- rciop.getparam("methc")
     if (metHCIn == cMetHCVariant1){ metHC <- cMetHCVariant1 }
@@ -56,19 +53,23 @@ process_application_runtime_options <- function()
     #rciop.log("INFO", paste0("hypeStateDate: ", hypeStateDate), nameOfSrcFile)
     rciop.log("INFO", "-------------------------------------------", nameOfSrcFile)
 
-
     outputApplRuntimeOptions <- list("hydModel"=hydModel,
                                      "metHC"=metHC,
                                      "metFC"=metFC,
                                      "runType"=runType,
                                      "hypeStateDate"=hypeStateDate
-  )
+                                    )
 
 } # process_application_runtime_options
 
 
-process_input_model_configuration <- function(applInput, # Input to application
-                                              tmpDir)    # Local temporary dir
+# Extract information from file dependencies.txt, part of the model/application config object
+# Output is now urls to configuration items to later be downloaded, e.g.:
+# modelData   - locating HYPE model (config) data. Data files etc.
+# gfdHydrogfd - locating netcdf files
+process_input_model_configuration <- function(applConfig, # Application configuration from user, ToDo
+                                              applInput)  # Input to application from stdin
+                                              #tmpDir)    # Local dir for temporary items only
 {
   # Download and read model config object from the applications input
   # Parse file dependencies.txt
@@ -112,7 +113,7 @@ process_input_model_configuration <- function(applInput, # Input to application
   rciop.log("INFO", input_enclosure)
   
   # Download the dir(s)
-  model_config_dir <- rciop.copy(input_enclosure, tmpDir, uncompress=TRUE)
+  model_config_dir <- rciop.copy(input_enclosure, TMPDIR, uncompress=TRUE) # tmpDir
   if (model_config_dir$exit.code==0) {
     local.model_config_dir <- model_config_dir$output # Returns path to local dir or file, dir in this case
   }else {
@@ -208,8 +209,11 @@ process_input_model_configuration <- function(applInput, # Input to application
 }
 
 
-process_input_hype_model_data <- function(modelConfig,
-                                          tmpDir)    # Local temporary dir
+# Download HYPE model (config) data from the url part of the model/application config object
+# Output is paths to downloaded data
+process_input_hype_model_data <- function(applConfig,  # Application configuration from user, ToDo
+                                          modelConfig) # Application model config object (urls)
+                                          #tmpDir)      # Dir to store downloaded items
 {
   # Outputs
   pathModelFiles <- NULL
@@ -226,7 +230,7 @@ process_input_hype_model_data <- function(modelConfig,
   rciop.log("INFO", input_enclosure)
   
   # Download the Hype model specific data dir(s)
-  modelDataDirs <- rciop.copy(input_enclosure, tmpDir, uncompress=TRUE) # or TMPDIR/subdir
+  modelDataDirs <- rciop.copy(input_enclosure, TMPDIR, uncompress=TRUE) # tmpDir
   if (modelDataDirs$exit.code==0) {
     local.modelDataDirs <- modelDataDirs$output
   }

@@ -35,22 +35,6 @@
 ## ------------------------------------------------------------------------------
 nameOfSrcFile <- "/node_forecast/run.R"
 
-# Constants application.xml (tag option)
-#cHydModelVariant1 <- "WestAfrica-HYPE"
-#cHydModelVariant2 <- "Niger-HYPE"
-#cHydModelVariants <- c(cHydModelVariant1,cHydModelVariant2)
-
-#cMetHCVariant1 <- "GFD 1.3 (SMHI)"
-#cMetHCVariant2 <- "HydroGFD 2.0 (SMHI)"
-#cMetHCVariants <- c(cMetHCVariant1,cMetHCVariant2)
-
-#cMetFCVariant1 <- "ECOPER (SMHI)"
-#cMetFCVariants <- c(cMetFCVariant1)
-
-#cRunTypeVariant1 <- "Operational"
-#cRunTypeVariant2 <- "Reforecast"
-#cRunTypeVariants <- c(cRunTypeVariant1,cRunTypeVariant2)
-
 ## create a date tag to include in output filenames
 
 # Handle HTEP fake input to only run the code in one run slot
@@ -60,14 +44,6 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
     # From user interface via input
     #input='https://recast.terradue.com/t2api/search/hydro-smhi/models?uid=9345ED73B72F49E6FF31B07B57013BC519210E24' #niger-hype-model-2.23.zip, one dir when unzipped\n",
-
-    # Use netcdf-to-obs
-    # in hypeapps-utils.R at line 843
-    # remove that code since netcdf to obs replace that
-    # publish the netcdf-to-obs pictures
-    ## 20190911 - Workshop at SMHI with T2
-    #system(paste0("source activate cdo-env; Rscript ", Sys.getenv("_CIOP_APPLICATION_PATH"), "/util/R/netcdf-to-obs/netcdf-to-obs-run.R"), intern=T)
-    #system("source deactivate cdo-env", intern=T)
 
     # RUN ID give the code a random number to see how many times the code was run based on the random number in the output filenames
     # run_id <- runif(n=1, min=1, max=10)
@@ -98,15 +74,18 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-netcdf.R",sep="/"))
     }
 
-    #rciop.log("INFO", paste("Processing user selection:", input, sep=" "))
-    #applRuntimeOptions <- process_application_runtime_options()
+    # Handle options for run-time configuration, e.g. switch between HYPE models etc.
+    # Global options defined in application.xml
+    rciop.log("INFO", "Processing user selection:")
+    applRuntimeOptions <- process_application_runtime_options()
     #rciop.log("INFO", applRuntimeOptions)
-    ##print(applRuntimeOptions)
+    #print(applRuntimeOptions)
 
     ## Read the main input
     ## This is the reference link to the model configuration
-    rciop.log("INFO", paste("Processing input:", input, sep=" "))
-    modelConfigData <- process_input_model_configuration(input,TMPDIR)
+    rciop.log("INFO", paste("Processing input from stdin:", input, sep=" "))
+    modelConfigData <- process_input_model_configuration(applRuntimeOptions,
+                                                         input) #,TMPDIR)
     rciop.log("INFO", modelConfigData)
 
     ## ------------------------------------------------------------------------------
@@ -142,9 +121,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## ------------------------------------------------------------------------------
     # Handle options for run-time configuration, e.g. switch between HYPE models etc.
     # Global options defined in application.xml
-    rciop.log("INFO", paste("Processing user selection:", input, sep=" "))
-    applRuntimeOptions <- process_application_runtime_options()
-    rciop.log("INFO", applRuntimeOptions)
+    #rciop.log("INFO", paste("Processing user selection:", input, sep=" "))
+    #applRuntimeOptions <- process_application_runtime_options()
+    #rciop.log("INFO", applRuntimeOptions)
     #print(applRuntimeOptions)
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste(" hypeapps inputs and parameters read"), nameOfSrcFile)}
@@ -166,10 +145,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         ## ------------------------------------------------------------------------------
         ## Get Hype model data dirs, niger-hype-data/data and niger-hype-data/v2.23
         ##### This code now continues to retrieve the data dirs (rciop.copy)
-        ##### Other R code not yet updated to handle paths (file copy from tmp dir to run dir etc.) instead of urls.
 
         rciop.log("INFO", "Processing config for model data", nameOfSrcFile)
-        modelDataPaths <- process_input_hype_model_data(modelConfigData,TMPDIR)
+        modelDataPaths <- process_input_hype_model_data(applRuntimeOptions,modelConfigData) # ,paste0(TMPDIR,"/hype-model-data"))
         #print(modelDataPaths)
 
         model.files.path     <- modelDataPaths$pathModelFiles     # Instead of model.files.url
@@ -222,17 +200,18 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                         dataSource = forcing.data.source,
                                         hindcast   = T)
 
-    # Todo: Dir name based on config dataset
-    dirNCFiles <- paste(TMPDIR,"xyz",sep="/")
+    ## Download and process hydrogfd netcdf files
 
-    # ToDo: Here or move up
-    #       Several calls here for POBS,QOBS,TOBS or within (it the same time interval so within most likely)
-    #process_netcdf2obs(modelConfigData)
+    # ToDo: Dir name based on config dataset
+    dirNCFiles  <- paste(TMPDIR,"netcdf-files",sep="/")
+    dirObsFiles <- paste(TMPDIR,"obs-files",sep="/")
     process_netcdf2obs(modelConfigData,
+                       modelDataPaths,
                        app.input$idate,
                        app.input$hcperiodlen,
-                       dirNCFiles)
-    # ToDo: Add path to store obs files, localDirOBS?
+                       dirNCFiles,
+                       ncSubDir=TRUE,
+                       dirObsFiles)
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste("hindcast forcing set"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "Hindcast forcing data downloaded and prepared",fileConn = logFile$fileConn)
