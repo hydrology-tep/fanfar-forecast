@@ -98,6 +98,11 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-netcdf.R",sep="/"))
     }
 
+    #rciop.log("INFO", paste("Processing user selection:", input, sep=" "))
+    #applRuntimeOptions <- process_application_runtime_options()
+    #rciop.log("INFO", applRuntimeOptions)
+    ##print(applRuntimeOptions)
+
     ## Read the main input
     ## This is the reference link to the model configuration
     rciop.log("INFO", paste("Processing input:", input, sep=" "))
@@ -137,35 +142,10 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## ------------------------------------------------------------------------------
     # Handle options for run-time configuration, e.g. switch between HYPE models etc.
     # Global options defined in application.xml
-    #hydModelIn <- rciop.getparam("hydmodel")
-    #if (hydModelIn == cHydModelVariant1){ hydModel <- cHydModelVariant1 }
-    #if (hydModelIn == cHydModelVariant2){ hydModel <- cHydModelVariant2 }
-#    for(i in 1:length(cHydModelVariants)){
-#        if (hydModelIn == cHydModelvar){
-#            hydModel <- 1
-#        }
-#    }
-
-    #metHCIn <- rciop.getparam("methc")
-    #if (metHCIn == cMetHCVariant1){ metHC <- cMetHCVariant1 }
-    #if (metHCIn == cMetHCVariant2){ metHC <- cMetHCVariant2 }
-
-    #metFCIn <- rciop.getparam("metfc")
-    #if (metFCIn == cMetFCVariant1){ metFC <- cMetFCVariant1 }
-
-    #runTypeIn <- rciop.getparam("runtype")
-    #if (runTypeIn == cRunTypeVariant1){ runType <- cRunTypeVariant1 }
-    #if (runTypeIn == cRunTypeVariant2){ runType <- cRunTypeVariant2 }
-
-    #rciop.log ("INFO", -------Global configuration options-------), nameOfSrcFile)
-    #rciop.log ("INFO", paste0("hydModel: ",hydModel), nameOfSrcFile)
-    #rciop.log ("INFO", paste0("metHC: ",metHC), nameOfSrcFile)
-    #rciop.log ("INFO", paste0("metFC: ",metFC), nameOfSrcFile)
-    #rciop.log ("INFO", paste0("runType: ",runType), nameOfSrcFile)
-    #rciop.log ("INFO", ------------------------------------------), nameOfSrcFile)
-
+    rciop.log("INFO", paste("Processing user selection:", input, sep=" "))
     applRuntimeOptions <- process_application_runtime_options()
-    print(applRuntimeOptions)
+    rciop.log("INFO", applRuntimeOptions)
+    #print(applRuntimeOptions)
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste(" hypeapps inputs and parameters read"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "Inputs and parameters read",fileConn = logFile$fileConn)
@@ -195,26 +175,24 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         model.files.path     <- modelDataPaths$pathModelFiles     # Instead of model.files.url
         forcing.archive.path <- modelDataPaths$pathForcingArchive # Instead of forcing.archive.url
         state.files.path     <- modelDataPaths$pathStateFiles     # Instead of state.files.url
-        #ToDo: Replace rciop.copy with file copy from these paths (changes needed in hypeapps-utils.R)
-
         rciop.log("INFO path", model.files.path)
         rciop.log("INFO path", forcing.archive.path)
         rciop.log("INFO path", state.files.path)
 
         ## ------------------------------------------------------------------------------
-        # For now, if needed, pass url from model_config_data['model-data-old-url'] to let present R code continue to do rciop.copy locally.
-        modelDataOldUrl <- modelConfigData$modelDataOldUrl
+        # # For now, if needed, pass url from model_config_data['model-data-old-url'] to let present R code continue to do rciop.copy locally.
+        # modelDataOldUrl <- modelConfigData$modelDataOldUrl
 
-        # Overwrite variables normally set in hypeapps-model-settings.R with url from the model configuration object
-        model.files.url     <- paste(modelDataOldUrl,"v2.23",sep="/")
-        forcing.archive.url <- paste(model.files.url,"forcingarchive",sep="/")
-        state.files.url     <- paste(model.files.url,"statefiles",sep="/")
-        # Check if other source code sources the file hypeapps-model-settings.R separately and are using any of these variables/constants.
-        # If its some other type of x-cast then it should not be of any problem.
-        rciop.log("INFO path", modelDataOldUrl)
-        rciop.log("INFO path", model.files.url)
-        rciop.log("INFO path", forcing.archive.url)
-        rciop.log("INFO path", state.files.url)
+        # # Overwrite variables normally set in hypeapps-model-settings.R with url from the model configuration object
+        # model.files.url     <- paste(modelDataOldUrl,"v2.23",sep="/")
+        # forcing.archive.url <- paste(model.files.url,"forcingarchive",sep="/")
+        # state.files.url     <- paste(model.files.url,"statefiles",sep="/")
+        # # Check if other source code sources the file hypeapps-model-settings.R separately and are using any of these variables/constants.
+        # # If its some other type of x-cast then it should not be of any problem.
+        # rciop.log("INFO path", modelDataOldUrl)
+        # rciop.log("INFO path", model.files.url)
+        # rciop.log("INFO path", forcing.archive.url)
+        # rciop.log("INFO path", state.files.url)
     }
     #q(save="no", status = 0)
 
@@ -244,6 +222,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                         dataSource = forcing.data.source,
                                         hindcast   = T)
 
+    # Todo: Dir name based on config dataset
     dirNCFiles <- paste(TMPDIR,"xyz",sep="/")
 
     # ToDo: Here or move up

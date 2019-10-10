@@ -35,6 +35,7 @@ days_per_month <- function(year, month)
 } 
 
 
+# ToDo: Split contents
 prepare_casts_intervals <- function(in_hindcastDays, # positive integer
                                     in_forecastIssueDate, # character string with dashes
                                     in_reforecast = TRUE,
@@ -339,13 +340,18 @@ prepare_casts_intervals <- function(in_hindcastDays, # positive integer
 # }
 
 
-search_and_download_netcdf <- function(urlNC,query,startDate,stopDate,ncRootDir,ncSubDir)
+search_and_download_netcdf <- function(urlNC,
+                                       query,
+                                       startDate,
+                                       stopDate,
+                                       ncRootDir,
+                                       ncSubDir)
 {
   # Constants
   osClientApp <- "opensearch-client"
   secStartDay <- "T00:00:01"
   secEndDay   <- "T23:59:59"
-  variables   <- c("pr", "tas", "tasmin", "tasmax")
+  variables   <- c("pr","tas","tasmin","tasmax")
 
   for (var in 1:length(variables)){
       if (ncSubDir == TRUE){
@@ -378,32 +384,95 @@ search_and_download_netcdf <- function(urlNC,query,startDate,stopDate,ncRootDir,
 } # search_and_download_netcdf
 
 
+check_date_interval_netcdf <- function(startDate,
+                                       endDate,
+                                       ncRootDir,
+                                       ncSubDir,
+                                       filePrefix,
+                                       fileSuffix)
+{
+  #tasmin_hydrogfdei_201906_fanfar_SMHI.nc
+  #tasmin_hydrogfdod_201908_fanfar_SMHI.nc
+  #tas_od-daily_20190917_fanfar_SMHI.nc
+  #tasmin_ecoper_2019091800_fanfar_SMHI.nc # 00_fanfar_SMHI.nc
+  nMissingFiles <- 0
+
+  # Constants
+  variables <- c("pr","tas","tasmin","tasmax")
+
+  interval <- NULL
+  dateFormat <- NULL
+  if (grepl("hydrogfdei",filePrefix,fixed=TRUE)) {
+      interval <- "month"
+      dateFormat <- "%Y%m"
+  } else if (grepl("hydrogfdod",filePrefix,fixed=TRUE)) {
+      interval <- "month"
+      dateFormat <- "%Y%m"
+  } else if (grepl("od-daily",filePrefix,fixed=TRUE)) {
+      interval <- "day"
+      dateFormat <- "%Y%m%d"
+  } else if (grepl("ecoper",filePrefix,fixed=TRUE)) {
+      interval <- "day"
+      dateFormat <- "%Y%m%d"
+  }
+
+  sDate <- as.Date(startDate)
+  eDate <- as.Date(endDate)
+
+  # List of date objects. Assumes end date later than start date
+  seqTimeStamps <- seq.Date(from=sDate,to=eDate,by=interval)
+
+  for (month_or_day in 1:length(seqTimeStamps)){
+      fileDate <- strftime(seqTimeStamps[month_or_day],format=dateFormat)
+      for (var in 1:length(variables)){
+          if (ncSubDir == TRUE){
+              local.netcdfDir <- paste(ncRootDir,variables[var],sep="/")
+          }else{
+              # All files into one dir
+              local.netcdfDir <- ncRootDir
+          }
+
+          expFilename <- paste0(variables[var],filePrefix,fileDate,fileSuffix)
+          print(expFilename)
+          if (! file.exists(paste(local.netcdfDir,expFilename,sep="/"))){
+              nMissingFiles <- nMissingFiles + 1
+              print(paste0("File missing: ", expFilename))
+              print(paste0("File missing: ", paste(local.netcdfDir,expFilename,sep="/"))
+          }
+      }
+  }
+
+  return (nMissingFiles)
+} # check_date_interval_netcdf
+
+
 # This handles the sequence for each x obs  file (iterates opensearch, download each meterological GFD, call function to convert to obs) 
-convert_netcdf2obs <- function(modelConfig,    # sub-dir to use for local download dir, url, query pattern etc 
-                               xCastsInterval, # dates for search start/stop, expected date in filename to check against
-                               netcdfDir)      # base dir to download files too
+# Retrieve files (pr,tas,tasmin,tasmax) via opensearch and rciop.copy
+# Configurable option to download all files into one dir or individual sub-dirs
+# for pr, tas, tasmin and tasmax.
+download_netcdf <- function(modelConfig,    # sub-dir to use for local download dir, url, query pattern etc 
+                            xCastsInterval, # dates for search start/stop, expected date in filename to check against
+                            netcdfDir)      # base dir to download files too
 {
   # Other inputs are:
   # path_to_store_netcdf_files - temporary dir
   # path to store obs files - res dir
   # expected file name for retrived netcdf files - to compare with after download
-
-  # Queries of start/stop date for opensearch may need dash, or may not
-  # Our hydrogfd filenames contains no dashes
   
   if (verbose == TRUE) {
-    print("convert_netcdf2obs func input:")
+    print("download_netcdf func input:")
     print(modelConfig)
     print(xCastsInterval)
   }
   
   # Constants
-  osClientApp <- "opensearch-client"
-  secStartDay <- "T00:00:01"
-  secEndDay   <- "T23:59:59"
-  variables   <- c("pr", "tas", "tasmin", "tasmax")
+  #osClientApp <- "opensearch-client"
+  #secStartDay <- "T00:00:01"
+  #secEndDay   <- "T23:59:59"
+  variables   <- c("pr","tas","tasmin","tasmax")
   #ncSubDir    <- FALSE
-  ncSubDir    <- TRUE
+  ncSubDir    <- TRUE # False-one dir, True-separate dir for each variable
+  fileSuffix <- "_fanfar_SMHI.nc"
 
   if (! dir.exists(netcdfDir)){
     dir.create(netcdfDir)
@@ -411,187 +480,69 @@ convert_netcdf2obs <- function(modelConfig,    # sub-dir to use for local downlo
 
   ## ------------------------------------------------------------------------------
   # Handle hydrogfdei
-  
-  # Retrieve files (pr,tas,tasmin,tasmax) via opensearch and rciop.copy
-  # Either one file at a time with count=unlimited or all 4 via count=4
-  # Choose count 4 for now
-
-  
-  # ToDo: Add opensearch code from test code...
-  print("Test: Download hydrogfdei netcdf files...")  
-
-    
-  #
-  # Search
-  #
-  
-  # ToDo: TMPDIR
-  # opensearchCmd=paste("opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' -p 'count=4' -p 'cat=[SMHI,operational,hydrogfdei]' -p 'start=2019-02-07T00:00:01' -p 'stop=2019-02-07T23:59:59' enclosure") # ok, files for 201902 (pr,tas,tasmin,tasmax)
-  # opensearchCmd=paste("opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' -p 'count=4' -p 'cat=[SMHI,operational,hydrogfdei]' -p 'start=2019-01-01T00:00:01' -p 'stop=2019-01-01T23:59:59' enclosure") # ok, files for 201901 (pr,tas,tasmin,tasmax)
-  # opensearchCmd=paste("opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' -p 'count=unlimited' -p 'cat=[SMHI,operational,hydrogfdei,pr]' -p 'start=2018-01-01T00:00:01' -p 'stop=2018-01-31T23:59:59' enclosure") # ok
-  # opensearchCmd=paste("opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' -p 'count=unlimited' -p 'cat=[SMHI,operational,hydrogfdei,tas]' -p 'start=2017-01-01T00:00:01' -p 'stop=2017-01-31T23:59:59' enclosure") # ok
-  # opensearchCmd=paste("opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' -p 'count=unlimited' -p 'cat=[SMHI,operational,hydrogfdei,tasmin]' -p 'start=2017-11-01T00:00:01' -p 'stop=2017-11-30T23:59:59' enclosure") # ok
-  # opensearchCmd=paste("opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' -p 'count=unlimited' -p 'cat=[SMHI,operational,hydrogfdei,tasmax]' -p 'start=2016-12-01T00:00:01' -p 'stop=2016-12-31T23:59:59' enclosure") # ok
-  # opensearchCmd=paste("opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' -p 'count=unlimited' -p 'cat=[SMHI,operational,monthly,hydrogfdei,tasmax]' -p 'start=2016-12-01T00:00:01' -p 'stop=2016-12-31T23:59:59' enclosure") # ok without cat=monthly
-  
-  #tmp
-  #opensearchCmd=paste("opensearch-client 'https://catalog.terradue.com/hydro-smhi/description' -p 'count=4' -p 'cat=[SMHI,operational,hydrogfdei]' -p 'start=2019-01-01T00:00:01' -p 'stop=2019-01-01T23:59:59' enclosure") # ok, files for 201901 (pr,tas,tasmin,tasmax)
-  # ok...
-  #tmp
-
   urlNC     <- modelConfig$gfdHydrogfdeiUrl
   query     <- modelConfig$gfdHydrogfdeiQuery
   startDate <- xCastsInterval$hydrogfdeiStartDateSearch
   stopDate  <- xCastsInterval$hydrogfdeiEndDateSearch
-
-  # for (var in 1:length(variables)){
-  #     if (ncSubDir == TRUE){
-  #         local.netcdfDir <- paste(netcdfDir,variables[var],sep="/")
-  #         # Append query with variable
-  #         varQuery <- paste0(',',variables[var],']')
-  #         catQuery <- gsub(']',varQuery,query)
-
-  #     }else{
-  #         local.netcdfDir <- netcdfDir
-  #         # All files into one dir
-  #         catQuery <- query
-  #     }
-  #     #if (! dir.exists(local.netcdfDir)) { dir.create(local.netcdfDir) }
-  #     opensearchCmd=paste0(osClientApp," '",urlNC,"'"," -p ","'count=unlimited'"," -p ","'cat=",catQuery,"'"," -p ","'start=",startDate,secStartDay,"'"," -p ","'stop=",stopDate,secEndDay,"'"," enclosure")
-  #     message(opensearchCmd)
-  #     input_enclosure <- system(command = opensearchCmd,intern = T)
-  #     if (length(input_enclosure >= 1)) {
-  #         if (! dir.exists(local.netcdfDir)) { dir.create(local.netcdfDir) }
-  #         for (url in 1:length(input_enclosure)) {
-  #             rciop.copy(input_enclosure[url],local.netcdfDir)
-  #         }
-  #     }
-  #     if (ncSubDir == FALSE){
-  #         if (var == 1){
-  #           break # for loop
-  #         }
-  #     }
-  # }
   
   search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-
-  #org:
-  #opensearchCmd=paste0(osClientApp," '",urlNC,"'"," -p ","'count=unlimited'"," -p ","'cat=",catQuery,"'"," -p ","'start=",startDate,secStartDay,"'"," -p ","'stop=",stopDate,secEndDay,"'"," enclosure")
-  #message(opensearchCmd)
-  #input_enclosure <- system(command = opensearchCmd,intern = T)
-  #message(input_enclosure)
-  #if (length(input_enclosure >= 1)) {
-  #  if (! dir.exists(netcdfDir)) { dir.create(netcdfDir) }
-  #  for (url in 1:length(input_enclosure)) {
-  #    rciop.copy(input_enclosure[url],netcdfDir)
-  #  }
-  #}
-
-  print("Test: Download complete hydrogfdei...")  
-
-  #q(save = "no", 0)
-
-  # Depending on start stop date interval, we may need to check filename for multiple dates
-  # Or... yes
-  # For hydrogfdei the filename date is yyyymm, no day
-  
-  # ToDo: loop start - stop date interval
-  # Check retrieved filenames
-  #metName <- hydrogfdei # ToDo: get from model config
-  
-  #dateInt <- (as.numeric(xCastsInterval$hydrogfdeiEndDateFilename) - as.numeric(xCastsInterval$hydrogfdeiStartDateFilename))
-  #startDate <- as.numeric(xCastsInterval$hydrogfdeiStartDateFilename)
-  #stopDate  <- as.numeric(xCastsInterval$hydrogfdeiEndDateFilename)
-  #monthCtr <- 0 # May need to handle year change...
-  
-  #dateInt <- (as.numeric(xCastsInterval$hydrogfdeiEndDateFilename) - as.numeric(xCastsInterval$hydrogfdeiStartDateFilename))
-  
-  
-  #for (d in )
-  #date <- 201904 # from loop start-stop
-  #for (v in variables){
-  #  expFilename <- paste(v,metName,d,"fanfar_SMHI.nc",sep="_")
-  #  
-  #}
-  
-  # With expected filename, check if file exists in local download dir
-  #status <- file.exists(expFilename)
+  nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
+                                         "_hydrogfdei_",fileSuffix)
+  if (nMissing > 0){
+      print(paste0(nMissingFiles," file(s) missing for hydrogfdei"))
+      rciop.log("INFO",paste0(nMissingFiles," file(s) missing for hydrogfdei"))
+  }
   
   ## ------------------------------------------------------------------------------
   # Handle hydrogfdod
   urlNC     <- modelConfig$gfdHydrogfdodUrl
-  #catQuery  <- modelConfig$gfdHydrogfdodQuery
-  query  <- modelConfig$gfdHydrogfdodQuery
+  query     <- modelConfig$gfdHydrogfdodQuery
   startDate <- xCastsInterval$hydrogfdodStartDateSearch
   stopDate  <- xCastsInterval$hydrogfdodEndDateSearch
-  
-  # opensearchCmd=paste0(osClientApp," '",urlNC,"'"," -p ","'count=unlimited'"," -p ","'cat=",catQuery,"'"," -p ","'start=",startDate,secStartDay,"'"," -p ","'stop=",stopDate,secEndDay,"'"," enclosure")
-  # message(opensearchCmd)
-  # input_enclosure <- system(command = opensearchCmd,intern = T)
-  # message(input_enclosure)
-  # if (length(input_enclosure >= 1)) {
-  #   if (! dir.exists(netcdfDir)) { dir.create(netcdfDir) }
-  #   for (url in 1:length(input_enclosure)) {
-  #     rciop.copy(input_enclosure[url],netcdfDir)
-  #   }
-  # }
 
   search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-  
   # Check retrieved filenames
+  nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
+                                         "_hydrogfdod_",fileSuffix)
+  if (nMissing > 0){
+      print(paste0(nMissingFiles," file(s) missing for hydrogfdod"))
+      rciop.log("INFO",paste0(nMissingFiles," file(s) missing for hydrogfdod"))
+  }
   
   ## ------------------------------------------------------------------------------
   # Handle od (od-daily)
   urlNC     <- modelConfig$gfdOdDailyUrl
-  #catQuery  <- modelConfig$gfdOdDailyQuery
-  query  <- modelConfig$gfdOdDailyQuery
+  query     <- modelConfig$gfdOdDailyQuery
   startDate <- xCastsInterval$odStartDateSearch
   stopDate  <- xCastsInterval$odEndDateSearch
-  
-  # opensearchCmd=paste0(osClientApp," '",urlNC,"'"," -p ","'count=unlimited'"," -p ","'cat=",catQuery,"'"," -p ","'start=",startDate,secStartDay,"'"," -p ","'stop=",stopDate,secEndDay,"'"," enclosure")
-  # message(opensearchCmd)
-  # input_enclosure <- system(command = opensearchCmd,intern = T)
-  # message(input_enclosure)
-  # if (length(input_enclosure >= 1)) {
-  #   if (! dir.exists(netcdfDir)) { dir.create(netcdfDir) }
-  #   for (url in 1:length(input_enclosure)) {
-  #     rciop.copy(input_enclosure[url],netcdfDir)
-  #   }
-  # }
 
   search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-  
-  # Check retrieved filenames
+  nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
+                                         "_od-daily_",fileSuffix)
+  if (nMissing > 0){
+      print(paste0(nMissingFiles," file(s) missing for od-daily"))
+      rciop.log("INFO",paste0(nMissingFiles," file(s) missing for od-daily"))
+  }
   
   ## ------------------------------------------------------------------------------
-  # Handle ecoper (ToDo: add 00 in expected filename)
+  # Handle ecoper (ToDo: add 00 in expected filename during check)
   urlNC     <- modelConfig$gfdEcoperUrl
-  #catQuery  <- modelConfig$gfdEcoperQuery
-  query  <- modelConfig$gfdEcoperQuery
+  query     <- modelConfig$gfdEcoperQuery
   startDate <- xCastsInterval$ecoperStartDateSearch
   stopDate  <- xCastsInterval$ecoperEndDateSearch
-  
-  # opensearchCmd=paste0(osClientApp," '",urlNC,"'"," -p ","'count=unlimited'"," -p ","'cat=",catQuery,"'"," -p ","'start=",startDate,secStartDay,"'"," -p ","'stop=",stopDate,secEndDay,"'"," enclosure")
-  # message(opensearchCmd)
-  # input_enclosure <- system(command = opensearchCmd,intern = T)
-  # message(input_enclosure)
-  # if (length(input_enclosure >= 1)) {
-  #   if (! dir.exists(netcdfDir)) { dir.create(netcdfDir) }
-  #   for (url in 1:length(input_enclosure)) {
-  #     rciop.copy(input_enclosure[url],netcdfDir)
-  #   }
-  # }
 
   search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-  
-  # Check retrieved filenames
+  nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
+                                         "_ecoper_",paste0("00",fileSuffix))
+  if (nMissing > 0){
+      print(paste0(nMissingFiles," file(s) missing for ecoper"))
+      rciop.log("INFO",paste0(nMissingFiles," file(s) missing for ecoper"))
+  }
 
   ## ------------------------------------------------------------------------------
   # All meterological gfd parts downloaded to local tmp dir
-  # Call Davids func with path etc. and path (run dir?) to let him store the result files
-  # ToDo:
   
-} # convert_netcdf2obs 
+} # download_netcdf 
  
 
 # External function
@@ -601,45 +552,27 @@ process_netcdf2obs <- function(modelConfig,
                                hindcastPeriodLength,
                                netcdfDir)
 {
-
-  # Select sep/oct due to latest EI/OD set hard when reforcast==false, 2019-06-30,2019-08-30
-  
-  # Fake model config data for tests
-  #modelConfig <- NULL
-  
-  
   # Prepare hindcast and forecast intervals, start and end dates
   prepCastInterval <- prepare_casts_intervals(hindcastPeriodLength,
-                                             forecastIssueDate,
-                                             in_reforecast = TRUE,
-                                             "19700101") # ToDo: Get date from latest Hype state filename
-  print("Call convert_netcdf2obs")
-  convert_netcdf2obs(modelConfig,
-                     xCastsInterval = prepCastInterval,
-                     netcdfDir)
-  print("After convert_netcdf2obs")
+                                              forecastIssueDate,
+                                              in_reforecast = TRUE,
+                                              "19700101") # ToDo: Get date from latest Hype state filename
+  print("Call download_netcdf")
+  download_netcdf(modelConfig,
+                  xCastsInterval = prepCastInterval,
+                  netcdfDir)
+  print("After download_netcdf")
   
-  # Test data for above sequence:
-  # out.prep2 <- prepare_casts_intervals(123, "2019-10-05", in_reforecast = TRUE, "20190608")
-  # convert_netcdf2obs(xCastsInterval = out.prep2)
-  # 
-  # out.prep3 <- prepare_casts_intervals(123, "2019-10-28", in_reforecast = TRUE, "20170110") # 2019-10-19
-  # convert_netcdf2obs(xCastsInterval = out.prep3)
-  # 
-  # out.prep4 <- prepare_casts_intervals(123, "2019-10-28", in_reforecast = TRUE, "20190608")
-  # convert_netcdf2obs(xCastsInterval = out.prep4)
-  # 
-  # out.prep1 <- prepare_casts_intervals(123, "2019-10-05", in_reforecast = FALSE, "20170110")
-  # convert_netcdf2obs(xCastsInterval = out.prep1)
-  # 
-  # out.prep2 <- prepare_casts_intervals(123, "2019-10-05", in_reforecast = FALSE, "20190608")
-  # convert_netcdf2obs(xCastsInterval = out.prep2)
-  # 
-  # out.prep3 <- prepare_casts_intervals(123, "2019-10-28", in_reforecast = FALSE, "20170110")
-  # convert_netcdf2obs(xCastsInterval = out.prep3)
-  # 
-  # out.prep4 <- prepare_casts_intervals(123, "2019-10-28", in_reforecast = FALSE, "20190608")
-  # convert_netcdf2obs(xCastsInterval = out.prep4)
+  # Call Davids func with path etc. and path (run dir?) to let him store the result files
+  # ToDo:
+
+  # For Tobs:
+
+  # For Pobs:
+
+  # For Qobs:
+
+
 } # process_netcdf2obs
 
 # External function

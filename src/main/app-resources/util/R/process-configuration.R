@@ -80,10 +80,10 @@ process_input_model_configuration <- function(applInput, # Input to application
   modelDataQuery   <- NULL
   modelDataComment <- NULL
   
-  modelDataOldSubDir  <- NULL
-  modelDataOldUrl     <- NULL
-  modelDataOldQuery   <- NULL
-  modelDataOldComment <- NULL
+  # modelDataOldSubDir  <- NULL
+  # modelDataOldUrl     <- NULL
+  # modelDataOldQuery   <- NULL
+  # modelDataOldComment <- NULL
   
   gfdHydrogfdeiSubDir  <- NULL
   gfdHydrogfdeiUrl     <- NULL
@@ -137,12 +137,12 @@ process_input_model_configuration <- function(applInput, # Input to application
       modelDataQuery   <- model_config_data[r,'querypattern']
       modelDataComment <- model_config_data[r,'info']
     }
-    if (subdir == 'model-data-old-url') {
-      modelDataOldSubDir  <- model_config_data[r,'subdir'] # Not used
-      modelDataOldUrl     <- model_config_data[r,'url']
-      modelDataOldQuery   <- model_config_data[r,'querypattern'] # Not used
-      modelDataOldComment <- model_config_data[r,'info']
-    }
+    # if (subdir == 'model-data-old-url') {
+    #   modelDataOldSubDir  <- model_config_data[r,'subdir'] # Not used
+    #   modelDataOldUrl     <- model_config_data[r,'url']
+    #   modelDataOldQuery   <- model_config_data[r,'querypattern'] # Not used
+    #   modelDataOldComment <- model_config_data[r,'info']
+    # }
     if (subdir == 'hydrogfdei') {
       gfdHydrogfdeiSubDir  <- model_config_data[r,'subdir'] # Intended to be used both for dir name (rciop.copy) and part of filename
       gfdHydrogfdeiUrl     <- model_config_data[r,'url']
@@ -176,10 +176,10 @@ process_input_model_configuration <- function(applInput, # Input to application
                             "modelDataQuery"=modelDataQuery,
                             "modelDataComment"=modelDataComment,
                             
-                            "modelDataOldSubDir"=modelDataOldSubDir,
-                            "modelDataOldUrl"=modelDataOldUrl,
-                            "modelDataOldQuery"=modelDataOldQuery,
-                            "modelDataOldComment"=modelDataOldComment,
+                            # "modelDataOldSubDir"=modelDataOldSubDir,
+                            # "modelDataOldUrl"=modelDataOldUrl,
+                            # "modelDataOldQuery"=modelDataOldQuery,
+                            # "modelDataOldComment"=modelDataOldComment,
                             
                             "gfdHydrogfdeiSubDir"=gfdHydrogfdeiSubDir,
                             "gfdHydrogfdeiUrl"=gfdHydrogfdeiUrl,
