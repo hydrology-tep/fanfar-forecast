@@ -201,17 +201,16 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                         hindcast   = T)
 
     ## Download and process hydrogfd netcdf files
-
     # ToDo: Dir name based on config dataset
     dirNCFiles  <- paste(TMPDIR,"netcdf-files",sep="/")
     dirObsFiles <- paste(TMPDIR,"obs-files",sep="/")
-    process_netcdf2obs(modelConfigData,
-                       modelDataPaths,
-                       app.input$idate,
-                       app.input$hcperiodlen,
-                       dirNCFiles,
-                       ncSubDir=TRUE,
-                       dirObsFiles)
+    process_hindcast_netcdf2obs(modelConfigData,
+                                modelDataPaths,
+                                app.input$idate,
+                                app.input$hcperiodlen,
+                                dirNCFiles,
+                                ncSubDir=TRUE,
+                                dirObsFiles)
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste("hindcast forcing set"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "Hindcast forcing data downloaded and prepared",fileConn = logFile$fileConn)
@@ -271,6 +270,17 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     #################################################################################
     ## 6 - Forecast input data
     ## ------------------------------------------------------------------------------
+    ## Download and process ecoper netcdf files
+
+    # ToDo: Dir name based on config dataset
+    #dirNCFiles  <- paste(TMPDIR,"netcdf-files",sep="/") already set before hindcast
+    #dirObsFiles <- paste(TMPDIR,"obs-files",sep="/")    already set before hindcast
+    process_forecast_netcdf2obs(modelConfigData,
+                                modelDataPaths,
+                                app.input$idate,
+                                dirNCFiles,
+                                ncSubDir=TRUE,
+                                dirObsFiles)
     ## forcing data
     forecast.forcing <- getModelForcing(appSetup   = app.setup,
                                         appInput  = app.input,

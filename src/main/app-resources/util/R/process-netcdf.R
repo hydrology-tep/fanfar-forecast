@@ -17,8 +17,7 @@ prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
                                           shapeFilePath, # Path to model shapefile
                                           outPath, # Path for output files, calling function to handle publish?
                                           startDate, # yyyy-mm-dd
-                                          endDate # yyyy-mm-dd
-                                          )
+                                          endDate)# yyyy-mm-dd
 {
     if (verbose == TRUE) {
         print('prepare_and_run_netcdf_to_obs():')
@@ -189,30 +188,205 @@ days_per_month <- function(year, month)
 } 
 
 
-# ToDo: Split contents
-prepare_casts_intervals <- function(in_hindcastDays, # positive integer
-                                    in_forecastIssueDate, # character string with dashes
-                                    in_reforecast = TRUE,
-                                    in_hypeStateFileDate) # character string without dashes
-  # Return start and end dates for all 4 meterological intervals.
+# In/Out - objects of posix date classes
+determine_interval_hindcast <- function(forecastIssueDate,
+                                        hindcastDays, # Integer/Numeric
+                                        hypeStateDate)
+{
+    # Hindcast start date
+    hindcast.startDate      <- forecastIssueDate
+    hindcast.startDate$mday <- hindcast.startDate$mday - hindcastDays
+
+    # Base hindcast start date depeding on HYPE state file
+    if (hindcast.startDate <= hypeStateDate) {
+      # Earlier than HYPE state date
+      hindcast.startDate      <- hypeStateDate
+      hindcast.startDate$mday <- hindcast.startDate$mday + 0 # + 1
+    }else {
+      # Later than HYPE state date
+
+      # Limit hindcast start date to the first day of the month
+      mday_as_char <- strftime(hindcast.startDate,format="%d")
+      mday_as_num  <- as.numeric(mday_as_char)
+      if (mday_as_num > 1) {
+        #hindcast.startDate$mday <- 1 # This seems to reset subtraction of hindcast.Days above...
+        #hindcast.startDate$mday <- hindcast.startDate$mday - hindcast.startDate$mday + 1 # The same...
+        hindcast.startDate$mday <- hindcast.startDate$mday - (mday_as_num - 1) # Ok, this worked...
+      }
+
+      # or: Limit hindcast start date to the first day of the calendar (jan 1)
+      # or: Limit hindcast start date to the first day of the hydrological year (sep 1 ->aug 31)
+    }
+
+    hindcast.endDate <- forecastIssueDate
+    hindcast.endDate$mday <- hindcast.endDate$mday - 1
+
+    if (verbose == TRUE) {
+      print('Hindcast start date:')
+      print(hindcast.startDate)
+      print(hindcast.endDate)
+      print('')
+    }
+
+    output <- list("hindcast.startDate"=hindcast.startDate,
+                   "hindcast.endDate"=hindcast.endDate)
+
+    return (output)
+} # determine_interval_hindcast
+
+
+# In/Out - objects of posix date classes
+determine_interval_hydrogfdei <- function(hindcastStartDate,
+                                          forecastIssueDate,
+                                          in_reforecast)
+{
+    hydrogfdei.startDate <- hindcastStartDate
+    if (in_reforecast == FALSE) {
+      # Operational
+
+      # Should be: last day in the most recent hydrogfdei file (as new input parameter)
+      # Now the last file is 201906
+      hydrogfdei.endDate <- "2019-06-30"
+      hydrogfdei.endDate <- as.Date(hydrogfdei.endDate)
+      hydrogfdei.endDate <- as.POSIXlt(hydrogfdei.endDate)
+    }else {
+      # Re-forecast
+      hydrogfdei.endDate <- forecastIssueDate
+      
+      mday_as_char <- strftime(hydrogfdei.endDate,format="%d")
+      mday_as_num  <- as.numeric(mday_as_char)
+      if (mday_as_num < 10) {
+          hydrogfdei.endDate$mon <- hydrogfdei.endDate$mon - 4
+      }else {
+          hydrogfdei.endDate$mon <- hydrogfdei.endDate$mon - 3
+      }
+            
+      # Round off to end of this month
+      mon_as_char  <- strftime(hydrogfdei.endDate,format="%m")
+      mon_as_num   <- as.numeric(mon_as_char)
+      year_as_char <- strftime(hydrogfdei.endDate,format="%Y")
+      year_as_num  <- as.numeric(year_as_char)
+      
+      mday_last <- days_per_month(year_as_num,mon_as_num)
+      hydrogfdei.endDate$mday <- hydrogfdei.endDate$mday + (mday_last - hydrogfdei.endDate$mday)
+    }
+    
+    if (verbose == TRUE) {
+      print('HydroGFDEI:')
+      print(hydrogfdei.startDate)
+      print(hydrogfdei.endDate)
+      print('')
+    }
+
+    output <- list("hydrogfdei.startDate"=hydrogfdei.startDate,
+                   "hydrogfdei.endDate"=hydrogfdei.endDate)
+
+    return (output)
+} # determine_interval_hydrogfdei
+
+
+# In/Out - objects of posix date classes
+determine_interval_hydrogfdod <- function(hydrogfdeiEndDate,
+                                          forecastIssueDate,
+                                          in_reforecast)
+{
+    hydrogfdod.startDate      <- hydrogfdeiEndDate
+    hydrogfdod.startDate$mday <- hydrogfdod.startDate$mday + 1 # day
+    if (in_reforecast == FALSE) {
+      # Operational
+      
+      # Should be: last day in the most recent hydrogfdod file (as new input parameter)
+      # Now the last file is 201908
+      hydrogfdod.endDate <- "2019-08-31"
+      hydrogfdod.endDate <- as.Date(hydrogfdod.endDate)
+      hydrogfdod.endDate <- as.POSIXlt(hydrogfdod.endDate)
+    }else {
+      # Re-forecast
+      hydrogfdod.endDate <- forecastIssueDate
+
+      mday_as_char <- strftime(hydrogfdod.endDate,format="%d")
+      mday_as_num  <- as.numeric(mday_as_char)
+      if (mday_as_num < 10) {
+        hydrogfdod.endDate$mon <- hydrogfdod.endDate$mon - 2
+      }else {
+        hydrogfdod.endDate$mon <- hydrogfdod.endDate$mon - 1
+      }
+
+      # Round off to end of this month
+      mon_as_char <- strftime(hydrogfdod.endDate,format="%m")
+      mon_as_num  <- as.numeric(mon_as_char)
+      year_as_char <- strftime(hydrogfdod.endDate,format="%Y")
+      year_as_num  <- as.numeric(year_as_char)
+      
+      mday_last <- days_per_month(year_as_num,mon_as_num)
+      hydrogfdod.endDate$mday <- hydrogfdod.endDate$mday + (mday_last - hydrogfdod.endDate$mday)
+    }
+    
+    if (verbose == TRUE) {
+      print('HydroGFDOD:')
+      print(hydrogfdod.startDate)
+      print(hydrogfdod.endDate)
+      print('')
+    }
+
+    output <- list("hydrogfdod.startDate"=hydrogfdod.startDate,
+                   "hydrogfdod.endDate"=hydrogfdod.endDate)
+
+    return (output)
+} # determine_interval_hydrogfdod
+
+
+# In/Out - objects of posix date classes
+determine_interval_od_daily <- function(hydrogfdodEndDate,
+                                        hindcastEndDate)
+{
+    od.startDate      <- hydrogfdodEndDate
+    od.startDate$mday <- od.startDate$mday + 1
+
+    od.endDate        <- hindcastEndDate
+    
+    if (verbose == TRUE) {
+      print('OD:')
+      print(od.startDate)
+      print(od.endDate)
+      print('')
+    }
+
+    output <- list("od.startDate"=od.startDate,
+                   "od.endDate"=od.endDate)
+
+    return (output)
+} # determine_interval_od_daily
+
+
+# In/Out - objects of posix date classes
+determine_interval_ecoper <- function(forecastIssueDate)
+{
+    ecoper.startDate    <- forecastIssueDate
+
+    ecoper.endDate      <- forecastIssueDate
+    ecoper.endDate$mday <- ecoper.endDate$mday + 9
+    
+    if (verbose == TRUE) {
+      print('ECOPER:')
+      print(ecoper.startDate)
+      print(ecoper.endDate)
+      print('')
+    }
+
+    output <- list("ecoper.startDate"=ecoper.startDate,
+                   "ecoper.endDate"=ecoper.endDate)
+
+    return (output)
+} # determine_interval_ecoper
+
+
+prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
+                                       in_forecastIssueDate, # character string with dashes
+                                       in_reforecast = TRUE,
+                                       in_hypeStateFileDate) # character string without dashes
 {
     # Dates internally in function uses class posixlt (list)
-
-    # Output variables
-    # hydrogfdei.startDate <- NULL
-    # hydrogfdei.endDate <- NULL
-    # hydrogfdod.startDate <- NULL
-    # hydrogfdod.endDate <- NULL
-    # od.startDate <- NULL
-    # od.endDate <- NULL
-    # ecoper.startDate <- NULL
-    # ecoper.endDate <- NULL
-
-    # Local variables
-    #hypeState.Date
-    #forecast.IssueDate
-    #potentialHindcastStart
-    #hindcast.startDate
 
     ## ------------------------------------------------------------------------------
     # Handle inputs
@@ -255,245 +429,137 @@ prepare_casts_intervals <- function(in_hindcastDays, # positive integer
     }
     
     ## ------------------------------------------------------------------------------
-    # Hindcast start date
-    hindcast.startDate      <- forecast.IssueDate
-    hindcast.startDate$mday <- hindcast.startDate$mday - hindcast.Days
+    # Hindcast general
+    intervalHindcast <- determine_interval_hindcast(forecast.IssueDate,
+                                                    hindcast.Days,
+                                                    hypeState.Date)
 
-    # Base hindcast start date depeding on HYPE state file
-    if (hindcast.startDate <= hypeState.Date) {
-      # Earlier than HYPE state date
-      hindcast.startDate      <- hypeState.Date
-      hindcast.startDate$mday <- hindcast.startDate$mday + 0 # + 1
-    }else {
-      # Later than HYPE state date
-
-      # Limit hindcast start date to the first day of the month
-      mday_as_char <- strftime(hindcast.startDate,format="%d")
-      mday_as_num  <- as.numeric(mday_as_char)
-      if (mday_as_num > 1) {
-        #hindcast.startDate$mday <- 1 # This seems to reset subtraction of hindcast.Days above...
-        #hindcast.startDate$mday <- hindcast.startDate$mday - hindcast.startDate$mday + 1 # The same...
-        hindcast.startDate$mday <- hindcast.startDate$mday - (mday_as_num - 1) # Ok, this worked...
-      }
-
-      # or: Limit hindcast start date to the first day of the calendar (jan 1)
-      # or: Limit hindcast start date to the first day of the hydrological year (sep 1 ->aug 31)
-    }
-
-    if (verbose == TRUE) {
-      print('Hindcast start date:')
-      print(hindcast.startDate)
-      print('')
-    }
-    
     ## ------------------------------------------------------------------------------
     # HydroGFDEI (monthly)
-    hydrogfdei.startDate <- hindcast.startDate
-    if (in_reforecast == FALSE) {
-      # Operational
+    intervalHydrogfdei <- determine_interval_hydrogfdei(intervalHindcast$hindcast.startDate,
+                                                        forecast.IssueDate,
+                                                        in_reforecast)
 
-      # Should be: last day in the most recent hydrogfdei file (as new input parameter)
-      # Now the last file is 201906
-      hydrogfdei.endDate <- "2019-06-30"
-      hydrogfdei.endDate <- as.Date(hydrogfdei.endDate)
-      hydrogfdei.endDate <- as.POSIXlt(hydrogfdei.endDate)
-    }else {
-      hydrogfdei.endDate <- forecast.IssueDate
-      
-      mday_as_char <- strftime(hydrogfdei.endDate,format="%d")
-      mday_as_num  <- as.numeric(mday_as_char)
-      if (mday_as_num < 10) {
-          hydrogfdei.endDate$mon <- hydrogfdei.endDate$mon - 4
-      }else {
-          hydrogfdei.endDate$mon <- hydrogfdei.endDate$mon - 3
-      }
-            
-      # Round off to end of this month
-      mon_as_char <- strftime(hydrogfdei.endDate,format="%m")
-      mon_as_num  <- as.numeric(mon_as_char)
-      year_as_char <- strftime(hydrogfdei.endDate,format="%Y")
-      year_as_num  <- as.numeric(year_as_char)
-      
-      mday_last <- days_per_month(year_as_num,mon_as_num)
-      hydrogfdei.endDate$mday <- hydrogfdei.endDate$mday + (mday_last - hydrogfdei.endDate$mday)
-    }
-    
-    if (verbose == TRUE) {
-      print('HydroGFDEI:')
-      print(hydrogfdei.startDate)
-      print(hydrogfdei.endDate)
-      print('')
-    }
-    
     ## ------------------------------------------------------------------------------
     # HydroGFDOD (monthly)
-    hydrogfdod.startDate      <- hydrogfdei.endDate
-    hydrogfdod.startDate$mday <- hydrogfdod.startDate$mday + 1 # day
-    if (in_reforecast == FALSE) {
-      # Operational
-      
-      # Should be: last day in the most recent hydrogfdod file (as new input parameter)
-      # Now the last file is 201908
-      hydrogfdod.endDate <- "2019-08-31"
-      hydrogfdod.endDate <- as.Date(hydrogfdod.endDate)
-      hydrogfdod.endDate <- as.POSIXlt(hydrogfdod.endDate)
-    }else {
-      hydrogfdod.endDate <- forecast.IssueDate
+    intervalHydrogfdod <- determine_interval_hydrogfdod(intervalHydrogfdei$hydrogfdei.endDate,
+                                                        forecast.IssueDate,
+                                                        in_reforecast)
 
-      mday_as_char <- strftime(hydrogfdod.endDate,format="%d")
-      mday_as_num  <- as.numeric(mday_as_char)
-      if (mday_as_num < 10) {
-        hydrogfdod.endDate$mon <- hydrogfdod.endDate$mon - 2
-      }else {
-        hydrogfdod.endDate$mon <- hydrogfdod.endDate$mon - 1
-      }
-
-      # Round off to end of this month
-      mon_as_char <- strftime(hydrogfdod.endDate,format="%m")
-      mon_as_num  <- as.numeric(mon_as_char)
-      year_as_char <- strftime(hydrogfdod.endDate,format="%Y")
-      year_as_num  <- as.numeric(year_as_char)
-      
-      mday_last <- days_per_month(year_as_num,mon_as_num)
-      hydrogfdod.endDate$mday <- hydrogfdod.endDate$mday + (mday_last - hydrogfdod.endDate$mday)
-    }
-    
-    if (verbose == TRUE) {
-      print('HydroGFDOD:')
-      print(hydrogfdod.startDate)
-      print(hydrogfdod.endDate)
-      print('')
-    }
-    
     ## ------------------------------------------------------------------------------
     # OD (daily)
-    od.startDate      <- hydrogfdod.endDate
-    od.startDate$mday <- hydrogfdod.endDate$mday + 1
-    od.endDate        <- forecast.IssueDate
-    od.endDate$mday   <- forecast.IssueDate$mday - 1 # Hindcast end date
-    
-    if (verbose == TRUE) {
-      print('OD:')
-      print(od.startDate)
-      print(od.endDate)
-      print('')
-    }
-    
-    ## ------------------------------------------------------------------------------
-    # ECOPER (daily)
-    ecoper.startDate    <- forecast.IssueDate
-    ecoper.endDate      <- forecast.IssueDate
-    ecoper.endDate$mday <- forecast.IssueDate$mday + 9
-    
-    if (verbose == TRUE) {
-      print('ECOPER:')
-      print(ecoper.startDate)
-      print(ecoper.endDate)
-      print('')
-    }
-    
+    intervalOdDaily <- determine_interval_od_daily(intervalHydrogfdod$hydrogfdod.endDate,
+                                                   intervalHindcast$hindcast.endDate)
+
     ## ------------------------------------------------------------------------------
     # Do not return the posixlt class objects
     # Convert data to character strings in the format yyyymm or yyyymmdd
-    # Queries of start/stop date for opensearch may need dash, or may not
-    # Our hydrogfd filenames contains no dashes
     
     if (verbose == TRUE) {
-      #tmp <- strftime(hydrogfdei.startDate,format="%Y-%m")
-      tmp <- strftime(hydrogfdei.startDate,format="%Y%m")
+      tmp <- strftime(intervalHindcast$hindcast.startDate,format="%Y%m")
       print(tmp)
-      tmp <- strftime(hydrogfdei.endDate,format="%Y%m")
+      tmp <- strftime(intervalHindcast$hindcast.endDate,format="%Y%m")
       print(tmp)
-      tmp <- strftime(hydrogfdod.startDate,format="%Y%m")
+
+      tmp <- strftime(intervalHydrogfdei$hydrogfdei.startDate,format="%Y%m")
       print(tmp)
-      tmp <- strftime(hydrogfdod.endDate,format="%Y%m")
+      tmp <- strftime(intervalHydrogfdei$hydrogfdei.endDate,format="%Y%m")
       print(tmp)
-      tmp <- strftime(od.startDate,format="%Y%m%d")
+      tmp <- strftime(intervalHydrogfdod$hydrogfdod.startDate,format="%Y%m")
       print(tmp)
-      tmp <- strftime(od.endDate,format="%Y%m%d")
+      tmp <- strftime(intervalHydrogfdod$hydrogfdod.endDate,format="%Y%m")
       print(tmp)
-      tmp <- strftime(ecoper.startDate,format="%Y%m%d")
+      tmp <- strftime(intervalOdDaily$od.startDate,format="%Y%m%d")
       print(tmp)
-      tmp <- strftime(ecoper.endDate,format="%Y%m%d")
+      tmp <- strftime(intervalOdDaily$od.endDate,format="%Y%m%d")
       print(tmp)
     }
 
-    hydrogfdeiStartDateSearch   <- strftime(hydrogfdei.startDate,format="%Y-%m-%d")
-    hydrogfdeiEndDateSearch     <- strftime(hydrogfdei.endDate,format="%Y-%m-%d")
-    hydrogfdeiStartDateFilename <- strftime(hydrogfdei.startDate,format="%Y%m")
-    hydrogfdeiEndDateFilename   <- strftime(hydrogfdei.endDate,format="%Y%m")
+    hindcastStartDateSearch <- strftime(intervalHindcast$hindcast.startDate,format="%Y-%m-%d")
+    hindcastEndDateSearch   <- strftime(intervalHindcast$hindcast.endDate,format="%Y-%m-%d")
+
+    hydrogfdeiStartDateSearch   <- strftime(intervalHydrogfdei$hydrogfdei.startDate,format="%Y-%m-%d")
+    hydrogfdeiEndDateSearch     <- strftime(intervalHydrogfdei$hydrogfdei.endDate,format="%Y-%m-%d")
+    hydrogfdeiStartDateFilename <- strftime(intervalHydrogfdei$hydrogfdei.startDate,format="%Y%m")
+    hydrogfdeiEndDateFilename   <- strftime(intervalHydrogfdei$hydrogfdei.endDate,format="%Y%m")
     
-    hydrogfdodStartDateSearch   <- strftime(hydrogfdod.startDate,format="%Y-%m-%d")
-    hydrogfdodEndDateSearch     <- strftime(hydrogfdod.endDate,format="%Y-%m-%d")
-    hydrogfdodStartDateFilename <- strftime(hydrogfdod.startDate,format="%Y%m")
-    hydrogfdodEndDateFilename   <- strftime(hydrogfdod.endDate,format="%Y%m")
+    hydrogfdodStartDateSearch   <- strftime(intervalHydrogfdod$hydrogfdod.startDate,format="%Y-%m-%d")
+    hydrogfdodEndDateSearch     <- strftime(intervalHydrogfdod$hydrogfdod.endDate,format="%Y-%m-%d")
+    hydrogfdodStartDateFilename <- strftime(intervalHydrogfdod$hydrogfdod.startDate,format="%Y%m")
+    hydrogfdodEndDateFilename   <- strftime(intervalHydrogfdod$hydrogfdod.endDate,format="%Y%m")
     
-    odStartDateSearch   <- strftime(od.startDate,format="%Y-%m-%d")
-    odEndDateSearch     <- strftime(od.endDate,format="%Y-%m-%d")
-    odStartDateFilename <- strftime(od.startDate,format="%Y%m%d")
-    odEndDateFilename   <- strftime(od.endDate,format="%Y%m%d")
+    odStartDateSearch   <- strftime(intervalOdDaily$od.startDate,format="%Y-%m-%d")
+    odEndDateSearch     <- strftime(intervalOdDaily$od.endDate,format="%Y-%m-%d")
+    odStartDateFilename <- strftime(intervalOdDaily$od.startDate,format="%Y%m%d")
+    odEndDateFilename   <- strftime(intervalOdDaily$od.endDate,format="%Y%m%d")
     
-    ecoperStartDateSearch   <- strftime(ecoper.startDate,format="%Y-%m-%d")
-    ecoperEndDateSearch     <- strftime(ecoper.endDate,format="%Y-%m-%d")
-    #ecoperStartDateFilename <- strftime(ecoper.startDate,format="%Y%m%d00") # Will create problem if necessary to convert to date for loop
-    #ecoperEndDateFilename   <- strftime(ecoper.endDate,format="%Y%m%d00")
-    ecoperStartDateFilename <- strftime(ecoper.startDate,format="%Y%m%d")
-    ecoperEndDateFilename   <- strftime(ecoper.endDate,format="%Y%m%d")
-    
-    # Return dates as characters
-    castIntervals <- list("hydrogfdeiStartDateSearch"=hydrogfdeiStartDateSearch,
+    castIntervals <- list("hindcastStartDateSearch"=hindcastStartDateSearch,
+                          "hindcastEndDateSearch"=hindcastEndDateSearch,
+
+                          "hydrogfdeiStartDateSearch"=hydrogfdeiStartDateSearch,
                           "hydrogfdeiEndDateSearch"=hydrogfdeiEndDateSearch,
                           "hydrogfdeiStartDateFilename"=hydrogfdeiStartDateFilename,
                           "hydrogfdeiEndDateFilename"=hydrogfdeiEndDateFilename,
+
                           "hydrogfdodStartDateSearch"=hydrogfdodStartDateSearch,
                           "hydrogfdodEndDateSearch"=hydrogfdodEndDateSearch,
                           "hydrogfdodStartDateFilename"=hydrogfdodStartDateFilename,
                           "hydrogfdodEndDateFilename"=hydrogfdodEndDateFilename,
+
                           "odStartDateSearch"=odStartDateSearch,
                           "odEndDateSearch"=odEndDateSearch,
                           "odStartDateFilename"=odStartDateFilename,
-                          "odEndDateFilename"=odEndDateFilename,
-                          "ecoperStartDateSearch"=ecoperStartDateSearch,
+                          "odEndDateFilename"=odEndDateFilename
+                          )
+    return(castIntervals)
+    
+} # prepare_hindcast_intervals
+
+
+prepare_forecast_intervals <- function(in_forecastIssueDate) # character string with dashes
+{
+    # Convert to posix date format
+    forecast.IssueDate <- as.Date(in_forecastIssueDate)
+    forecast.IssueDate <- as.POSIXlt(forecast.IssueDate)
+    
+    if (verbose == TRUE) {
+      print('Handle inputs:')
+      print('forecast.IssueDate:')
+      print(forecast.IssueDate)
+      print('')
+    }
+
+    ## ------------------------------------------------------------------------------
+    # ECOPER (daily)
+    intervalEcoper <- determine_interval_ecoper(forecast.IssueDate)
+
+    ## ------------------------------------------------------------------------------
+    # Do not return the posixlt class objects
+    # Convert data to character strings in the format yyyymm or yyyymmdd
+    
+    if (verbose == TRUE) {
+      tmp <- strftime(intervalEcoper$ecoper.startDate,format="%Y%m%d")
+      print(tmp)
+      tmp <- strftime(intervalEcoper$ecoper.endDate,format="%Y%m%d")
+      print(tmp)
+    }
+
+    ecoperStartDateSearch   <- strftime(intervalEcoper$ecoper.startDate,format="%Y-%m-%d")
+    ecoperEndDateSearch     <- strftime(intervalEcoper$ecoper.endDate,format="%Y-%m-%d")
+    ecoperStartDateFilename <- strftime(intervalEcoper$ecoper.startDate,format="%Y%m%d")
+    ecoperEndDateFilename   <- strftime(intervalEcoper$ecoper.endDate,format="%Y%m%d")
+    
+    castIntervals <- list("ecoperStartDateSearch"=ecoperStartDateSearch,
                           "ecoperEndDateSearch"=ecoperEndDateSearch,
                           "ecoperStartDateFilename"=ecoperStartDateFilename,
                           "ecoperEndDateFilename"=ecoperEndDateFilename
                           )
     return(castIntervals)
     
-} # prepare_casts_intervals
+} # prepare_forecast_intervals
 
 
-
-# Check name of a retreived file
-# Return TRUE when name match, else FALSE
-# check_filename <- function(curFilename, # Name of file to check
-#                            metName, # String hydrogfdei, hydrogfdod, od-daily, ecoper (same as model config sub-dir)
-#                            variable, # String pr, tas, tasmin or tasmax
-#                            date)#, # Expected date in filename, ecoper (00 already part of date for filename)
-#                            #onlyPRTAS = FALSE) # When true, ignore tasmin/tasmax
-# {
-#   # if (onlyPRTAS == TRUE) {
-#   #   variables = c("pr", "tas")
-#   # }else {
-#   #   variables = c("pr", "tas", "tasmin", "tasmax")
-#   # }
-#   # for (v in variables){
-# 
-#   expFilename <- paste(variable,metName,date,"fanfar_SMHI.nc",sep="_")
-#   if (verbose == TRUE) {
-#     print(curFilename)
-#     print(expFilename)
-#   }
-#   
-#   # ToDo: Does this work in R?
-#   nameMatch <- (curFilename != expFilename)
-#   nameMatch <- TRUE # ToDo: remove
-#   
-#   return (nameMatch)
-# 
-# }
-
-
+# Common
 search_and_download_netcdf <- function(urlNC,
                                        query,
                                        startDate,
@@ -538,6 +604,7 @@ search_and_download_netcdf <- function(urlNC,
 } # search_and_download_netcdf
 
 
+# Common
 check_date_interval_netcdf <- function(startDate,
                                        endDate,
                                        ncRootDir,
@@ -600,7 +667,7 @@ check_date_interval_netcdf <- function(startDate,
   return (nMissingFiles)
 } # check_date_interval_netcdf
 
-
+# Common
 # This handles the sequence for each x obs  file (iterates opensearch, download each meterological GFD, call function to convert to obs) 
 # Retrieve files (pr,tas,tasmin,tasmax) via opensearch and rciop.copy
 # Configurable option to download all files into one dir or individual sub-dirs
@@ -608,7 +675,8 @@ check_date_interval_netcdf <- function(startDate,
 download_netcdf <- function(modelConfig,    # sub-dir to use for local download dir, url, query pattern etc 
                             xCastsInterval, # dates for search start/stop, expected date in filename to check against
                             netcdfDir,      # base dir to download files too
-                            ncSubDir)       # False-one dir, True-separate dir for each variable
+                            ncSubDir,       # False-one dir, True-separate dir for each variable
+                            forecast=FALSE) # False-hindcast, True-forecast
 {
   # Other inputs are:
   # path_to_store_netcdf_files - temporary dir
@@ -619,113 +687,116 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
     print("download_netcdf func input:")
     print(modelConfig)
     print(xCastsInterval)
+    print(forecast)
   }
   
   # Constants
-  #osClientApp <- "opensearch-client"
-  #secStartDay <- "T00:00:01"
-  #secEndDay   <- "T23:59:59"
   variables   <- c("pr","tas","tasmin","tasmax")
-  #ncSubDir    <- FALSE
-  #ncSubDir    <- TRUE # False-one dir, True-separate dir for each variable
   fileSuffix <- "_fanfar_SMHI.nc"
 
   if (! dir.exists(netcdfDir)){
     dir.create(netcdfDir)
   }
 
-  ## ------------------------------------------------------------------------------
-  # Handle hydrogfdei
-  urlNC     <- modelConfig$gfdHydrogfdeiUrl
-  query     <- modelConfig$gfdHydrogfdeiQuery
-  startDate <- xCastsInterval$hydrogfdeiStartDateSearch
-  stopDate  <- xCastsInterval$hydrogfdeiEndDateSearch
-  
-  search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-  nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
-                                         "_hydrogfdei_",fileSuffix)
-  if (nMissing > 0){
-      print(paste0(nMissing," file(s) missing for hydrogfdei"))
-      rciop.log("INFO",paste0(nMissing," file(s) missing for hydrogfdei"))
-  }
-  
-  ## ------------------------------------------------------------------------------
-  # Handle hydrogfdod
-  urlNC     <- modelConfig$gfdHydrogfdodUrl
-  query     <- modelConfig$gfdHydrogfdodQuery
-  startDate <- xCastsInterval$hydrogfdodStartDateSearch
-  stopDate  <- xCastsInterval$hydrogfdodEndDateSearch
+  if (forecast == FALSE){
+      ## ------------------------------------------------------------------------------
+      # Handle hydrogfdei
+      urlNC     <- modelConfig$gfdHydrogfdeiUrl
+      query     <- modelConfig$gfdHydrogfdeiQuery
+      startDate <- xCastsInterval$hydrogfdeiStartDateSearch
+      stopDate  <- xCastsInterval$hydrogfdeiEndDateSearch
+      
+      search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
+      nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
+                                            "_hydrogfdei_",fileSuffix)
+      if (nMissing > 0){
+          print(paste0(nMissing," file(s) missing for hydrogfdei"))
+          rciop.log("INFO",paste0(nMissing," file(s) missing for hydrogfdei"))
+      }
+      
+      ## ------------------------------------------------------------------------------
+      # Handle hydrogfdod
+      urlNC     <- modelConfig$gfdHydrogfdodUrl
+      query     <- modelConfig$gfdHydrogfdodQuery
+      startDate <- xCastsInterval$hydrogfdodStartDateSearch
+      stopDate  <- xCastsInterval$hydrogfdodEndDateSearch
 
-  search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-  # Check retrieved filenames
-  nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
-                                         "_hydrogfdod_",fileSuffix)
-  if (nMissing > 0){
-      print(paste0(nMissing," file(s) missing for hydrogfdod"))
-      rciop.log("INFO",paste0(nMissing," file(s) missing for hydrogfdod"))
-  }
-  
-  ## ------------------------------------------------------------------------------
-  # Handle od (od-daily)
-  urlNC     <- modelConfig$gfdOdDailyUrl
-  query     <- modelConfig$gfdOdDailyQuery
-  startDate <- xCastsInterval$odStartDateSearch
-  stopDate  <- xCastsInterval$odEndDateSearch
+      search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
+      # Check retrieved filenames
+      nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
+                                            "_hydrogfdod_",fileSuffix)
+      if (nMissing > 0){
+          print(paste0(nMissing," file(s) missing for hydrogfdod"))
+          rciop.log("INFO",paste0(nMissing," file(s) missing for hydrogfdod"))
+      }
+      
+      ## ------------------------------------------------------------------------------
+      # Handle od (od-daily)
+      urlNC     <- modelConfig$gfdOdDailyUrl
+      query     <- modelConfig$gfdOdDailyQuery
+      startDate <- xCastsInterval$odStartDateSearch
+      stopDate  <- xCastsInterval$odEndDateSearch
 
-  search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-  nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
-                                         "_od-daily_",fileSuffix)
-  if (nMissing > 0){
-      print(paste0(nMissing," file(s) missing for od-daily"))
-      rciop.log("INFO",paste0(nMissing," file(s) missing for od-daily"))
-  }
-  
-  ## ------------------------------------------------------------------------------
-  # Handle ecoper (ToDo: add 00 in expected filename during check)
-  urlNC     <- modelConfig$gfdEcoperUrl
-  query     <- modelConfig$gfdEcoperQuery
-  startDate <- xCastsInterval$ecoperStartDateSearch
-  stopDate  <- xCastsInterval$ecoperEndDateSearch
+      search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
+      nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
+                                            "_od-daily_",fileSuffix)
+      if (nMissing > 0){
+          print(paste0(nMissing," file(s) missing for od-daily"))
+          rciop.log("INFO",paste0(nMissing," file(s) missing for od-daily"))
+      }
+  } # forecast == FALSE
+  else{
+      # forecast == TRUE
+      ## ------------------------------------------------------------------------------
+      # Handle ecoper
+      urlNC     <- modelConfig$gfdEcoperUrl
+      query     <- modelConfig$gfdEcoperQuery
+      startDate <- xCastsInterval$ecoperStartDateSearch
+      stopDate  <- xCastsInterval$ecoperEndDateSearch
 
-  search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-  nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
-                                         "_ecoper_",paste0("00",fileSuffix))
-  if (nMissing > 0){
-      print(paste0(nMissing," file(s) missing for ecoper"))
-      rciop.log("INFO",paste0(nMissing," file(s) missing for ecoper"))
-  }
-
+      search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
+      nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
+                                            "_ecoper_",paste0("00",fileSuffix))
+      if (nMissing > 0){
+          print(paste0(nMissing," file(s) missing for ecoper"))
+          rciop.log("INFO",paste0(nMissing," file(s) missing for ecoper"))
+      }
+  } # forecast == TRUE
   ## ------------------------------------------------------------------------------
   # All meterological gfd parts downloaded to local tmp dir
   
-} # download_netcdf 
- 
+} # download_netcdf
+
+
+# Possibly split into two functions
+# one for hindcast sequence and
+# one for forcast sequence
 
 # External function
 # Wrapper for netcdf2obs sequence
-process_netcdf2obs <- function(modelConfig, # Misc config data, now 
-                               modelDataConfig, # Misc model config data, paths to state files, forcing, shape files
-                               forecastIssueDate, # yyyy-mm-dd
-                               hindcastPeriodLength, # Days
-                               netcdfDir, # Dir to store netcdf files
-                               ncSubDir, # False-one dir, True-separate dir for each variable
-                               obsDir) # Dir to store obs files
+process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now 
+                                        modelDataConfig, # Misc model config data, paths to state files, forcing, shape files
+                                        forecastIssueDate, # yyyy-mm-dd
+                                        hindcastPeriodLength, # Days
+                                        netcdfDir, # Dir to store netcdf files
+                                        ncSubDir, # False-one dir, True-separate dir for each variable
+                                        obsDir) # Dir to store obs files
 {
   # Prepare hindcast and forecast intervals, start and end dates
-  prepCastInterval <- prepare_casts_intervals(hindcastPeriodLength,
-                                              forecastIssueDate,
-                                              in_reforecast = TRUE,
-                                              "19700101") # ToDo: Get date from latest Hype state filename
+  prepHindcastInterval <- prepare_hindcast_intervals(hindcastPeriodLength,
+                                                     forecastIssueDate,
+                                                     in_reforecast = TRUE,
+                                                     "19700101") # ToDo: Get date from latest Hype state filename
   # For the calculated time interval, search and download hydrogfd netcdf files
   download_netcdf(modelConfig,
-                  xCastsInterval = prepCastInterval,
+                  xCastsInterval = prepHindcastInterval, # Now different types... either have one type only...
                   netcdfDir,
                   ncSubDir)
   
   # Produce the files Pobs.txt, Tobs.txt, TMINobs.txt and TMAXobs.txt
   # Depending on selected dir, copy the files to run dir
-  startDate <- prepCastInterval$hydrogfdeiStartDateSearch
-  endDate   <- prepCastInterval$ecoperEndDateSearch
+  startDate <- prepHindcastInterval$hindcastStartDateSearch
+  endDate   <- prepHindcastInterval$hindcastEndDateSearch
   
   res <- prepare_and_run_netcdf_to_obs(workDir=paste0(TMPDIR,"/netcdf_to_obs"),
                                        ncRootDir=netcdfDir,
@@ -745,7 +816,50 @@ process_netcdf2obs <- function(modelConfig, # Misc config data, now
   #  # Copy obs files to run dir
   #}
 
-} # process_netcdf2obs
+} # process_hindcast_netcdf2obs
 
+
+# ToDo: Remove/Replace some inputs, call other func for forecast interval
 # External function
-#process_netcdf2obs()
+# Wrapper for netcdf2obs sequence
+process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now 
+                                        modelDataConfig, # Misc model config data, paths to state files, forcing, shape files
+                                        forecastIssueDate, # yyyy-mm-dd
+                                        netcdfDir, # Dir to store netcdf files
+                                        ncSubDir, # False-one dir, True-separate dir for each variable
+                                        obsDir) # Dir to store obs files
+{
+  # Prepare hindcast and forecast intervals, start and end dates
+  prepForecastInterval <- prepare_forecast_intervals(forecastIssueDate)
+
+  # For the calculated time interval, search and download hydrogfd netcdf files
+  download_netcdf(modelConfig,
+                  xCastsInterval = prepForecastInterval, # Now different types... either have one type only...
+                  netcdfDir,
+                  ncSubDir,
+                  forecast=TRUE)
+  
+  # Produce the files Pobs.txt, Tobs.txt, TMINobs.txt and TMAXobs.txt
+  # Depending on selected dir, copy the files to run dir
+  startDate <- prepForecastInterval$ecoperStartDateSearch
+  endDate   <- prepForecastInterval$ecoperEndDateSearch
+  
+  res <- prepare_and_run_netcdf_to_obs(workDir=paste0(TMPDIR,"/netcdf_to_obs"),
+                                       ncRootDir=netcdfDir,
+                                       ncSubDir=ncSubDir,
+                                       resourceDir=NULL, # ToDo
+                                       gridElevPath=NULL,
+                                       shapeFilePath=NULL,
+                                       outPath=obsDir,
+                                       startDate,
+                                       endDate
+                                       )
+  if (res > 0){
+      rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs, exit code=",res))
+  }
+
+  #if (obsDir != runDir){
+  #  # Copy obs files to run dir
+  #}
+
+} # process_forecast_netcdf2obs
