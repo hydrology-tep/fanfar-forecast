@@ -153,6 +153,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         model.files.path     <- modelDataPaths$pathModelFiles     # Instead of model.files.url
         forcing.archive.path <- modelDataPaths$pathForcingArchive # Instead of forcing.archive.url
         state.files.path     <- modelDataPaths$pathStateFiles     # Instead of state.files.url
+        #shapefiles          <- modelDataPaths$pathShapeFiles
         rciop.log("INFO path", model.files.path)
         rciop.log("INFO path", forcing.archive.path)
         rciop.log("INFO path", state.files.path)
@@ -204,12 +205,14 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     # ToDo: Dir name based on config dataset
     dirNCFiles  <- paste(TMPDIR,"netcdf-files",sep="/")
     dirObsFiles <- paste(TMPDIR,"obs-files",sep="/")
+    dirGridMeta <- paste(TMPDIR,"grid-meta",sep="/")
     process_hindcast_netcdf2obs(modelConfigData,
                                 modelDataPaths,
                                 app.input$idate,
                                 app.input$hcperiodlen,
                                 dirNCFiles,
                                 ncSubDir=TRUE,
+                                dirGridMeta,
                                 dirObsFiles)
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste("hindcast forcing set"), nameOfSrcFile)}
@@ -280,6 +283,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                 app.input$idate,
                                 dirNCFiles,
                                 ncSubDir=TRUE,
+                                dirGridMeta,
                                 dirObsFiles)
     ## forcing data
     forecast.forcing <- getModelForcing(appSetup   = app.setup,

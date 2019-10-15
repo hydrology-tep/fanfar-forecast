@@ -106,6 +106,11 @@ process_input_model_configuration <- function(applConfig, # Application configur
   gfdEcoperDailyQuery   <- NULL
   gfdEcoperDailyComment <- NULL
   
+  gfdElevationSubDir  <- NULL
+  gfdElevationUrl     <- NULL
+  gfdElevationQuery   <- NULL
+  gfdElevationComment <- NULL
+  
   # Query the input reference
   opensearchCmd=paste0("opensearch-client '",applInput,"' enclosure")
   message(opensearchCmd)
@@ -169,6 +174,12 @@ process_input_model_configuration <- function(applConfig, # Application configur
       gfdEcoperComment <- model_config_data[r,'info']
     }
     # Skip subdir 'ei-monthly' and 'od-monthly'
+    if (subdir == 'elevation') {
+      gfdElevationSubDir  <- model_config_data[r,'subdir']
+      gfdElevationUrl     <- model_config_data[r,'url']
+      gfdElevationQuery   <- model_config_data[r,'querypattern']
+      gfdElevationComment <- model_config_data[r,'info']
+    }
   }
   
   # Return information as a list
@@ -200,7 +211,12 @@ process_input_model_configuration <- function(applConfig, # Application configur
                             "gfdEcoperSubDir"=gfdEcoperSubDir,
                             "gfdEcoperUrl"=gfdEcoperUrl,
                             "gfdEcoperQuery"=gfdEcoperQuery,
-                            "gfdEcoperComment"=gfdEcoperComment
+                            "gfdEcoperComment"=gfdEcoperComment,
+                            
+                            "gfdElevationSubDir"=gfdElevationSubDir,
+                            "gfdElevationUrl"=gfdElevationUrl,
+                            "gfdElevationQuery"=gfdElevationQuery,
+                            "gfdElevationComment"=gfdElevationComment
   )
   
   #print(outputModelConfig)
@@ -218,7 +234,8 @@ process_input_hype_model_data <- function(applConfig,  # Application configurati
   # Outputs
   pathModelFiles <- NULL
   pathForcingArchive <- NULL
-  pathStateFiles <- NULL  
+  pathStateFiles <- NULL
+  pathShapeFiles <- NULL
   
   url <- modelConfig$modelDataUrl
   query <- modelConfig$modelDataQuery
@@ -244,11 +261,13 @@ process_input_hype_model_data <- function(applConfig,  # Application configurati
   
   pathForcingArchive <- paste(pathModelFiles,"forcingarchive",sep="/") # Instead of forcing.archive.url
   pathStateFiles     <- paste(pathModelFiles,"statefiles",sep="/") # Instead of state.files.url
+  pathShapeFiles     <- paste(pathModelFiles,"shapefiles",sep="/") # ToDo: Use
   
   # Return information as a list
   outputModelData <- list("pathModelFiles"=pathModelFiles,
                           "pathForcingArchive"=pathForcingArchive,
-                          "pathStateFiles"=pathStateFiles
+                          "pathStateFiles"=pathStateFiles,
+                          "pathShapeFiles"=pathShapeFiles
   )
   
   #print(outputModelData)
