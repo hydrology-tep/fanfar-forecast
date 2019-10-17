@@ -1021,6 +1021,24 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
   #  # Copy obs files to run dir
   #}
 
+  # Return the same type structure as function getModelForcing() and readXobsData(), but minimal
+  bdate <- as.Date(startDate)
+  cdate <- as.Date(prepHindcastInterval$hydrogfdeiEndDateSearch)
+  edate <- as.Date(endDate)
+  hindcast.forcing <- list("bdate"=bdate,
+                           "cdate"=cdate,
+                           "edate"=edate)
+  
+  xobsVar   <- c("var xyz") # ToDo
+  xobsSubid <- c("subid xyz") # ToDo
+  xobs.input <- list("xobsVar"=xobsVar,
+                     "xobsSubid"=xobsSubid)
+
+  output <- list("hindcast.forcing"=hindcast.forcing,
+                 "xobs.input"=xobs.input)
+
+  return (output)
+
 } # process_hindcast_netcdf2obs
 
 
@@ -1067,5 +1085,17 @@ process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
   #if (obsDir != runDir){
   #  # Copy obs files to run dir
   #}
+
+  # Return the same type structure as function getModelForcing(), but minimal
+  bdate <- as.Date(startDate)
+  cdate <- as.Date(startDate)
+  edate <- as.Date(endDate)
+  forecast.forcing <- list("bdate"=bdate,
+                           "cdate"=cdate,
+                           "edate"=edate)
+
+  output <- list("forecast.forcing"=forecast.forcing)
+
+  return (output)
 
 } # process_forecast_netcdf2obs

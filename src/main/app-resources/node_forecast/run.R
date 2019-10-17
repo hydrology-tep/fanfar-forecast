@@ -205,46 +205,87 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## 4 - Hindcast input data
     ## ------------------------------------------------------------------------------
     ## forcing data
-    hindcast.forcing <- getModelForcing(appSetup   = app.setup,
-                                        appInput  = app.input,
-                                        dataSource = forcing.data.source,
-                                        hindcast   = T)
 
-    ## Download and process hydrogfd netcdf files
-    # ToDo: Dir name based on config dataset
-    dirNCFiles  <- paste(TMPDIR,"netcdf-files",sep="/")
-    dirObsFiles <- paste(TMPDIR,"obs-files",sep="/")
-    dirGridMeta <- paste(TMPDIR,"grid-meta",sep="/")
-    process_hindcast_netcdf2obs(modelConfigData,
-                                modelDataPaths,
-                                app.input$idate,
-                                app.input$hcperiodlen,
-                                dirNCFiles,
-                                ncSubDir=TRUE,
-                                dirGridMeta,
-                                dirObsFiles)
+    if (applRuntimeOptions$metHC == cMetHCVariant1) {
+        hindcast.forcing <- getModelForcing(appSetup   = app.setup,
+                                            appInput   = app.input,
+                                            dataSource = forcing.data.source,
+                                            hindcast   = T)
+        print("hindcast.forcing returned1:")
+        print(hindcast.forcing)
 
-    if(app.sys=="tep"){rciop.log ("DEBUG", paste("hindcast forcing set"), nameOfSrcFile)}
-    log.res=appLogWrite(logText = "Hindcast forcing data downloaded and prepared",fileConn = logFile$fileConn)
+        # getModelForcing returns:
+        # return(list("status"=T, # TRUE
+        #            "localFile"=downloadInfo$localFile,# "/var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910161533_0110/attempt_201910161533_0110_m_000000_0/work/tmp/20190926.zip"
+        #            "issueDate"=issueDate.Num, # "2019-09-26 GMT"
+        #            "archive"=F, # FALSE
+        #            "bdate"=bdate, # "2019-01-01 01:00:00 CET"
+        #            "cdate"=cdate, # "2019-05-26 GMT"
+        #            "edate"=edate, # "2019-09-25 GMT"
+        #            "outstateDate"=outstateDate, # "2019-09-26 GMT"
+        #            "stateFile"=stateFile)) # "/var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910161533_0110/attempt_201910161533_0110_m_000000_0/work/tmp/model/forecast/niger-hype/state_save20190101.txt"
 
-    ## ------------------------------------------------------------------------------
+        if(app.sys=="tep"){rciop.log ("DEBUG", paste("hindcast forcing set"), nameOfSrcFile)}
+        log.res=appLogWrite(logText = "Hindcast forcing data downloaded and prepared",fileConn = logFile$fileConn)
 
-    xobs.data <- getXobsData(appInput = app.input, # xobsNum, xobs, xobsURL
-                             appSetup = app.setup) # model run dir, res dir etc.
-    if(app.sys=="tep"){rciop.log ("DEBUG", paste("xobs data downloaded from catalogue"), nameOfSrcFile)}
-    log.res=appLogWrite(logText = "xobs data (if any) downloaded from catalogue",fileConn = logFile$fileConn)
+        ## ------------------------------------------------------------------------------
 
-    ## ------------------------------------------------------------------------------
-    ## read downloaded Xobs input file(s) - merge into one Xobs.txt in the model run folder
-    xobs.input <- readXobsData(appSetup = app.setup,
-                               xobsData = xobs.data)
-    if(app.sys=="tep"){rciop.log ("DEBUG", paste("xobs data merged to model rundir"), nameOfSrcFile)}
-    log.res=appLogWrite(logText = "Xobs data (if any) merged into model directory",fileConn = logFile$fileConn)
+        xobs.data <- getXobsData(appInput = app.input, # xobsNum, xobs, xobsURL
+                                 appSetup = app.setup) # model run dir, res dir etc.
+        if(app.sys=="tep"){rciop.log ("DEBUG", paste("xobs data downloaded from catalogue"), nameOfSrcFile)}
+        log.res=appLogWrite(logText = "xobs data (if any) downloaded from catalogue",fileConn = logFile$fileConn)
+
+        ## ------------------------------------------------------------------------------
+        ## read downloaded Xobs input file(s) - merge into one Xobs.txt in the model run folder
+        xobs.input <- readXobsData(appSetup = app.setup,
+                                   xobsData = xobs.data)
+        print("xobs.input returned1:")
+        print(xobs.input)
+        if(app.sys=="tep"){rciop.log ("DEBUG", paste("xobs data merged to model rundir"), nameOfSrcFile)}
+        log.res=appLogWrite(logText = "Xobs data (if any) merged into model directory",fileConn = logFile$fileConn)
+    }
+
+    if (applRuntimeOptions$metHC == cMetHCVariant2) {
+        ## Download and process hydrogfd netcdf files
+        # ToDo: Dir name based on config dataset
+        dirNCFiles  <- paste(TMPDIR,"netcdf-files",sep="/")
+        dirObsFiles <- paste(TMPDIR,"obs-files",sep="/")
+        dirGridMeta <- paste(TMPDIR,"grid-meta",sep="/")
+        hindcast.forcingandxobs <- process_hindcast_netcdf2obs(modelConfigData,
+                                                               modelDataPaths,
+                                                               app.input$idate,
+                                                               app.input$hcperiodlen,
+                                                               dirNCFiles,
+                                                               ncSubDir=TRUE,
+                                                               dirGridMeta,
+                                                               dirObsFiles)
+
+        # updateModelInput() uses only:
+        # hindcast.forcing$bdate # as.Date
+        # hindcast.forcing$cdate # as.Date
+        # hindcast.forcing$edate # as.Date
+        # xobs.input$xobsVar # list
+        # xobs.input$xobsSubid # list
+
+        # Minimal variants of original list types
+        hindcast.forcing <- hindcast.forcingandxobs$hindcast.forcing
+        xobs.input       <- hindcast.forcingandxobs$xobs.input
+        print("hindcast.forcing returned2:")
+        print(hindcast.forcing)
+        print("xobs.input returned2:")
+        print(xobs.input)
+    }
 
     ## ------------------------------------------------------------------------------
     ## modify some model files based on input parameters
+    #if (applRuntimeOptions$metHC == cMetHCVariant1) {
     hindcast.input <- updateModelInput(appSetup = app.setup, appInput = app.input,
                                        hindcast = T, modelForcing = hindcast.forcing, xobsInput = xobs.input)
+    #}
+    #if (applRuntimeOptions$metHC == cMetHCVariant2) {
+    #    hindcast.input <- updateModelInput(appSetup = app.setup, appInput = app.input,
+    #                                    hindcast = T, modelForcing = hindcast.forcing, xobsInput = xobs.input) # ToDo: data x2
+    #}
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste("hindcast inputs modified"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "hindcast model inputs modified",fileConn = logFile$fileConn)
@@ -281,23 +322,45 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     #################################################################################
     ## 6 - Forecast input data
     ## ------------------------------------------------------------------------------
-    ## Download and process ecoper netcdf files
-
-    # ToDo: Dir name based on config dataset
-    #dirNCFiles  <- paste(TMPDIR,"netcdf-files",sep="/") already set before hindcast
-    #dirObsFiles <- paste(TMPDIR,"obs-files",sep="/")    already set before hindcast
-    process_forecast_netcdf2obs(modelConfigData,
-                                modelDataPaths,
-                                app.input$idate,
-                                dirNCFiles,
-                                ncSubDir=TRUE,
-                                dirGridMeta,
-                                dirObsFiles)
     ## forcing data
-    forecast.forcing <- getModelForcing(appSetup   = app.setup,
-                                        appInput  = app.input,
-                                        dataSource = forcing.data.source,
-                                        hindcast   = F)
+
+    if (applRuntimeOptions$metHC == cMetHCVariant1) {
+        forecast.forcing <- getModelForcing(appSetup   = app.setup,
+                                            appInput   = app.input,
+                                            dataSource = forcing.data.source,
+                                            hindcast   = F)
+        print("forecast.forcing returned1:")
+        print(forecast.forcing)
+        #   return(list("status"=T, # TRUE
+        #               "localFile"=downloadInfo$localFile, # "/var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910161533_0110/attempt_201910161533_0110_m_000000_0/work/tmp/20190926.zip"
+        #               "issueDate"=issueDate.Num, # "2019-09-27 GMT" # Should be 26...
+        #               "archive"=F, # FALSE
+        #               "bdate"=bdate, # "2019-09-26 GMT"
+        #               "cdate"=cdate, # "2019-09-26 GMT"
+        #               "edate"=edate, # "2019-10-05 GMT"
+        #               "outstateDate"=outstateDate, # NA
+        #               "stateFile"=stateFile)) # "/var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910161533_0110/attempt_201910161533_0110_m_000000_0/work/tmp/model/forecast/niger-hype/state_save20190926.txt"
+    }
+
+    if ((applRuntimeOptions$metHC == cMetHCVariant2) &&
+        (applRuntimeOptions$metFC == cMetFCVariant1)) {
+        ## Download and process ecoper netcdf files
+
+        # ToDo: Dir name based on config dataset
+        #dirNCFiles  <- paste(TMPDIR,"netcdf-files",sep="/") already set before hindcast
+        #dirObsFiles <- paste(TMPDIR,"obs-files",sep="/")    already set before hindcast
+        forecast.forcingandxobs <- process_forecast_netcdf2obs(modelConfigData,
+                                                               modelDataPaths,
+                                                               app.input$idate,
+                                                               dirNCFiles,
+                                                               ncSubDir=TRUE,
+                                                               dirGridMeta,
+                                                               dirObsFiles)
+        # Minimal variants of original list types
+        forecast.forcing <- forecast.forcingandxobs$forecast.forcing
+        print("forecast.forcing returned2:")
+        print(forecast.forcing)
+    }
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste("...forecast forcing set"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "forecast model forcing data downloaded and prepared",fileConn = logFile$fileConn)

@@ -69,7 +69,7 @@ process_application_runtime_options <- function()
 # gfdHydrogfd - locating netcdf files
 process_input_model_configuration <- function(applConfig=NULL, # Application configuration from user, ToDo
                                               applInput=NULL)  # Input to application from stdin
-                                              #tmpDir)         # Local dir for temporary items only
+                                              #tmpDir)    # Local dir for temporary items only
 {
   # Download and read model config object from the applications input
   # Parse file dependencies.txt
