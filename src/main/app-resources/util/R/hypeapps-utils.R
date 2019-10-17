@@ -2334,6 +2334,10 @@ updateModelInput<-function(appSetup=NULL,appInput=NULL,hindcast=NULL,modelForcin
 ## prepare application outputs
 prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,modelForcing = NULL,runRes=NULL,appDate=NULL){
   
+  # Disable post-processing for H-TEP
+  enablePostProcessing <- (app.sys!="tep")
+  print(paste0("enablePostProcessing: ",enablePostProcessing))
+
   # Create folder for data to be published
   outDir = paste(appSetup$tmpDir,'output',sep="/")
   dir.create(outDir,recursive = T,showWarnings = F)
@@ -2766,33 +2770,34 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
       
       # HINDCAST and FORECAST standard plots (basin outputs and maps)
       
+      if(enablePostProcessing == TRUE){
       # FORECAST special COUT plots
-      if(k==2){
-        # make warning level plots only if return period level file exists
-        if(!is.null(appSetup$rpFileCOUT)){
+        if(k==2){
+          # make warning level plots only if return period level file exists
+          if(!is.null(appSetup$rpFileCOUT)){
 
-          rpFile=appSetup$rpFileCOUT
-          
-          # plot forecast hydrographs for selected subbasins
-          if(length(basinFiles)>0){
-            for(i in 1:length(basinFiles)){
-              syscmd = paste(app.rscript4plotting,
-                             "--vanilla --slave --quite",
-                             app.plotscriptForecastBasin,
-                             appSetup$resDir[1],
-                             appSetup$resDir[2],
-                             outDir[2],
-                             basinFiles[i],
-                             appSetup$modelName,
-                             hype2csvFile,
-                             rpFile,
-                             paste(prefix.img,"_forecast",sep=""),
-                             sep=" ")
-              if(app.sys=="tep"){rciop.log ("DEBUG", paste(" trying forecast basin plot script:  ",syscmd,sep=""), "/util/R/hypeapps-utils.R")}
-              plotres = system(command = syscmd,intern = T)
-              if(app.sys=="tep"){rciop.log ("DEBUG", paste(" plot result:  ",plotres,sep=""), "/util/R/hypeapps-utils.R")}
+            rpFile=appSetup$rpFileCOUT
+            
+            # plot forecast hydrographs for selected subbasins
+            if(length(basinFiles)>0){
+              for(i in 1:length(basinFiles)){
+                syscmd = paste(app.rscript4plotting,
+                               "--vanilla --slave --quite",
+                               app.plotscriptForecastBasin,
+                               appSetup$resDir[1],
+                               appSetup$resDir[2],
+                               outDir[2],
+                               basinFiles[i],
+                               appSetup$modelName,
+                               hype2csvFile,
+                               rpFile,
+                               paste(prefix.img,"_forecast",sep=""),
+                               sep=" ")
+                if(app.sys=="tep"){rciop.log ("DEBUG", paste(" trying forecast basin plot script:  ",syscmd,sep=""), "/util/R/hypeapps-utils.R")}
+                plotres = system(command = syscmd,intern = T)
+                if(app.sys=="tep"){rciop.log ("DEBUG", paste(" plot result:  ",plotres,sep=""), "/util/R/hypeapps-utils.R")}
+              }
             }
-          }
           
           # plot forecast warning level maps
 #           args         = commandArgs(trailingOnly=TRUE)
@@ -2806,32 +2811,33 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
 #           modelNameIN  = args[8]
           
         
-          name.hypeout = "timeCOUT.txt"
-          if(file.exists(paste(appSetup$resDir[2],name.hypeout,sep="/"))){
-            name.retlev  = appSetup$rpFileCOUT
-            name.wl.txt  = paste(prefix.wl.txt,"_forecast_mapWarningLevel.txt",sep="")
-            name.wl.png  = paste(prefix.wl.png,"_forecast_mapWarningLevel.png",sep="")
-            rdataFile    = appSetup$shapefileRdata
-          
-            syscmd = paste(app.rscript4plotting,"--vanilla --slave --quite",
-                           app.plotscriptWarningLevelMap,
-                           appSetup$resDir[2],
-                           outDir[2],
-                           name.hypeout,
-                           name.retlev,
-                           name.wl.txt,
-                           name.wl.png,
-                           rdataFile,
-                           appSetup$modelName,
-                           sep=" ")
-            if(app.sys=="tep"){rciop.log ("DEBUG", paste(" trying warning level map plot script:  ",syscmd,sep=""), "/util/R/hypeapps-utils.R")}
-            plotres = system(command = syscmd,intern = T)
-            system("source deactive cairo-env")
+            name.hypeout = "timeCOUT.txt"
+            if(file.exists(paste(appSetup$resDir[2],name.hypeout,sep="/"))){
+              name.retlev  = appSetup$rpFileCOUT
+              name.wl.txt  = paste(prefix.wl.txt,"_forecast_mapWarningLevel.txt",sep="")
+              name.wl.png  = paste(prefix.wl.png,"_forecast_mapWarningLevel.png",sep="")
+              rdataFile    = appSetup$shapefileRdata
+            
+              syscmd = paste(app.rscript4plotting,"--vanilla --slave --quite",
+                             app.plotscriptWarningLevelMap,
+                             appSetup$resDir[2],
+                             outDir[2],
+                             name.hypeout,
+                             name.retlev,
+                             name.wl.txt,
+                             name.wl.png,
+                             rdataFile,
+                             appSetup$modelName,
+                             sep=" ")
+              if(app.sys=="tep"){rciop.log ("DEBUG", paste(" trying warning level map plot script:  ",syscmd,sep=""), "/util/R/hypeapps-utils.R")}
+              plotres = system(command = syscmd,intern = T)
+              system("source deactive cairo-env")
 
-            if(app.sys=="tep"){rciop.log ("DEBUG", paste(" plot result:  ",plotres,sep=""), "/util/R/hypeapps-utils.R")}
+              if(app.sys=="tep"){rciop.log ("DEBUG", paste(" plot result:  ",plotres,sep=""), "/util/R/hypeapps-utils.R")}
+            }
           }
-        }
-      }  
+        } # k==2
+      } # enablePostProcessing
     }
     #outDir = paste(appSetup$tmpDir,'output',sep="/")
     
@@ -2846,7 +2852,7 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
   ## return outFiles
   return(outFiles)
   
-}
+} # prepareHypeAppsOutput
 
 # functions for application logfile that will be published as part of application results
 appLogOpen<-function(appName, tmpDir,appDate,prefix=NULL){

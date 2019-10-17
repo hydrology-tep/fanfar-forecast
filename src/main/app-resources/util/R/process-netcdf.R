@@ -39,7 +39,7 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
     if (! dir.exists(workDir)){
         dir.create(workDir)
     }
-    setwd(workDir)
+    currentDir <- setwd(workDir)
 
     # Source the utility file
     fileToSource <- paste0(Sys.getenv("_CIOP_APPLICATION_PATH"), "/util/R/netcdf_to_obs_utils.R")
@@ -47,7 +47,7 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
         rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",fileToSource))
         q(save="no", status = 0) # 77
     }
-    source(fileToSource)
+    #ToDo   source(fileToSource)
 
     # Define input/output data
     if (ncSubDir == TRUE){
@@ -116,20 +116,26 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
     timeEnd.1=as.POSIXct(endDate,tz = "GMT")
 
     # Check/re-generate gridLink
-    isGridLink = gridLinkPreparation(grid.path = grid_dir_path[1]
-                                    ,grid.pattern = nc_file_pattern[1]
-                                    ,grid.elev = grid_elev_path
-                                    ,var.name = nc_var_name[1]
-                                    ,grid.meta = resource_dir_path
-                                    ,output.path = out_path
-                                    ,redoGridLink = redoGridLink
-                                    ,model.shape = shape_file_path
-                                    ,cleanGeometry = cleanGeometry
-                                    ,crsProj = crsProjProc)
-    if (isGridLink > 0){
-        rciop.log("INFO", paste0("Aborting netcdf to obs - gridLinkPreparation(): ",isGridLink))
-        #q(save="no", status = 76)
-        status <- status + 1
+    #ToDo
+    # isGridLink = gridLinkPreparation(grid.path = grid_dir_path[1]
+    #                                 ,grid.pattern = nc_file_pattern[1]
+    #                                 ,grid.elev = grid_elev_path
+    #                                 ,var.name = nc_var_name[1]
+    #                                 ,grid.meta = resource_dir_path
+    #                                 ,output.path = out_path
+    #                                 ,redoGridLink = redoGridLink
+    #                                 ,model.shape = shape_file_path
+    #                                 ,cleanGeometry = cleanGeometry
+    #                                 ,crsProj = crsProjProc)
+    # if (isGridLink > 0){
+    #     rciop.log("INFO", paste0("Aborting netcdf to obs - gridLinkPreparation(): ",isGridLink))
+    #     #q(save="no", status = 76)
+    #     #status <- status + 1
+    # }
+
+    # Change back to previous work dir
+    if (! is.null(currentDir)){
+        setwd(currentDir)
     }
 
     return (status)
@@ -162,126 +168,131 @@ prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
     # Output
     status <- 0
 
-#     # Change to workDir
-#     if (! dir.exists(workDir)){
-#         dir.create(workDir)
-#     }
-#     setwd(workDir)
+    # Change to workDir
+    if (! dir.exists(workDir)){
+        dir.create(workDir)
+    }
+    currentDir <- setwd(workDir)
 
-#     # Source the utility file
-#     fileToSource <- paste0(Sys.getenv("_CIOP_APPLICATION_PATH"), "/util/R/netcdf_to_obs_utils.R")
-#     if (! file.exists(fileToSource)){
-#         rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",fileToSource))
-#         q(save="no", status = 77)
-#     }
-#     source(fileToSource)
+    # Source the utility file
+    fileToSource <- paste0(Sys.getenv("_CIOP_APPLICATION_PATH"), "/util/R/netcdf_to_obs_utils.R")
+    if (! file.exists(fileToSource)){
+        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",fileToSource))
+        q(save="no", status = 77)
+    }
+    #ToDo   source(fileToSource)
 
-#     # Define input/output data
-#     if (ncSubDir == TRUE){
-#         grid_dir_path <- c(paste0(ncRootDir,"/pr"),
-#                            paste0(ncRootDir,"/tas"),
-#                            paste0(ncRootDir,"/tasmin"),
-#                            paste0(ncRootDir,"/tasmax")
-#                           )
-#     }else{
-#         grid_dir_path <- ncRootDir
-#     }
+    # Define input/output data
+    if (ncSubDir == TRUE){
+        grid_dir_path <- c(paste0(ncRootDir,"/pr"),
+                           paste0(ncRootDir,"/tas"),
+                           paste0(ncRootDir,"/tasmin"),
+                           paste0(ncRootDir,"/tasmax")
+                          )
+    }else{
+        grid_dir_path <- ncRootDir
+    }
 
-#     resource_dir_path <- resourceDir
-#     if (! file.exists(resource_dir_path)){
-#         rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",resource_dir_path))
-#         q(save="no", status = 77)
-#     }
+    resource_dir_path <- resourceDir
+    if (! file.exists(resource_dir_path)){
+        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",resource_dir_path))
+        q(save="no", status = 77)
+    }
     
-#     grid_elev_path <- gridElevPath
-#     if (! file.exists(grid_elev_path)){
-#         rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",grid_elev_path))
-#         q(save="no", status = 77)
-#     }
+    grid_elev_path <- gridElevPath
+    if (! file.exists(grid_elev_path)){
+        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",grid_elev_path))
+        q(save="no", status = 77)
+    }
 
-#     nc_var_name     <- c("pr","tas","tasmin","tasmax")
-#     hype_obs_type   <- c("Pobs","Tobs","TMINobs","TMAXobs")
-#     nc_file_pattern <- c("pr_","tas_","tasmin_","tasmax_")
+    nc_var_name     <- c("pr","tas","tasmin","tasmax")
+    hype_obs_type   <- c("Pobs","Tobs","TMINobs","TMAXobs")
+    nc_file_pattern <- c("pr_","tas_","tasmin_","tasmax_")
 
-#     obsScale  <- c(86400,1,1,1)
-#     obsOffset <- c(0,-273.15,-273.15,-273.15)
-#     obsDigits <- c(3,1,1,1)
+    obsScale  <- c(86400,1,1,1)
+    obsOffset <- c(0,-273.15,-273.15,-273.15)
+    obsDigits <- c(3,1,1,1)
 
-#     # Model input
-#     shape_file_path <- shapeFilePath
-#     if (! file.exists(shape_file_path)){
-#         rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",shape_file_path))
-#         q(save="no", status = 77)
-#     }
+    # Model input
+    shape_file_path <- shapeFilePath
+    if (! file.exists(shape_file_path)){
+        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",shape_file_path))
+        q(save="no", status = 77)
+    }
 
-#     # Output options
-#     out_path <- outPath
-#     if (! dir.exists(out_path)){
-#         dir.create(out_path)
-#     }
+    # Output options
+    out_path <- outPath
+    if (! dir.exists(out_path)){
+        dir.create(out_path)
+    }
     
-#     # Processing options
-#     # force re-generation of gridLink (it will always be generated if [out_path]/gridLink.Rdata is missing)
-#     redoGridLink = F
+    # Processing options
+    # force re-generation of gridLink (it will always be generated if [out_path]/gridLink.Rdata is missing)
+    redoGridLink = F
     
-#     # force re-generation of grid.point.shp and grid.polygon.shp
-#     redoGridLayers = F
+    # force re-generation of grid.point.shp and grid.polygon.shp
+    redoGridLayers = F
     
-#     # prefered projected crs to use for calculating areal weights and distances
-#     #  - if not given, UTM will be used, with UTM zone adapted for each subbasin
-#     crsProjProc = NULL
+    # prefered projected crs to use for calculating areal weights and distances
+    #  - if not given, UTM will be used, with UTM zone adapted for each subbasin
+    crsProjProc = NULL
 
-#     # Check and clean subbasin polygons for corrupted geometries? 
-#     #  - preferably this should be done in advance and not as part of operational use
-#     cleanGeometry = F
+    # Check and clean subbasin polygons for corrupted geometries? 
+    #  - preferably this should be done in advance and not as part of operational use
+    cleanGeometry = F
     
-#     # nearest(1) or weighted(0)
-#     weightedOrNearest=0
+    # nearest(1) or weighted(0)
+    weightedOrNearest=0
 
-#     # Time period options (optional)
-#     timeStart.1=as.POSIXct(startDate,tz = "GMT")
-#     timeEnd.1=as.POSIXct(endDate,tz = "GMT")
+    # Time period options (optional)
+    timeStart.1=as.POSIXct(startDate,tz = "GMT")
+    timeEnd.1=as.POSIXct(endDate,tz = "GMT")
 
-#    # # Check/re-generate gridLink
-#        # isGridLink = gridLinkPreparation(grid.path = grid_dir_path[1]
-#        #                                 ,grid.pattern = nc_file_pattern[1]
-#        #                                 ,grid.elev = grid_elev_path
-#        #                                 ,var.name = nc_var_name[1]
-#        #                                 ,grid.meta = resource_dir_path
-#        #                                 ,output.path = out_path
-#        #                                 ,redoGridLink = redoGridLink
-#        #                                 ,model.shape = shape_file_path
-#        #                                 ,cleanGeometry = cleanGeometry
-#        #                                 ,crsProj = crsProjProc)
-#        # if (isGridLink > 0){
-#        #     rciop.log("INFO", paste0("Aborting netcdf to obs - gridLinkPreparation(): ",isGridLink))
-#        #     #q(save="no", status = 76)
-#        #     status <- status + 1
-#        # }
+    # # Check/re-generate gridLink
+    # isGridLink = gridLinkPreparation(grid.path = grid_dir_path[1]
+    #                                 ,grid.pattern = nc_file_pattern[1]
+    #                                 ,grid.elev = grid_elev_path
+    #                                 ,var.name = nc_var_name[1]
+    #                                 ,grid.meta = resource_dir_path
+    #                                 ,output.path = out_path
+    #                                 ,redoGridLink = redoGridLink
+    #                                 ,model.shape = shape_file_path
+    #                                 ,cleanGeometry = cleanGeometry
+    #                                 ,crsProj = crsProjProc)
+    # if (isGridLink > 0){
+    #     rciop.log("INFO", paste0("Aborting netcdf to obs - gridLinkPreparation(): ",isGridLink))
+    #     #q(save="no", status = 76)
+    #     status <- status + 1
+    # }
 
-#     # Read netcdf data from the grid.data folder and generate (new) PT-obs files and ForcKey.txt using a gridLink.Rdata
-#     # Also possible to read a new time period and merge with existing data (see file mentioned above)
-#     readWriteResult = readGridsAndWriteObs(
-#                            grid.path         = grid_dir_path
-#                           ,grid.pattern      = nc_file_pattern
-#                           ,var.name          = nc_var_name
-#                           ,obs.type          = hype_obs_type
-#                           ,obs.scale         = obsScale
-#                           ,obs.offset        = obsOffset
-#                           ,obs.digits        = obsDigits
-#                           ,gridLink.path     = paste(out_path,"/gridLink.Rdata",sep="")
-#                           ,output.path       = out_path
-#                           ,overwrite         = T
-#                           ,doForcKey         = T
-#                           ,elev.digits       = 1
-#                           ,time.start        = timeStart.1
-#                           ,time.end          = timeEnd.1
-#                           ,weightedOrNearest = weightedOrNearest)
-#     if (readWriteResult > 0){
-#         rciop.log("INFO", paste0("Aborting netcdf to obs - readGridsAndWriteObs(): ",readWriteResult))
-#         #q(save="no", status = 76)
-#         status <- status + 2
-#     }
+    # Read netcdf data from the grid.data folder and generate (new) PT-obs files and ForcKey.txt using a gridLink.Rdata
+    # Also possible to read a new time period and merge with existing data (see file mentioned above)
+    # readWriteResult = readGridsAndWriteObs(
+    #                        grid.path         = grid_dir_path
+    #                       ,grid.pattern      = nc_file_pattern
+    #                       ,var.name          = nc_var_name
+    #                       ,obs.type          = hype_obs_type
+    #                       ,obs.scale         = obsScale
+    #                       ,obs.offset        = obsOffset
+    #                       ,obs.digits        = obsDigits
+    #                       ,gridLink.path     = paste(out_path,"/gridLink.Rdata",sep="")
+    #                       ,output.path       = out_path
+    #                       ,overwrite         = T
+    #                       ,doForcKey         = T
+    #                       ,elev.digits       = 1
+    #                       ,time.start        = timeStart.1
+    #                       ,time.end          = timeEnd.1
+    #                       ,weightedOrNearest = weightedOrNearest)
+    # if (readWriteResult > 0){
+    #     rciop.log("INFO", paste0("Aborting netcdf to obs - readGridsAndWriteObs(): ",readWriteResult))
+    #     #q(save="no", status = 76)
+    #     status <- status + 2
+    # }
+
+    # Change back to previous work dir
+    if (! is.null(currentDir)){
+        setwd(currentDir)
+    }
 
     return (status)
 } # prepare_and_run_netcdf_to_obs

@@ -31,6 +31,19 @@
 # 9 End of workflow
 
 #################################################################################
+## 0 - Common functions - should be placed in a separate source code file
+## ------------------------------------------------------------------------------
+# Wrap this type of logging into a log wrapper function, may require a separate init(open) and close functions.
+#    if(app.sys=="tep"){rciop.log ("DEBUG", paste("HypeApp setup read"), nameOfSrcFile)}
+#    log.res=appLogWrite(logText = "HypeApp setup read",fileConn = logFile$fileConn)
+#
+# Different inputs to handle log support for
+#  - print() or message() to stdout
+#  - file handle for appLogWrite (or handled internally and the user gets another handle/integer as return)
+#  - rciop.log
+#
+
+#################################################################################
 ## 1 - Initialization
 ## ------------------------------------------------------------------------------
 nameOfSrcFile <- "/node_forecast/run.R"
@@ -57,7 +70,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## flag which environment is used, if not set
     if(!exists("app.sys")){
         app.sys ="tep"
-        }
+    }
     ## ------------------------------------------------------------------------------
     ## load rciop package and set working directory to TMPDIR when running on TEP
     if(app.sys=="tep"){
@@ -97,12 +110,14 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/TriggerDistribution.r", sep="/"))
 
         rciop.log ("DEBUG", paste(" libraries loaded and utilities sourced"), nameOfSrcFile)
-        }else if(app.sys=="win"){
+    }else if(app.sys=="win"){
         source("application/util/R/hypeapps-environment.R")
         source("application/util/R/hypeapps-utils.R")
-        }
+    }
     ## open application logfile
-    logFile=appLogOpen(appName = app.name, tmpDir = getwd(),appDate = app.date,prefix="000")
+    forecastIssueDate <- rciop.getparam("idate")
+    fileDate <- gsub("-", "", as.character(forecastIssueDate))
+    logFile=appLogOpen(appName = app.name, tmpDir = getwd(),appDate = fileDate,prefix="000")
 
     # Get git commit
     git_con <- file(paste0(Sys.getenv("_CIOP_APPLICATION_PATH"), "/git_commit.txt"),"r")
@@ -140,8 +155,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         #   forcing.archive.url  = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23/forcingarchive"
         #   state.files.url = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23/statefiles"
         log.res=appLogWrite(logText = "Using configuration from hypeapps-model-settings.R",fileConn = logFile$fileConn)
-    }
-    else if (app.sys=="tep") {
+    }else if (app.sys=="tep") {
         ## ------------------------------------------------------------------------------
         ## Get Hype model data dirs, niger-hype-data/data and niger-hype-data/v2.23
         ##### This code now continues to retrieve the data dirs (rciop.copy)
@@ -157,6 +171,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         rciop.log("INFO path", model.files.path)
         rciop.log("INFO path", forcing.archive.path)
         rciop.log("INFO path", state.files.path)
+        #ToDo: When switching between different HYPE model datasets, we may need to output a list of filenames (currently hardcoded filenames)
 
         ## ------------------------------------------------------------------------------
         # # For now, if needed, pass url from model_config_data['model-data-old-url'] to let present R code continue to do rciop.copy locally.
@@ -181,11 +196,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                  appDir    = app.app_path,
                                  appName   = app.name,
                                  appInput  = app.input,
-                                 #modelFilesURL = model.files.url, #ToDo: TO BE CHANGED to read from downloaded zip (model_file)
                                  modelFilesPath = model.files.path,
-                                 #forcingArchiveURL = forcing.archive.url, # Used by getHindcastForcingData, getModelForcing
                                  forcingArchivePath = forcing.archive.path,
-                                 #stateFilesURL = state.files.url, # Used by getModelForcing
                                  stateFilesPath = state.files.path,
                                  stateFilesIN = state.files)
 
@@ -217,8 +229,6 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste("hindcast forcing set"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "Hindcast forcing data downloaded and prepared",fileConn = logFile$fileConn)
-
-    #q(save="no", status = 0)
 
     ## ------------------------------------------------------------------------------
 
@@ -258,8 +268,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         hyssLogFile = dir(path = app.setup$runDir, pattern =".log")
         if(length(hyssLogFile)>=0){
             for(j in 1:length(hyssLogFile)){
-                file.copy(from = paste(app.setup$runDir,hyssLogFile[j],sep="/"), to = paste0(app.setup$runDir, "/", "000_", app.date, "_", gsub("hyss", "hindcast_hyss",hyssLogFile[j])))
-                rciop.publish(path=paste0(app.setup$runDir, "/", "000_", app.date, "_", gsub("hyss", "hindcast_hyss",hyssLogFile[j])), recursive=FALSE, metalink=TRUE)
+                toFile <- paste0(app.setup$runDir, "/", "000_", fileDate, "_", gsub("hyss", "hindcast_hyss",hyssLogFile[j]))
+                file.copy(from = paste(app.setup$runDir,hyssLogFile[j],sep="/"),to = toFile)
+                rciop.publish(path=toFile, recursive=FALSE, metalink=TRUE)
              }
         }
 
@@ -314,9 +325,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
         log.res=appLogWrite(logText = "... forecast model run ready",fileConn = logFile$fileConn)
         if(app.sys=="tep"){rciop.log ("DEBUG", " ...forecast model run ready", nameOfSrcFile)}
-        }else{
+    }else{
         log.res=appLogWrite(logText = "something wrong with forecast model inputs (no run)",fileConn = logFile$fileConn)
-        }
+    }
 
     #################################################################################
     ## 8 - Output
@@ -331,44 +342,49 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     app.outfiles <- prepareHypeAppsOutput(appSetup  = app.setup, appInput = app.input,
                                           modelInput = forecast.input, modelForcing = forecast.forcing,
                                           runRes = attr(forecast.run,"status"),
-                                          appDate = app.date)
+                                          appDate = fileDate)
     if(length(app.outfiles)>1){
         app.outfiles=sort(app.outfiles,decreasing = F)
-        }
+    }
     log.res=appLogWrite(logText = "HypeApp outputs prepared",fileConn = logFile$fileConn)
 
+    trigger_distribution_outfiles <- NULL # or remove this section since no plots or maps are longer produced
     # Prepare for trigger distribution
     # Written by jafet.andersson@smhi.se
-    for (i in app.outfiles) {
-        if (grepl("forecast_mapWarningLevel.txt", i)) {
-            map_file <- i
+    if(length(app.outfiles>1)){
+        for (i in app.outfiles) {
+            if (grepl("forecast_mapWarningLevel.txt", i)) {
+                map_file <- i
+                print(paste0("app.input$idate: ",app.input$idate)) # Only year present previous run??? idate ok here...
+                trigger_distribution_outfiles <- TriggerDistribution(dirname(map_file), app.input$idate)
             }
         }
-    trigger_distribution_outfiles <- TriggerDistribution(dirname(map_file), app.input$idate)
+    }
 
     ## ------------------------------------------------------------------------------
-    ## publish postprocessed results
+    ## publish postprocessed results # ToDo: HYPE model and log files shall remain published, review what part that is the postprocessing stuff
     if(app.sys=="tep"){
         #  for(k in 1:length(app.outdir)){
         #    rciop.publish(path=paste(app.outdir[k],"/*",sep=""), recursive=FALSE, metalink=TRUE)
         #  }
         for(k in 1:length(app.outfiles)){
             rciop.publish(path=app.outfiles[k], recursive=FALSE, metalink=TRUE)
-            }
+        }
         log.res=appLogWrite(logText = "HypeApp outputs published",fileConn = logFile$fileConn)
 
-        for(k in 1:length(trigger_distribution_outfiles)){
-            rciop.publish(path=trigger_distribution_outfiles[k], recursive=FALSE, metalink=TRUE)
+        if(length(trigger_distribution_outfiles) > 0){
+            for(k in 1:length(trigger_distribution_outfiles)){
+                rciop.publish(path=trigger_distribution_outfiles[k], recursive=FALSE, metalink=TRUE)
             }
-        log.res=appLogWrite(logText = "trigger distribution outputs published",fileConn = logFile$fileConn)
-
+            log.res=appLogWrite(logText = "trigger distribution outputs published",fileConn = logFile$fileConn)
         }
+    }
 
     ## close and publish the logfile
     log.file=appLogClose(appName = app.name,fileConn = logFile$fileConn)
     if(app.sys=="tep"){
         rciop.publish(path=logFile$fileName, recursive=FALSE, metalink=TRUE)
-        }
+    }
 
     #}
     #################################################################################
@@ -377,3 +393,28 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## exit with appropriate status code
     q(save="no", status = 0)
 }
+
+# Oct 16 09:23 000_20191016_0437_forecast_hyss_000_191016_0439.log
+# Oct 16 09:23 000_20191016_0437_hindcast_hyss_000_191016_0439.log
+# Oct 16 09:23 000_20191016_0437_hypeapps-forecast.log
+# Oct 16 09:23 001_20191016_0437_forecast_0004244_discharge-forecast.png
+# Oct 16 09:23 001_20191016_0437_forecast_0004244_discharge-forecast.pngw
+# Oct 16 09:23 001_20191016_0437_forecast_mapWarningLevel.png
+# Oct 16 09:23 001_20191016_0437_forecast_mapWarningLevel.pngw
+# Oct 16 09:23 002_20191016_0437_forecast_0004244.csv
+# Oct 16 09:23 002_20191016_0437_hindcast_0004244.csv
+# Oct 16 09:23 003_20191016_0437_forecast_0004244.txt
+# Oct 16 09:23 003_20191016_0437_hindcast_0004244.txt           <<<<<< app.date
+# Oct 16 09:23 004_20191015_email_message.txt                   <<<<<< app.input$idate
+# Oct 16 09:23 004_20191015_sms_message.txt
+# Oct 16 09:23 004_20191016_0437_forecast_mapCOUT.txt
+# Oct 16 09:23 004_20191016_0437_forecast_mapWarningLevel.txt
+# Oct 16 09:23 004_20191016_0437_hindcast_mapCOUT.txt
+# Oct 16 09:23 005_20191016_0437_forecast_timeCOUT.txt
+# Oct 16 09:23 005_20191016_0437_hindcast_timeCOUT.txt
+# Oct 16 09:23 006_20191016_0437_forecast_simass.txt
+# Oct 16 09:23 006_20191016_0437_forecast_subass1.txt
+# Oct 16 09:23 006_20191016_0437_hindcast_simass.txt
+# Oct 16 09:23 006_20191016_0437_hindcast_subass1.txt
+# Oct 16 09:23 niger-hype-rp-cout.txt
+# Oct 16 09:23 subbasin_shp.zip
