@@ -993,7 +993,7 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
                                                                   ncSubDir=ncSubDir,
                                                                   resourceDir=NULL,
                                                                   gridElevPath=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD2elevation.nc",sep="/"),
-                                                                  shapeFilePath=modelDataConfig$pathShapeFiles,
+                                                                  shapeFilePath=modelDataConfig$dirShapeFiles,
                                                                   outPath=gridMetaDir,
                                                                   startDate,
                                                                   endDate
@@ -1008,7 +1008,7 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
                                                       ncSubDir=ncSubDir,
                                                       resourceDir=gridMetaDir,
                                                       gridElevPath=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD2elevation.nc",sep="/"),
-                                                      shapeFilePath=modelDataConfig$pathShapeFiles,
+                                                      shapeFilePath=modelDataConfig$dirShapeFiles,
                                                       outPath=obsDir,
                                                       startDate,
                                                       endDate
@@ -1055,7 +1055,7 @@ process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
                                        ncSubDir=ncSubDir,
                                        resourceDir=gridMetaDir,
                                        gridElevPath=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD2elevation.nc",sep="/"),
-                                       shapeFilePath=modelDataConfig$pathShapeFiles,
+                                       shapeFilePath=modelDataConfig$dirShapeFiles,
                                        outPath=obsDir,
                                        startDate,
                                        endDate

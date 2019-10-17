@@ -55,9 +55,6 @@ stdin_f <- file("stdin")
 open(stdin_f)
 while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
-    # From user interface via input
-    #input='https://recast.terradue.com/t2api/search/hydro-smhi/models?uid=9345ED73B72F49E6FF31B07B57013BC519210E24' #niger-hype-model-2.23.zip, one dir when unzipped\n",
-
     # RUN ID give the code a random number to see how many times the code was run based on the random number in the output filenames
     # run_id <- runif(n=1, min=1, max=10)
     # run_id <- as.character(run_id *100000)
@@ -164,10 +161,10 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         modelDataPaths <- process_input_hype_model_data(applRuntimeOptions,modelConfigData) # ,paste0(TMPDIR,"/hype-model-data"))
         #print(modelDataPaths)
 
-        model.files.path     <- modelDataPaths$pathModelFiles     # Instead of model.files.url
-        forcing.archive.path <- modelDataPaths$pathForcingArchive # Instead of forcing.archive.url
-        state.files.path     <- modelDataPaths$pathStateFiles     # Instead of state.files.url
-        #shapefiles          <- modelDataPaths$pathShapeFiles
+        model.files.path     <- modelDataPaths$dirModelFiles     # Instead of model.files.url
+        forcing.archive.path <- modelDataPaths$dirForcingArchive # Instead of forcing.archive.url
+        state.files.path     <- modelDataPaths$dirStateFiles     # Instead of state.files.url
+        #shapefiles          <- modelDataPaths$dirShapeFiles
         rciop.log("INFO path", model.files.path)
         rciop.log("INFO path", forcing.archive.path)
         rciop.log("INFO path", state.files.path)
@@ -392,7 +389,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## ------------------------------------------------------------------------------
     ## exit with appropriate status code
     q(save="no", status = 0)
-}
+} # while(length(input
 
 # Oct 16 09:23 000_20191016_0437_forecast_hyss_000_191016_0439.log
 # Oct 16 09:23 000_20191016_0437_hindcast_hyss_000_191016_0439.log
