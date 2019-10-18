@@ -53,7 +53,6 @@ jupyter_core=4.3.0=py27_0
 kealib=1.4.6=0
 lcms=1.19=0
 libffi=3.2.1=1
-libgcc=5.2.0=0
 libgdal=1.11.2=0
 libiconv=1.14=0
 libnetcdf=4.4.1=0
@@ -252,3 +251,4 @@ wheel=0.29.0=py27_0
 xz=5.2.2=1
 yaml=0.1.6=0
 zeromq=4.1.5=0
+gcc=4.8.5

@@ -186,9 +186,18 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         # rciop.log("INFO path", state.files.url)
     }
     #q(save="no", status = 0)
+    if (applRuntimeOptions$hydModel == cHydModelVariant1) {
+        # Name of local subdir (run-dir/subdir), prefix in some filenames
+        modelName <- model.name # hypeapps-model-settings.R
+        modelBin  <- model.bin  # hypeapps-model-settings.R
+    }
+    if (applRuntimeOptions$hydModel == cHydModelVariant2) {
+        modelName <- "westafrica-hype"
+        modelBin  <- "hype-5.8.0.exe"
+    }
 
-    app.setup <- getHypeAppSetup(modelName = model.name,
-                                 modelBin  = model.bin,
+    app.setup <- getHypeAppSetup(modelName = modelName,
+                                 modelBin  = modelBin,
                                  tmpDir    = app.tmp_path,
                                  appDir    = app.app_path,
                                  appName   = app.name,
