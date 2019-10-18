@@ -50,17 +50,28 @@
 {
   # Packages (we need to load certain packages - install if you dont have them. HYPEtools can be found on github)
   {
-    library(HYPEtools) # to work with HYPE data formats
-    library(ncdf4)     # to read the GFD netcdf files
+    #library(HYPEtools) # to work with HYPE data formats
+    library(ncdf4)     # to read the GFD netcdf files # add via conda install r-ncdf4
     library(sp)        # spatial data base package
     library(rgdal)     # GDAL functions
     library(rgeos)     # GEOS functions
     library(raster)    # raster functions
     library(maptools)  # maptools (needed to clean geometry errors)
-    library(cleangeo)  # cleangeo (also needed to clean geometry errors)
+    #library(cleangeo)  # cleangeo (also needed to clean geometry errors) # not found via conda
     library(foreign)   # to write dbf files (workaround annoying limitations in writeOGR)
+    library(data.table) # Used by functions from HYPEtools (instead of the complete HYPEtools and its dependencies)
   }
-  
+
+   #### source the utility file (assumed to be located in the working directory)
+  {
+    fileToSource <- paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/netcdf_to_obs_utils_hypetools.R",sep="/")
+    if (! file.exists(fileToSource)){
+        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",fileToSource))
+        q(save="no", status = 0) # 77
+    }
+    source(fileToSource)
+  }
+
   # Define CRS for WGS84 lat-long (projected CRS should now be provided by the user (see run example scripts))
   {
     CRSlatlon = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
