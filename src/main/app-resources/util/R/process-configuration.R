@@ -27,6 +27,12 @@ cRunTypeVariants <- c(cRunTypeVariant1,cRunTypeVariant2)
 # of models, datasets etc.
 process_application_runtime_options <- function()
 {
+    # Outputs
+    hydModel <- NULL
+    metHC    <- NULL
+    metFC    <- NULL
+    runType  <- NULL
+
     hydModelIn <- rciop.getparam("hydmodel")
     if (hydModelIn == cHydModelVariant1){ hydModel <- cHydModelVariant1 }
     if (hydModelIn == cHydModelVariant2){ hydModel <- cHydModelVariant2 }
@@ -274,11 +280,13 @@ process_input_hype_model_data <- function(applConfig,  # Application configurati
                                           #tmpDir)      # Dir to store downloaded items
 {
   # Outputs
-  dirModelFiles <- NULL
+  dirGridMetaData   <- NULL
+  dirModelFiles     <- NULL
   dirForcingArchive <- NULL
-  dirReturnLevels <- NULL
-  dirShapeFiles <- NULL
-  dirStateFiles <- NULL
+  dirReturnLevels   <- NULL
+  dirShapeFiles     <- NULL
+  dirStateFiles     <- NULL
+
   fileInfoTxtColdStart <- NULL
   fileInfoTxtHindcast  <- NULL
   fileInfoTxtForecast  <- NULL
@@ -307,6 +315,7 @@ process_input_hype_model_data <- function(applConfig,  # Application configurati
       dirModelFiles <- paste(local.modelDataDirs,"v2.23",sep="/")
       
       # Dirs (absolute paths)
+      #dirGridMetaData   <-
       dirForcingArchive <- paste(dirModelFiles,"forcingarchive",sep="/")
       dirReturnLevels   <- paste(dirModelFiles,"returnlevels",sep="/")
       dirShapeFiles     <- paste(dirModelFiles,"shapefiles",sep="/")
@@ -321,6 +330,7 @@ process_input_hype_model_data <- function(applConfig,  # Application configurati
       dirModelFiles <- paste(local.modelDataDirs,"v1.3.6",sep="/")
       
       # Dirs (absolute paths)
+      dirGridMetaData   <- paste(dirModelFiles,"grid.meta",sep="/")
       dirForcingArchive <- paste(dirModelFiles,"forcingarchive",sep="/")
       dirReturnLevels   <- paste(dirModelFiles,"returnlevels",sep="/")
       dirShapeFiles     <- paste(dirModelFiles,"subidshapefiles",sep="/")
@@ -333,6 +343,7 @@ process_input_hype_model_data <- function(applConfig,  # Application configurati
   }
 
   # Check that dirs/files do exists
+  check_dir_exist(dirGridMetaData)
   check_dir_exist(dirModelFiles)
   check_dir_exist(dirForcingArchive)
   check_dir_exist(dirReturnLevels)
@@ -345,6 +356,7 @@ process_input_hype_model_data <- function(applConfig,  # Application configurati
 
   # Return information as a list
   outputModelData <- list("dirModelFiles"=dirModelFiles,
+                          "dirGridMetaData"=dirGridMetaData,
                           "dirForcingArchive"=dirForcingArchive,
                           "dirReturnLevels"=dirReturnLevels,
                           "dirShapeFiles"=dirShapeFiles,

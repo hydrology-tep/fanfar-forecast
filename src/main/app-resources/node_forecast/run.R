@@ -258,15 +258,15 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         ## Download and process hydrogfd netcdf files
         # ToDo: Dir name based on config dataset
         dirNCFiles  <- paste(TMPDIR,"netcdf-files",sep="/")
-        dirObsFiles <- paste(TMPDIR,"obs-files",sep="/")
-        dirGridMeta <- paste(TMPDIR,"grid-meta",sep="/")
+        dirObsFiles <- paste(TMPDIR,"obs-files",sep="/") # Output dir of produced files
+        #dirGridMeta <- paste(TMPDIR,"grid-meta",sep="/")
         hindcast.forcingandxobs <- process_hindcast_netcdf2obs(modelConfigData,
                                                                modelDataPaths,
                                                                app.input$idate,
                                                                app.input$hcperiodlen,
                                                                dirNCFiles,
                                                                ncSubDir=TRUE,
-                                                               dirGridMeta,
+                                                               modelDataPaths$dirGridMetaData,
                                                                dirObsFiles)
 
         # updateModelInput() uses only:

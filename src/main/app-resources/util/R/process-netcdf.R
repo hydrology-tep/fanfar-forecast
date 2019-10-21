@@ -47,7 +47,7 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
         rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",fileToSource))
         q(save="no", status = 0) # 77
     }
-    #ToDo   source(fileToSource)
+    source(fileToSource)
 
     # Define input/output data
     if (ncSubDir == TRUE){
@@ -61,15 +61,15 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
     }
 
     resource_dir_path <- resourceDir # NULL => code sets output to output.path
-    # if (! file.exists(resource_dir_path)){
-    #     rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",resource_dir_path))
-    #     q(save="no", status = 0)
-    # }
+    if (! file.exists(resource_dir_path)){ # dir.exists
+        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",resource_dir_path))
+        #q(save="no", status = 0)
+    }
     
     grid_elev_path <- gridElevPath
     if (! file.exists(grid_elev_path)){
         rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",grid_elev_path))
-        q(save="no", status = 0)
+        #q(save="no", status = 0)
     }
 
     nc_var_name     <- c("pr","tas","tasmin","tasmax")
@@ -84,7 +84,7 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
     shape_file_path <- shapeFilePath
     if (! file.exists(shape_file_path)){
         rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",shape_file_path))
-        q(save="no", status = 0)
+        #q(save="no", status = 0)
     }
 
     # Output options
@@ -115,23 +115,30 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
     timeStart.1=as.POSIXct(startDate,tz = "GMT")
     timeEnd.1=as.POSIXct(endDate,tz = "GMT")
 
+    print("PATHS:")
+    print(paste0("grid.path: ",grid_dir_path[1]))
+    print(paste0("grid.elev: ",grid_elev_path))
+    print(paste0("grid.meta: ",resource_dir_path))
+    print(paste0("output.path: ",out_path))
+    print(paste0("model.shape: ",shape_file_path))
+    #print(paste0(": ",))
+
     # Check/re-generate gridLink
-    #ToDo
-    # isGridLink = gridLinkPreparation(grid.path = grid_dir_path[1]
-    #                                 ,grid.pattern = nc_file_pattern[1]
-    #                                 ,grid.elev = grid_elev_path
-    #                                 ,var.name = nc_var_name[1]
-    #                                 ,grid.meta = resource_dir_path
-    #                                 ,output.path = out_path
-    #                                 ,redoGridLink = redoGridLink
-    #                                 ,model.shape = shape_file_path
-    #                                 ,cleanGeometry = cleanGeometry
-    #                                 ,crsProj = crsProjProc)
-    # if (isGridLink > 0){
-    #     rciop.log("INFO", paste0("Aborting netcdf to obs - gridLinkPreparation(): ",isGridLink))
-    #     #q(save="no", status = 76)
-    #     #status <- status + 1
-    # }
+    isGridLink = gridLinkPreparation(grid.path = grid_dir_path[1]
+                                    ,grid.pattern = nc_file_pattern[1]
+                                    ,grid.elev = grid_elev_path
+                                    ,var.name = nc_var_name[1]
+                                    ,grid.meta = resource_dir_path
+                                    ,output.path = out_path               # ToDo: or workDir
+                                    ,redoGridLink = redoGridLink
+                                    ,model.shape = shape_file_path
+                                    ,cleanGeometry = cleanGeometry
+                                    ,crsProj = crsProjProc)
+    if (isGridLink > 0){
+        rciop.log("INFO", paste0("Aborting netcdf to obs - gridLinkPreparation(): ",isGridLink))
+        #q(save="no", status = 76)
+        #status <- status + 1
+    }
 
     # Change back to previous work dir
     if (! is.null(currentDir)){
@@ -180,7 +187,7 @@ prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
         rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",fileToSource))
         q(save="no", status = 77)
     }
-    #ToDo   source(fileToSource)
+    source(fileToSource)
 
     # Define input/output data
     if (ncSubDir == TRUE){
@@ -248,46 +255,39 @@ prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
     timeStart.1=as.POSIXct(startDate,tz = "GMT")
     timeEnd.1=as.POSIXct(endDate,tz = "GMT")
 
-    # # Check/re-generate gridLink
-    # isGridLink = gridLinkPreparation(grid.path = grid_dir_path[1]
-    #                                 ,grid.pattern = nc_file_pattern[1]
-    #                                 ,grid.elev = grid_elev_path
-    #                                 ,var.name = nc_var_name[1]
-    #                                 ,grid.meta = resource_dir_path
-    #                                 ,output.path = out_path
-    #                                 ,redoGridLink = redoGridLink
-    #                                 ,model.shape = shape_file_path
-    #                                 ,cleanGeometry = cleanGeometry
-    #                                 ,crsProj = crsProjProc)
-    # if (isGridLink > 0){
-    #     rciop.log("INFO", paste0("Aborting netcdf to obs - gridLinkPreparation(): ",isGridLink))
-    #     #q(save="no", status = 76)
-    #     status <- status + 1
-    # }
+    print("PATHS:")
+    print(paste0("grid.path: ",grid_dir_path))
+    print(paste0("gridLink.path: ",paste(out_path,"/gridLink.Rdata",sep="")))
+    #print(paste0("grid.meta: ",resource_dir_path))
+    print(paste0("output.path: ",out_path))
+    #print(paste0("model.shape: ",shape_file_path))
+    print(paste0("time.start: ",timeStart.1))
+    print(paste0("time.end: ",timeEnd.1))
+    #print(paste0(": ",))
 
     # Read netcdf data from the grid.data folder and generate (new) PT-obs files and ForcKey.txt using a gridLink.Rdata
     # Also possible to read a new time period and merge with existing data (see file mentioned above)
-    # readWriteResult = readGridsAndWriteObs(
-    #                        grid.path         = grid_dir_path
-    #                       ,grid.pattern      = nc_file_pattern
-    #                       ,var.name          = nc_var_name
-    #                       ,obs.type          = hype_obs_type
-    #                       ,obs.scale         = obsScale
-    #                       ,obs.offset        = obsOffset
-    #                       ,obs.digits        = obsDigits
-    #                       ,gridLink.path     = paste(out_path,"/gridLink.Rdata",sep="")
-    #                       ,output.path       = out_path
-    #                       ,overwrite         = T
-    #                       ,doForcKey         = T
-    #                       ,elev.digits       = 1
-    #                       ,time.start        = timeStart.1
-    #                       ,time.end          = timeEnd.1
-    #                       ,weightedOrNearest = weightedOrNearest)
-    # if (readWriteResult > 0){
-    #     rciop.log("INFO", paste0("Aborting netcdf to obs - readGridsAndWriteObs(): ",readWriteResult))
-    #     #q(save="no", status = 76)
-    #     status <- status + 2
-    # }
+    readWriteResult = readGridsAndWriteObs(
+                           grid.path         = grid_dir_path
+                          ,grid.pattern      = nc_file_pattern
+                          ,var.name          = nc_var_name
+                          ,obs.type          = hype_obs_type
+                          ,obs.scale         = obsScale
+                          ,obs.offset        = obsOffset
+                          ,obs.digits        = obsDigits
+                          ,gridLink.path     = paste(out_path,"/gridLink.Rdata",sep="")
+                          ,output.path       = out_path
+                          ,overwrite         = T
+                          ,doForcKey         = T
+                          ,elev.digits       = 1
+                          ,time.start        = timeStart.1
+                          ,time.end          = timeEnd.1
+                          ,weightedOrNearest = weightedOrNearest)
+    if (readWriteResult > 0){
+        rciop.log("INFO", paste0("Aborting netcdf to obs - readGridsAndWriteObs(): ",readWriteResult))
+        #q(save="no", status = 76)
+        status <- status + 2
+    }
 
     # Change back to previous work dir
     if (! is.null(currentDir)){
@@ -957,10 +957,10 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
                                         modelDataConfig, # Misc model config data, paths to state files, forcing, shape files
                                         forecastIssueDate, # yyyy-mm-dd
                                         hindcastPeriodLength, # Days
-                                        netcdfDir, # Dir to store netcdf files
+                                        netcdfDir, # Input dir with hydrogfd netcdf files
                                         ncSubDir, # False-one dir, True-separate dir for each variable
-                                        gridMetaDir, # Dir to store grid weight files
-                                        obsDir) # Dir to store obs files
+                                        gridMetaDir, # Input dir with grid weight files
+                                        obsDir) # Output dir for obs files
 {
   # Prepare hindcast and forecast intervals, start and end dates
   prepHindcastInterval <- prepare_hindcast_intervals(hindcastPeriodLength,
@@ -986,36 +986,41 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
   startDate <- prepHindcastInterval$hindcastStartDateSearch
   endDate   <- prepHindcastInterval$hindcastEndDateSearch
   
+  netcdf_to_obs_wd <- paste0(TMPDIR,"/netcdf_to_obs")
+  #netcdf_to_obs_output <- paste0(netcdf_to_obs_wd,"/output")
   # ToDo: gridLink...
-  if (! dir.exists(gridMetaDir)){ # or a certain file
-      res <- run_netcdf_to_obs_gridLinkPreparation(workDir=paste0(TMPDIR,"/netcdf_to_obs"),
-                                                                  ncRootDir=netcdfDir,
-                                                                  ncSubDir=ncSubDir,
-                                                                  resourceDir=NULL,
-                                                                  gridElevPath=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD2elevation.nc",sep="/"),
-                                                                  shapeFilePath=modelDataConfig$dirShapeFiles,
-                                                                  outPath=gridMetaDir,
-                                                                  startDate,
-                                                                  endDate
-                                                                  )
+  # ToDo: Do this once... when criteria is new or changed
+  rciop.log("INFO",paste0("run_netcdf_to_obs_gridLinkPreparation START"))
+  #if (! dir.exists(gridMetaDir)){ # or a certain file (file.exists)
+      res <- run_netcdf_to_obs_gridLinkPreparation(workDir=netcdf_to_obs_wd,
+                                                   ncRootDir=netcdfDir,
+                                                   ncSubDir=ncSubDir,
+                                                   resourceDir=gridMetaDir,
+                                                   gridElevPath=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD2elevation.nc",sep="/"),
+                                                   shapeFilePath=paste(modelDataConfig$dirShapeFiles,"SUBID_shapefile.shp", sep="/"),
+                                                   outPath=obsDir, # Should maybe be a temporary dir for next step, but need to be available for the corresponding functional call during forecast
+                                                   startDate,
+                                                   endDate)
       if (res > 0){
           rciop.log("INFO",paste0("run_netcdf_to_obs_gridLinkPreparation, exit code=",res))
       }
-  }
+  #}
+  rciop.log("INFO",paste0("run_netcdf_to_obs_gridLinkPreparation END"))
   
-  res <- prepare_and_run_netcdf_to_obs(workDir=paste0(TMPDIR,"/netcdf_to_obs"),
-                                                      ncRootDir=netcdfDir,
-                                                      ncSubDir=ncSubDir,
-                                                      resourceDir=gridMetaDir,
-                                                      gridElevPath=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD2elevation.nc",sep="/"),
-                                                      shapeFilePath=modelDataConfig$dirShapeFiles,
-                                                      outPath=obsDir,
-                                                      startDate,
-                                                      endDate
-                                                      )
+  rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs START"))
+  res <- prepare_and_run_netcdf_to_obs(workDir=netcdf_to_obs_wd,
+                                       ncRootDir=netcdfDir,
+                                       ncSubDir=ncSubDir,
+                                       resourceDir=gridMetaDir,
+                                       gridElevPath=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD2elevation.nc",sep="/"),
+                                       shapeFilePath=paste(modelDataConfig$dirShapeFiles,"SUBID_shapefile.shp", sep="/"),
+                                       outPath=obsDir,
+                                       startDate,
+                                       endDate)
   if (res > 0){
       rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs, exit code=",res))
   }
+  rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs END"))
 
   #if (obsDir != runDir){
   #  # Copy obs files to run dir
@@ -1048,10 +1053,10 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
 process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now 
                                         modelDataConfig, # Misc model config data, paths to state files, forcing, shape files
                                         forecastIssueDate, # yyyy-mm-dd
-                                        netcdfDir, # Dir to store netcdf files
+                                        netcdfDir, # Input dir with hydrogfd netcdf files
                                         ncSubDir, # False-one dir, True-separate dir for each variable
-                                        gridMetaDir, # Dir to read grid weight files
-                                        obsDir) # Dir to store obs files
+                                        gridMetaDir, # Input dir with grid weight files
+                                        obsDir) # Output dir for obs files
 {
   # Prepare hindcast and forecast intervals, start and end dates
   prepForecastInterval <- prepare_forecast_intervals(forecastIssueDate)
@@ -1068,19 +1073,21 @@ process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
   startDate <- prepForecastInterval$ecoperStartDateSearch
   endDate   <- prepForecastInterval$ecoperEndDateSearch
   
-  res <- prepare_and_run_netcdf_to_obs(workDir=paste0(TMPDIR,"/netcdf_to_obs"),
+  netcdf_to_obs_wd <- paste0(TMPDIR,"/netcdf_to_obs")
+  rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs START"))
+  res <- prepare_and_run_netcdf_to_obs(workDir=netcdf_to_obs_wd,
                                        ncRootDir=netcdfDir,
                                        ncSubDir=ncSubDir,
                                        resourceDir=gridMetaDir,
                                        gridElevPath=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD2elevation.nc",sep="/"),
-                                       shapeFilePath=modelDataConfig$dirShapeFiles,
+                                       shapeFilePath=paste(modelDataConfig$dirShapeFiles,"SUBID_shapefile.shp", sep="/"),
                                        outPath=obsDir,
                                        startDate,
-                                       endDate
-                                       )
+                                       endDate)
   if (res > 0){
       rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs, exit code=",res))
   }
+  rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs END"))
 
   #if (obsDir != runDir){
   #  # Copy obs files to run dir
