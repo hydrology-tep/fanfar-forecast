@@ -48,11 +48,17 @@
                   <!-- Set here the dependencies installed with 'sudo yum install'-->
                   <requires>
                     <require>miniconda</require>
+                    <!-- remove? -->
                     <require>openjpeg2</require>
                     <require>proj</require>
                     <require>libgfortran</require>
+                    <!-- remove? -->
                     <require>ghostscript-fonts</require>
+                    <!-- remove? -->
                     <require>urw-fonts</require>
+                    <!-- add? -->
+                    <!-- <require>netcdf4-python.x86_64</require> -->
+                    <!-- <require>hdf5.x86_64</require> -->
                   </requires>
                   <postinstallScriptlet combine.self="override">
                     <scriptFile>${basedir}/src/main/app-resources/scripts/postinstall.sh</scriptFile>

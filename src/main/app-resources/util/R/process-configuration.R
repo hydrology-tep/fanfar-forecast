@@ -333,8 +333,8 @@ process_input_hype_model_data <- function(applConfig,  # Application configurati
       dirGridMetaData   <- paste(dirModelFiles,"grid.meta",sep="/")
       dirForcingArchive <- paste(dirModelFiles,"forcingarchive",sep="/")
       dirReturnLevels   <- paste(dirModelFiles,"returnlevels",sep="/")
-      #dirShapeFiles     <- paste(dirModelFiles,"subidshapefiles",sep="/") # ToDo: Temporary disabled during tests with shapefiles for niger-hype
-      dirShapeFiles     <- paste(dirModelFiles,"shapefiles",sep="/")
+      dirShapeFiles     <- paste(dirModelFiles,"subidshapefiles",sep="/") # ToDo: Temporary disabled during tests with shapefiles for niger-hype
+      #dirShapeFiles     <- paste(dirModelFiles,"shapefiles",sep="/")
       dirStateFiles     <- paste(dirModelFiles,"statefiles",sep="/")
       
       # Individual files - these info files should maybe be fetched from the model/application config object? (parallel files to dependencies.txt in zip-file)

@@ -6,6 +6,9 @@ verbose <- TRUE
 #verboseX2 <- TRUE
 verboseX2 <- FALSE
 
+# Includes that the sourced R-files uses
+library(ncdf4)
+
 ## ------------------------------------------------------------------------------
 # For information on local variables and call sequence within this function,
 # see 'test/netcdf_to_obs_example.R'
@@ -842,6 +845,21 @@ check_date_interval_netcdf <- function(startDate,
               #print(paste0("File missing: ",expFilename))
               print(paste0("File missing: ",localPath))
           }
+
+          test_nc_open_file <- FALSE #TRUE
+          if (test_nc_open_file == TRUE){
+              if (expFilename == "pr_hydrogfdei_201906_fanfar_SMHI.nc"){
+                print("Trying to nc_open file: pr_hydrogfdei_201906_fanfar_SMHI.nc")
+                print(localPath)
+                ncfh = nc_open(localPath)
+                print("after nc_open")
+                print(ncfh)
+
+                print("Trying to close file")
+                nc_close(ncfh)
+                print("after nc_close")
+              }
+          }
       }
   }
 
@@ -1014,8 +1032,8 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
                                                    ncSubDir=ncSubDir,
                                                    resourceDir=gridMetaDir,
                                                    gridElevPath=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD2elevation.nc",sep="/"),
-                                                   #shapeFilePath=paste(modelDataConfig$dirShapeFiles,"SUBID_shapefile.shp", sep="/"),
-                                                   shapeFilePath=paste(modelDataConfig$dirShapeFiles,"niger-hype.shp", sep="/"),
+                                                   shapeFilePath=paste(modelDataConfig$dirShapeFiles,"SUBID_shapefile.shp", sep="/"),
+                                                   #shapeFilePath=paste(modelDataConfig$dirShapeFiles,"niger-hype.shp", sep="/"),
                                                    outPath=obsDir, # Should maybe be a temporary dir for next step, but need to be available for the corresponding functional call during forecast
                                                    startDate,
                                                    endDate)
@@ -1026,24 +1044,27 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
   rciop.log("INFO",paste0("run_netcdf_to_obs_gridLinkPreparation END"))
 
   rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs START"))
-  # res <- prepare_and_run_netcdf_to_obs(workDir=netcdf_to_obs_wd,
-  #                                      ncRootDir=netcdfDir,
-  #                                      ncSubDir=ncSubDir,
-  #                                      resourceDir=gridMetaDir,
-  #                                      gridElevPath=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD2elevation.nc",sep="/"),
-  #                                      #shapeFilePath=paste(modelDataConfig$dirShapeFiles,"SUBID_shapefile.shp", sep="/"),
-  #                                      shapeFilePath=paste(modelDataConfig$dirShapeFiles,"niger-hype.shp", sep="/"),
-  #                                      outPath=obsDir,
-  #                                      startDate,
-  #                                      endDate)
-  # if (res > 0){
-  #     rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs, exit code=",res))
-  # }
+  res <- prepare_and_run_netcdf_to_obs(workDir=netcdf_to_obs_wd,
+                                       ncRootDir=netcdfDir,
+                                       ncSubDir=ncSubDir,
+                                       resourceDir=gridMetaDir,
+                                       gridElevPath=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD2elevation.nc",sep="/"),
+                                       shapeFilePath=paste(modelDataConfig$dirShapeFiles,"SUBID_shapefile.shp", sep="/"),
+                                       #shapeFilePath=paste(modelDataConfig$dirShapeFiles,"niger-hype.shp", sep="/"),
+                                       outPath=obsDir,
+                                       startDate,
+                                       endDate)
+  if (res > 0){
+      rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs, exit code=",res))
+  }
   rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs END"))
 
   #if (obsDir != runDir){
   #  # Copy obs files to run dir
   #}
+
+  # List files in output dir
+  print(list.files(obsDir))
 
   # Return the same type structure as function getModelForcing() and readXobsData(), but minimal
   bdate <- as.Date(startDate)
@@ -1099,8 +1120,8 @@ process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
                                        ncSubDir=ncSubDir,
                                        resourceDir=gridMetaDir,
                                        gridElevPath=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD2elevation.nc",sep="/"),
-                                       #shapeFilePath=paste(modelDataConfig$dirShapeFiles,"SUBID_shapefile.shp", sep="/"),
-                                       shapeFilePath=paste(modelDataConfig$dirShapeFiles,"niger-hype.shp", sep="/"),
+                                       shapeFilePath=paste(modelDataConfig$dirShapeFiles,"SUBID_shapefile.shp", sep="/"),
+                                       #shapeFilePath=paste(modelDataConfig$dirShapeFiles,"niger-hype.shp", sep="/"),
                                        outPath=obsDir,
                                        startDate,
                                        endDate)

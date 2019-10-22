@@ -284,6 +284,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         print("xobs.input returned2:")
         print(xobs.input)
     }
+    q(save="no", status = 0)
+
+    # ToDo: Use prepared info-hindcast.txt etc.
 
     ## ------------------------------------------------------------------------------
     ## modify some model files based on input parameters

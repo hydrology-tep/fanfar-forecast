@@ -14,6 +14,11 @@ r-lmomco
 geos=3.5.0
 gcc=4.8.5
 
+#This shouldn't be necessary r-essentials
+
+#r-ncdf4=1.16.1
+#r-base=3.6
+
 #libnetcdf=4.3.3.1
 
 #r-essentials
@@ -31,3 +36,19 @@ gcc=4.8.5
 #sudo yum install hdf5.x86_64 netcdf4-python.x86_64
 #sudo yum install miniconda
 #sudo conda install -y --file fanfar-forecast-retrieve-opensearch/src/main/app-resources/dependencies/R/new_attempt_packages.list
+
+# yum list installed: 
+#hdf5.x86_64                          1.8.5.patch1-10.el6        @epel           
+#hdf5-devel.x86_64                    1.8.5.patch1-10.el6        @epel           
+#miniconda.x86_64                     4.4.10-1.el6               @ciop-stable    
+#netcdf.x86_64                        4.1.1-3.el6.5              @epel           
+#netcdf-devel.x86_64                  4.1.1-3.el6.5              @epel           
+#netcdf4-python.x86_64                1.0.2-1.el6                @epel           
+
+
+# Test these instead of shared variants:
+#netcdf-static.x86_64
+#hdf5-static.x86_64
+
+# sudo yum remove hdf netcdf
+# sudo yum install netcdf-static.x86_64 hdf5-static.x86_64 miniconda

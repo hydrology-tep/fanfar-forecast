@@ -6,7 +6,7 @@
 #
 
 # Additional libaries:
-#library(data.table) # Moved to netcdf_to_obs_utils.R
+library(data.table) # Moved to netcdf_to_obs_utils.R
 
 #' @importFrom data.table fwrite
 #' @export

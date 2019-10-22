@@ -51,7 +51,7 @@
   # Packages (we need to load certain packages - install if you dont have them. HYPEtools can be found on github)
   {
     #library(HYPEtools) # to work with HYPE data formats
-    #library(ncdf4)     # to read the GFD netcdf files # add via conda install r-ncdf4
+    library(ncdf4)     # to read the GFD netcdf files # add via conda install r-ncdf4
     library(sp)        # spatial data base package
     library(rgdal)     # GDAL functions
     library(rgeos)     # GEOS functions
@@ -60,7 +60,6 @@
     #library(cleangeo)  # cleangeo (also needed to clean geometry errors) # not found via conda
     library(foreign)   # to write dbf files (workaround annoying limitations in writeOGR)
     library(data.table) # Used by functions from HYPEtools (instead of the complete HYPEtools and its dependencies)
-    library(ncdf4)     # to read the GFD netcdf files # add via conda install r-ncdf4
   }
 
    #### source the utility file (assumed to be located in the working directory)
@@ -79,13 +78,13 @@
   }
 }
 
-{
-  print("Print some info about session:")
-  print(.libPaths())
-  print(sessionInfo())
-  print(version)
-  sessionInfo()
-}
+# {
+#   print("Print some info about session:")
+#   print(.libPaths())
+#   print(sessionInfo())
+#   print(version)
+#   sessionInfo()
+# }
 
 # -------------------------------------------------------------------------------------------
 # Functions
@@ -343,9 +342,19 @@
       print(paste0("readGFDGCMnetcdf - ","0"))
       # open nc file
       {
+        if (! file.exists(gfdFile)){
+          print("gfdFile doesn't exist")
+        }else{
+          print("gfdFile do exist")
+        }
+
         print(gfdFile) # "/var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910211332_0036/attempt_201910211332_0036_m_000001_0/work/tmp/netcdf-files/pr/pr_hydrogfdei_201906_fanfar_SMHI.nc", checksum ok vid kontroll
                        # "/var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910211332_0038/attempt_201910211332_0038_m_000001_0/work/tmp/netcdf-files/pr/pr_hydrogfdei_201810_fanfar_SMHI.nc", checksumma ok vid kontroll
         nc = nc_open(gfdFile) # ToDo: This one outputs error: netcdf: 65536 is not a valid cdfid (java.lang.RuntimeException: PipeMapRed.waitResultThreads(): subprocess failed with code 3)
+        print("nc:")
+        print(nc)
+
+        print(paste0("readGFDGCMnetcdf - ","0.1"))
       }
       print(paste0("readGFDGCMnetcdf - ","1"))
 
@@ -1037,6 +1046,14 @@
               return(1)
             }
             print(paste0("gridLinkPreparation - ","8"))
+            print(grid.path)
+            print(grid_file_path[1])
+            if (! dir.exists(grid.path)){
+                print("grid.path doesn't exist")
+            }else{
+                print("grid.path do exist")
+            }
+
             # read file
             data = readGFDGCMnetcdf444(gfdFile = paste(grid.path,"/",grid_file_path[1],sep="")
                              ,dataOut = F
