@@ -144,14 +144,14 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
 # [1] "model.shape: /var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910211332_0020/attempt_201910211332_0020_m_000001_0/work/tmp/westafrica-hype-data/v1.3.6/shapefiles/niger-hype.shp"
 
     # Check/re-generate gridLink
-    isGridLink = gridLinkPreparation(grid.path = grid_dir_path[1] # ok
-                                    ,grid.pattern = nc_file_pattern[1] # ok
-                                    ,grid.elev = grid_elev_path # ok
-                                    ,var.name = nc_var_name[1] # ok
-                                    ,grid.meta = resource_dir_path # ok
-                                    ,output.path = out_path # ok
+    isGridLink = gridLinkPreparation(grid.path = grid_dir_path[1]
+                                    ,grid.pattern = nc_file_pattern[1]
+                                    ,grid.elev = grid_elev_path
+                                    ,var.name = nc_var_name[1]
+                                    ,grid.meta = resource_dir_path
+                                    ,output.path = out_path
                                     ,redoGridLink = redoGridLink
-                                    ,model.shape = shape_file_path # ok
+                                    ,model.shape = shape_file_path
                                     ,cleanGeometry = cleanGeometry
                                     ,crsProj = crsProjProc)
     if (isGridLink > 0){
@@ -1074,13 +1074,64 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
                            "cdate"=cdate,
                            "edate"=edate)
 
-  xobsVar   <- c("var xyz") # ToDo
-  xobsSubid <- c("subid xyz") # ToDo
-  xobs.input <- list("xobsVar"=xobsVar,
-                     "xobsSubid"=xobsSubid)
+  # xobsVar   <- c("var xyz") # ToDo
+  # xobsSubid <- c("subid xyz") # ToDo
+  # xobs.input <- list("xobsVar"=xobsVar,
+  #                    "xobsSubid"=xobsSubid)
+
+  # ToDo: Not hardcoded
+  nFiles    <- 0
+  xobsfiles <- NULL
+
+  pobs    <- paste(obsDir,"Pobs.txt",sep="/")
+  tobs    <- paste(obsDir,"Tobs.txt",sep="/")
+  tminobs <- paste(obsDir,"TMINobs.txt",sep="/")
+  tmaxobs <- paste(obsDir,"TMAXobs.txt",sep="/")
+
+  if (file.exists(pobs)) {
+    if (nFiles == 0) {
+      xobsfiles <- c(pobs)
+    }else{
+      xobsfiles <- c(xobsfiles,pobs)
+    }
+    nFiles <- nFiles + 1
+  }
+
+  if (file.exists(tobs)) {
+    if (nFiles == 0) {
+      xobsfiles <- c(tobs)
+    }else{
+      xobsfiles <- c(xobsfiles,tobs)
+    }
+    nFiles <- nFiles + 1
+  }
+
+  if (file.exists(tminobs)) {
+    if (nFiles == 0) {
+      xobsfiles <- c(tminobs)
+    }else{
+      xobsfiles <- c(xobsfiles,tminobs)
+    }
+    nFiles <- nFiles + 1
+  }
+
+  if (file.exists(tmaxobs)) {
+    if (nFiles == 0) {
+      xobsfiles <- c(tmaxobs)
+    }else{
+      xobsfiles <- c(xobsfiles,tmaxobs)
+    }
+    nFiles <- nFiles + 1
+  }
+  #nFiles  <- 4
+  #xobsfiles <- c(pobs,tobs,tminobs,tmaxobs)
+
+  xobs.data <- list("xobsNum"=nFiles,
+                    "xobsFile"=xobsfiles)
 
   output <- list("hindcast.forcing"=hindcast.forcing,
-                 "xobs.input"=xobs.input)
+                 #"xobs.input"=xobs.input)
+                 "xobs.data"=xobs.data)
 
   return (output)
 
@@ -1134,6 +1185,9 @@ process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
   #  # Copy obs files to run dir
   #}
 
+  # List files in output dir
+  print(list.files(obsDir))
+
   # Return the same type structure as function getModelForcing(), but minimal
   bdate <- as.Date(startDate)
   cdate <- as.Date(startDate)
@@ -1142,7 +1196,59 @@ process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
                            "cdate"=cdate,
                            "edate"=edate)
 
-  output <- list("forecast.forcing"=forecast.forcing)
+  # ToDo: Not hardcoded
+  nFiles    <- 0
+  xobsfiles <- NULL
+
+  pobs    <- paste(obsDir,"Pobs.txt",sep="/")
+  tobs    <- paste(obsDir,"Tobs.txt",sep="/")
+  tminobs <- paste(obsDir,"TMINobs.txt",sep="/")
+  tmaxobs <- paste(obsDir,"TMAXobs.txt",sep="/")
+
+  if (file.exists(pobs)) {
+    if (nFiles == 0) {
+      xobsfiles <- c(pobs)
+    }else{
+      xobsfiles <- c(xobsfiles,pobs)
+    }
+    nFiles <- nFiles + 1
+  }
+
+  if (file.exists(tobs)) {
+    if (nFiles == 0) {
+      xobsfiles <- c(tobs)
+    }else{
+      xobsfiles <- c(xobsfiles,tobs)
+    }
+    nFiles <- nFiles + 1
+  }
+
+  if (file.exists(tminobs)) {
+    if (nFiles == 0) {
+      xobsfiles <- c(tminobs)
+    }else{
+      xobsfiles <- c(xobsfiles,tminobs)
+    }
+    nFiles <- nFiles + 1
+  }
+
+  if (file.exists(tmaxobs)) {
+    if (nFiles == 0) {
+      xobsfiles <- c(tmaxobs)
+    }else{
+      xobsfiles <- c(xobsfiles,tmaxobs)
+    }
+    nFiles <- nFiles + 1
+  }
+  #nFiles  <- 4
+  #xobsfiles <- c(pobs,tobs,tminobs,tmaxobs)
+
+  xobs.data <- list("xobsNum"=nFiles,
+                    "xobsFile"=xobsfiles)
+
+  #output <- list("forecast.forcing"=forecast.forcing)
+  output <- list("forecast.forcing"=forecast.forcing,
+                 "xobs.data"=xobs.data)
 
   return (output)
 

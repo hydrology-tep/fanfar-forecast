@@ -672,7 +672,7 @@ getHypeAppInput<-function(appName){
 ## -------------------------------------------------------------------------------
 ## prepare work directories and copy basic model files
 #getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,modelFilesURL,forcingArchiveURL=NULL,stateFilesURL=NULL,stateFilesIN=NULL){
-getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,modelFilesPath,forcingArchivePath=NULL,stateFilesPath=NULL,stateFilesIN=NULL){
+getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,modelFilesPath,forcingArchivePath=NULL,stateFilesPath=NULL,stateFilesIN=NULL, modelDataPaths=NULL){
 
 # 
 # forcingArchiveURL and stateFilesURL are only assigned to output
@@ -742,6 +742,8 @@ getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,mode
       }
     }
     
+    # ToDo: This currently copies "known" files from westafrica-hype-data/v1.3.6/
+    #       Some of these files (info-*.txt) should instead be copied by path set by the configuration in run.R (e.g. modelDataPaths$fileInfoTxtHindcast)
     for(i in 1:length(fileNames)){ # Todo
       #if(app.sys=="tep"){
         #res <- rciop.copy(paste(modelFilesURL,fileNames[i],sep="/"), modelFilesRunDir, uncompress=TRUE) # Downloading files to modelFilesRunDir
@@ -752,6 +754,39 @@ getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,mode
       rciop.log ("DEBUG", paste0("cp ",modelFilesPath,"/",fileNames[i]," to ",modelFilesRunDir,"/",fileNames[i]),"/util/R/hypeapps-utils.R")
       #}
     }
+
+    if(appName=="forecast"){
+      # Insert some functionality for info-files based on the configuration
+      # For now, we only have the complete path+filename
+      if(! is.null(modelDataPaths)){
+        print("Files from modelDataPaths")
+        if(! is.null(modelDataPaths$fileInfoTxtColdStart)){
+          file.copy(from=modelDataPaths$fileInfoTxtColdStart,to=modelFilesRunDir,overwrite=T)
+          rciop.log ("DEBUG", paste0("cp ",modelDataPaths$fileInfoTxtColdStart," to ",modelFilesRunDir),"/util/R/hypeapps-utils.R")
+          destFile <- paste0(modelFilesRunDir,"/info-coldstart-19791994.txt") # ToDo: Hardcoded, remove
+          if (! file.exists(destFile)){
+              print(paste0("File missing: ",destFile))
+          }
+        }
+        if(! is.null(modelDataPaths$fileInfoTxtHindcast)){
+          file.copy(from=modelDataPaths$fileInfoTxtHindcast,to=modelFilesRunDir,overwrite=T)
+          rciop.log ("DEBUG", paste0("cp ",modelDataPaths$fileInfoTxtHindcast," to ",modelFilesRunDir),"/util/R/hypeapps-utils.R")
+          destFile <- paste0(modelFilesRunDir,"/info-hindcast.txt") # ToDo: Hardcoded, remove
+          if (! file.exists(destFile)){
+              print(paste0("File missing: ",destFile))
+          }
+        }
+        if(! is.null(modelDataPaths$fileInfoTxtForecast)){
+          file.copy(from=modelDataPaths$fileInfoTxtForecast,to=modelFilesRunDir,overwrite=T)
+          rciop.log ("DEBUG", paste0("cp ",modelDataPaths$fileInfoTxtForecast," to ",modelFilesRunDir),"/util/R/hypeapps-utils.R")
+          destFile <- paste0(modelFilesRunDir,"/info-forecast.txt") # ToDo: Hardcoded, remove
+          if (! file.exists(destFile)){
+              print(paste0("File missing: ",destFile))
+          }
+        }
+      } # modelDataPaths
+    } # app = forecast
+
   }
   
   ## model binary file (stays in application folder)

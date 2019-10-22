@@ -147,20 +147,15 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## Prepare basic model setup (static input files and hype model executable copied to working folder)
 
     if(app.sys!="tep"){
-        # Use these values defined in hypeapps-model-settings.R:
-        #   model.files.url = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23" # model files root index
-        #   forcing.archive.url  = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23/forcingarchive"
-        #   state.files.url = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23/statefiles"
         log.res=appLogWrite(logText = "Using configuration from hypeapps-model-settings.R",fileConn = logFile$fileConn)
     }else if (app.sys=="tep") {
         ## ------------------------------------------------------------------------------
-        ## Get Hype model data dirs, niger-hype-data/data and niger-hype-data/v2.23
-        ##### This code now continues to retrieve the data dirs (rciop.copy)
-
+        ## Get HYPE model data dirs
         rciop.log("INFO", "Processing config for model data", nameOfSrcFile)
         modelDataPaths <- process_input_hype_model_data(applRuntimeOptions,modelConfigData) # ,paste0(TMPDIR,"/hype-model-data"))
-        #print(modelDataPaths)
 
+        ## ------------------------------------------------------------------------------
+        # Overwrite variables normally set in hypeapps-model-settings.R
         model.files.path     <- modelDataPaths$dirModelFiles     # Instead of model.files.url
         forcing.archive.path <- modelDataPaths$dirForcingArchive # Instead of forcing.archive.url
         state.files.path     <- modelDataPaths$dirStateFiles     # Instead of state.files.url
@@ -169,23 +164,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         rciop.log("INFO path", forcing.archive.path)
         rciop.log("INFO path", state.files.path)
         #ToDo: When switching between different HYPE model datasets, we may need to output a list of filenames (currently hardcoded filenames)
-
-        ## ------------------------------------------------------------------------------
-        # # For now, if needed, pass url from model_config_data['model-data-old-url'] to let present R code continue to do rciop.copy locally.
-        # modelDataOldUrl <- modelConfigData$modelDataOldUrl
-
-        # # Overwrite variables normally set in hypeapps-model-settings.R with url from the model configuration object
-        # model.files.url     <- paste(modelDataOldUrl,"v2.23",sep="/")
-        # forcing.archive.url <- paste(model.files.url,"forcingarchive",sep="/")
-        # state.files.url     <- paste(model.files.url,"statefiles",sep="/")
-        # # Check if other source code sources the file hypeapps-model-settings.R separately and are using any of these variables/constants.
-        # # If its some other type of x-cast then it should not be of any problem.
-        # rciop.log("INFO path", modelDataOldUrl)
-        # rciop.log("INFO path", model.files.url)
-        # rciop.log("INFO path", forcing.archive.url)
-        # rciop.log("INFO path", state.files.url)
     }
-    #q(save="no", status = 0)
+
     if (applRuntimeOptions$hydModel == cHydModelVariant1) {
         # Name of local subdir (run-dir/subdir), prefix in some filenames
         modelName <- model.name # hypeapps-model-settings.R
@@ -194,6 +174,11 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     if (applRuntimeOptions$hydModel == cHydModelVariant2) {
         modelName <- "westafrica-hype"
         modelBin  <- "hype-5.8.0.exe"
+
+        # HYPE 5.8.0 required newer gfortran than part of gcc-4.4.7 during build.
+        #Apperantely not set   Sys.setenv(LD_LIBRARY_PATH=paste("/opt/anaconda/pkgs/gcc-4.8.5-7/lib", Sys.getenv("LD_LIBRARY_PATH"),sep=":"))
+        Sys.setenv(LD_LIBRARY_PATH=paste0("/opt/anaconda/pkgs/gcc-4.8.5-7/lib"))
+        #print(Sys.getenv(LD_LIBRARY_PATH))
     }
 
     app.setup <- getHypeAppSetup(modelName = modelName,
@@ -205,7 +190,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                  modelFilesPath = model.files.path,
                                  forcingArchivePath = forcing.archive.path,
                                  stateFilesPath = state.files.path,
-                                 stateFilesIN = state.files)
+                                 stateFilesIN = state.files,
+                                 modelDataPaths = modelDataPaths)
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste("HypeApp setup read"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "HypeApp setup read",fileConn = logFile$fileConn)
@@ -241,17 +227,11 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
         xobs.data <- getXobsData(appInput = app.input, # xobsNum, xobs, xobsURL
                                  appSetup = app.setup) # model run dir, res dir etc.
+
+        print("xobs.data1.3:")
+        print(xobs.data)
         if(app.sys=="tep"){rciop.log ("DEBUG", paste("xobs data downloaded from catalogue"), nameOfSrcFile)}
         log.res=appLogWrite(logText = "xobs data (if any) downloaded from catalogue",fileConn = logFile$fileConn)
-
-        ## ------------------------------------------------------------------------------
-        ## read downloaded Xobs input file(s) - merge into one Xobs.txt in the model run folder
-        xobs.input <- readXobsData(appSetup = app.setup,
-                                   xobsData = xobs.data)
-        print("xobs.input returned1:")
-        print(xobs.input)
-        if(app.sys=="tep"){rciop.log ("DEBUG", paste("xobs data merged to model rundir"), nameOfSrcFile)}
-        log.res=appLogWrite(logText = "Xobs data (if any) merged into model directory",fileConn = logFile$fileConn)
     }
 
     if (applRuntimeOptions$metHC == cMetHCVariant2) {
@@ -278,21 +258,34 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
         # Minimal variants of original list types
         hindcast.forcing <- hindcast.forcingandxobs$hindcast.forcing
-        xobs.input       <- hindcast.forcingandxobs$xobs.input
+        #xobs.input       <- hindcast.forcingandxobs$xobs.input
+        xobs.data        <- hindcast.forcingandxobs$xobs.data
         print("hindcast.forcing returned2:")
         print(hindcast.forcing)
-        print("xobs.input returned2:")
-        print(xobs.input)
+        # print("xobs.input returned2:")
+        # print(xobs.input)
+        print("xobs.data returned2:")
+        print(xobs.data)
     }
-    q(save="no", status = 0)
 
-    # ToDo: Use prepared info-hindcast.txt etc.
+    ## ------------------------------------------------------------------------------
+    ## read downloaded Xobs input file(s) - merge into one Xobs.txt in the model run folder
+    xobs.input <- readXobsData(appSetup = app.setup,
+                                xobsData = xobs.data)
+    print("xobs.input returned1:")
+    print(xobs.input)
+    if(app.sys=="tep"){rciop.log ("DEBUG", paste("xobs data merged to model rundir"), nameOfSrcFile)}
+    log.res=appLogWrite(logText = "Xobs data (if any) merged into model directory",fileConn = logFile$fileConn)
 
     ## ------------------------------------------------------------------------------
     ## modify some model files based on input parameters
     #if (applRuntimeOptions$metHC == cMetHCVariant1) {
     hindcast.input <- updateModelInput(appSetup = app.setup, appInput = app.input,
                                        hindcast = T, modelForcing = hindcast.forcing, xobsInput = xobs.input)
+    print("hindcast.input:")
+    print(hindcast.input)
+    #q(save="no", status = 0)
+
     #}
     #if (applRuntimeOptions$metHC == cMetHCVariant2) {
     #    hindcast.input <- updateModelInput(appSetup = app.setup, appInput = app.input,
@@ -331,6 +324,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         log.res=appLogWrite(logText = "something wrong with hindcast model inputs (no run)",fileConn = logFile$fileConn)
         }
 
+    q(save="no", status = 0)
+
     #################################################################################
     ## 6 - Forecast input data
     ## ------------------------------------------------------------------------------
@@ -352,6 +347,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         #               "edate"=edate, # "2019-10-05 GMT"
         #               "outstateDate"=outstateDate, # NA
         #               "stateFile"=stateFile)) # "/var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910161533_0110/attempt_201910161533_0110_m_000000_0/work/tmp/model/forecast/niger-hype/state_save20190926.txt"
+
+        # As previously set for forecast
+        xobs.input <- NULL
     }
 
     if ((applRuntimeOptions$metHC == cMetHCVariant2) &&
@@ -366,13 +364,29 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                                                app.input$idate,
                                                                dirNCFiles,
                                                                ncSubDir=TRUE,
-                                                               dirGridMeta,
+                                                               modelDataPaths$dirGridMetaData,
                                                                dirObsFiles)
         # Minimal variants of original list types
         forecast.forcing <- forecast.forcingandxobs$forecast.forcing
         print("forecast.forcing returned2:")
         print(forecast.forcing)
+
+        xobs.data <- forecast.forcingandxobs$xobs.data
+        print("xobs.data returned2:")
+        print(xobs.data)
+
+        ## ------------------------------------------------------------------------------
+        ## read downloaded Xobs input file(s) - merge into one Xobs.txt in the model run folder
+        xobs.input <- readXobsData(appSetup = app.setup,
+                                   xobsData = xobs.data)
+        #xobs.input <- NULL
+        print("xobs.input returned1:")
+        print(xobs.input)
+        if(app.sys=="tep"){rciop.log ("DEBUG", paste("xobs data merged to model rundir"), nameOfSrcFile)}
+        log.res=appLogWrite(logText = "Xobs data (if any) merged into model directory",fileConn = logFile$fileConn)
     }
+
+    q(save="no", status = 0)
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste("...forecast forcing set"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "forecast model forcing data downloaded and prepared",fileConn = logFile$fileConn)
@@ -380,7 +394,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## ------------------------------------------------------------------------------
     ## modify some model files based on input parameters
     forecast.input <- updateModelInput(appSetup = app.setup, appInput = app.input,
-                                       hindcast = F, modelForcing = forecast.forcing, xobsInput = NULL)
+                                       hindcast = F, modelForcing = forecast.forcing, xobsInput = NULL) # ToDo:xobsInput = xobs.input
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste("...forecast inputs modified"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "forecast model input files modified",fileConn = logFile$fileConn)
