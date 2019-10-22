@@ -31,6 +31,16 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
         print(paste0("startDate: ",startDate))
         print(paste0("endDate: ",endDate))
     }
+# [1] "run_netcdf_to_obs_gridLinkPreparation():"
+# [1] "workDir: /var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910211332_0020/attempt_201910211332_0020_m_000001_0/work/tmp/netcdf_to_obs"
+# [1] "ncRootDir: /var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910211332_0020/attempt_201910211332_0020_m_000001_0/work/tmp/netcdf-files"
+# [1] "ncSubDir: TRUE"
+# [1] "resourceDir: /var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910211332_0020/attempt_201910211332_0020_m_000001_0/work/tmp/westafrica-hype-data/v1.3.6/grid.meta"
+# [1] "gridElevPath: /var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910211332_0020/attempt_201910211332_0020_m_000001_0/work/tmp/netcdf-files/elevation/HydroGFD2elevation.nc"
+# [1] "shapeFilePath: /var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910211332_0020/attempt_201910211332_0020_m_000001_0/work/tmp/westafrica-hype-data/v1.3.6/shapefiles/niger-hype.shp"
+# [1] "outPath: /var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910211332_0020/attempt_201910211332_0020_m_000001_0/work/tmp/obs-files"
+# [1] "startDate: 2019-06-01"
+# [1] "endDate: 2019-10-02"
 
     # Output
     status <- 0
@@ -65,7 +75,7 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
         rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",resource_dir_path))
         #q(save="no", status = 0)
     }
-    
+
     grid_elev_path <- gridElevPath
     if (! file.exists(grid_elev_path)){
         rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",grid_elev_path))
@@ -92,22 +102,22 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
     if (! dir.exists(out_path)){
         dir.create(out_path)
     }
-    
+
     # Processing options
     # force re-generation of gridLink (it will always be generated if [out_path]/gridLink.Rdata is missing)
     redoGridLink = F
-    
+
     # force re-generation of grid.point.shp and grid.polygon.shp
     redoGridLayers = F
-    
+
     # prefered projected crs to use for calculating areal weights and distances
     #  - if not given, UTM will be used, with UTM zone adapted for each subbasin
     crsProjProc = NULL
 
-    # Check and clean subbasin polygons for corrupted geometries? 
+    # Check and clean subbasin polygons for corrupted geometries?
     #  - preferably this should be done in advance and not as part of operational use
     cleanGeometry = F
-    
+
     # nearest(1) or weighted(0)
     weightedOrNearest=0
 
@@ -123,15 +133,22 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
     print(paste0("model.shape: ",shape_file_path))
     #print(paste0(": ",))
 
+# [1] "PATHS:"
+# [1] "grid.path: /var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910211332_0020/attempt_201910211332_0020_m_000001_0/work/tmp/netcdf-files/pr"
+# [1] "grid.elev: /var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910211332_0020/attempt_201910211332_0020_m_000001_0/work/tmp/netcdf-files/elevation/HydroGFD2elevation.nc"
+# [1] "grid.meta: /var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910211332_0020/attempt_201910211332_0020_m_000001_0/work/tmp/westafrica-hype-data/v1.3.6/grid.meta"
+# [1] "output.path: /var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910211332_0020/attempt_201910211332_0020_m_000001_0/work/tmp/obs-files"
+# [1] "model.shape: /var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910211332_0020/attempt_201910211332_0020_m_000001_0/work/tmp/westafrica-hype-data/v1.3.6/shapefiles/niger-hype.shp"
+
     # Check/re-generate gridLink
-    isGridLink = gridLinkPreparation(grid.path = grid_dir_path[1]
-                                    ,grid.pattern = nc_file_pattern[1]
-                                    ,grid.elev = grid_elev_path
-                                    ,var.name = nc_var_name[1]
-                                    ,grid.meta = resource_dir_path
-                                    ,output.path = out_path               # ToDo: or workDir
+    isGridLink = gridLinkPreparation(grid.path = grid_dir_path[1] # ok
+                                    ,grid.pattern = nc_file_pattern[1] # ok
+                                    ,grid.elev = grid_elev_path # ok
+                                    ,var.name = nc_var_name[1] # ok
+                                    ,grid.meta = resource_dir_path # ok
+                                    ,output.path = out_path # ok
                                     ,redoGridLink = redoGridLink
-                                    ,model.shape = shape_file_path
+                                    ,model.shape = shape_file_path # ok
                                     ,cleanGeometry = cleanGeometry
                                     ,crsProj = crsProjProc)
     if (isGridLink > 0){
@@ -185,7 +202,7 @@ prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
     fileToSource <- paste0(Sys.getenv("_CIOP_APPLICATION_PATH"), "/util/R/netcdf_to_obs_utils.R")
     if (! file.exists(fileToSource)){
         rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",fileToSource))
-        q(save="no", status = 77)
+        #q(save="no", status = 77)
     }
     source(fileToSource)
 
@@ -203,13 +220,13 @@ prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
     resource_dir_path <- resourceDir
     if (! file.exists(resource_dir_path)){
         rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",resource_dir_path))
-        q(save="no", status = 77)
+        #q(save="no", status = 77)
     }
-    
+
     grid_elev_path <- gridElevPath
     if (! file.exists(grid_elev_path)){
         rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",grid_elev_path))
-        q(save="no", status = 77)
+        #q(save="no", status = 77)
     }
 
     nc_var_name     <- c("pr","tas","tasmin","tasmax")
@@ -224,7 +241,7 @@ prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
     shape_file_path <- shapeFilePath
     if (! file.exists(shape_file_path)){
         rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",shape_file_path))
-        q(save="no", status = 77)
+        #q(save="no", status = 77)
     }
 
     # Output options
@@ -232,22 +249,22 @@ prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
     if (! dir.exists(out_path)){
         dir.create(out_path)
     }
-    
+
     # Processing options
     # force re-generation of gridLink (it will always be generated if [out_path]/gridLink.Rdata is missing)
     redoGridLink = F
-    
+
     # force re-generation of grid.point.shp and grid.polygon.shp
     redoGridLayers = F
-    
+
     # prefered projected crs to use for calculating areal weights and distances
     #  - if not given, UTM will be used, with UTM zone adapted for each subbasin
     crsProjProc = NULL
 
-    # Check and clean subbasin polygons for corrupted geometries? 
+    # Check and clean subbasin polygons for corrupted geometries?
     #  - preferably this should be done in advance and not as part of operational use
     cleanGeometry = F
-    
+
     # nearest(1) or weighted(0)
     weightedOrNearest=0
 
@@ -286,7 +303,7 @@ prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
     if (readWriteResult > 0){
         rciop.log("INFO", paste0("Aborting netcdf to obs - readGridsAndWriteObs(): ",readWriteResult))
         #q(save="no", status = 76)
-        status <- status + 2
+        #status <- status + 2
     }
 
     # Change back to previous work dir
@@ -304,7 +321,7 @@ leap_year <- function(year)
   leap <- ifelse( (year %% 4 == 0 & year %% 100 != 0) | year %% 400 == 0, TRUE, FALSE)
   return (leap)
 }
- 
+
 # Return number of days in requested month
 # in  : year  - to determine leap year
 # in  : month - 1 to 12
@@ -324,7 +341,7 @@ days_per_month <- function(year, month)
     print(day)
   }
   return (day)
-} 
+}
 
 
 # In/Out - objects of posix date classes
@@ -391,7 +408,7 @@ determine_interval_hydrogfdei <- function(hindcastStartDate,
     }else {
       # Re-forecast
       hydrogfdei.endDate <- forecastIssueDate
-      
+
       mday_as_char <- strftime(hydrogfdei.endDate,format="%d")
       mday_as_num  <- as.numeric(mday_as_char)
       if (mday_as_num < 10) {
@@ -399,17 +416,17 @@ determine_interval_hydrogfdei <- function(hindcastStartDate,
       }else {
           hydrogfdei.endDate$mon <- hydrogfdei.endDate$mon - 3
       }
-            
+
       # Round off to end of this month
       mon_as_char  <- strftime(hydrogfdei.endDate,format="%m")
       mon_as_num   <- as.numeric(mon_as_char)
       year_as_char <- strftime(hydrogfdei.endDate,format="%Y")
       year_as_num  <- as.numeric(year_as_char)
-      
+
       mday_last <- days_per_month(year_as_num,mon_as_num)
       hydrogfdei.endDate$mday <- hydrogfdei.endDate$mday + (mday_last - hydrogfdei.endDate$mday)
     }
-    
+
     if (verbose == TRUE) {
       print('HydroGFDEI:')
       print(hydrogfdei.startDate)
@@ -433,7 +450,7 @@ determine_interval_hydrogfdod <- function(hydrogfdeiEndDate,
     hydrogfdod.startDate$mday <- hydrogfdod.startDate$mday + 1 # day
     if (in_reforecast == FALSE) {
       # Operational
-      
+
       # Should be: last day in the most recent hydrogfdod file (as new input parameter)
       # Now the last file is 201908
       hydrogfdod.endDate <- "2019-08-31"
@@ -456,11 +473,11 @@ determine_interval_hydrogfdod <- function(hydrogfdeiEndDate,
       mon_as_num  <- as.numeric(mon_as_char)
       year_as_char <- strftime(hydrogfdod.endDate,format="%Y")
       year_as_num  <- as.numeric(year_as_char)
-      
+
       mday_last <- days_per_month(year_as_num,mon_as_num)
       hydrogfdod.endDate$mday <- hydrogfdod.endDate$mday + (mday_last - hydrogfdod.endDate$mday)
     }
-    
+
     if (verbose == TRUE) {
       print('HydroGFDOD:')
       print(hydrogfdod.startDate)
@@ -483,7 +500,7 @@ determine_interval_od_daily <- function(hydrogfdodEndDate,
     od.startDate$mday <- od.startDate$mday + 1
 
     od.endDate        <- hindcastEndDate
-    
+
     if (verbose == TRUE) {
       print('OD:')
       print(od.startDate)
@@ -505,7 +522,7 @@ determine_interval_ecoper <- function(forecastIssueDate)
 
     ecoper.endDate      <- forecastIssueDate
     ecoper.endDate$mday <- ecoper.endDate$mday + 9
-    
+
     if (verbose == TRUE) {
       print('ECOPER:')
       print(ecoper.startDate)
@@ -534,7 +551,7 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
     if (hindcast.Days < 0) {
       hindcast.Days <- 0
     }
-    
+
     # Convert to posix date format
     forecast.IssueDate <- as.Date(in_forecastIssueDate)
     forecast.IssueDate <- as.POSIXlt(forecast.IssueDate)
@@ -553,7 +570,7 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
     hypeState.Date <- paste(yyyy,mm,dd,sep="-")
     hypeState.Date <- as.Date(hypeState.Date) # No time
     hypeState.Date <- as.POSIXlt(hypeState.Date) # Still no time
-    
+
     if (verbose == TRUE) {
       print('Handle inputs:')
       print('hindcast.Days:')
@@ -566,7 +583,7 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
       print(hypeState.Date)
       print('')
     }
-    
+
     ## ------------------------------------------------------------------------------
     # Hindcast general
     intervalHindcast <- determine_interval_hindcast(forecast.IssueDate,
@@ -593,7 +610,7 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
     ## ------------------------------------------------------------------------------
     # Do not return the posixlt class objects
     # Convert data to character strings in the format yyyymm or yyyymmdd
-    
+
     if (verbose == TRUE) {
       tmp <- strftime(intervalHindcast$hindcast.startDate,format="%Y%m")
       print(tmp)
@@ -621,17 +638,17 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
     hydrogfdeiEndDateSearch     <- strftime(intervalHydrogfdei$hydrogfdei.endDate,format="%Y-%m-%d")
     hydrogfdeiStartDateFilename <- strftime(intervalHydrogfdei$hydrogfdei.startDate,format="%Y%m")
     hydrogfdeiEndDateFilename   <- strftime(intervalHydrogfdei$hydrogfdei.endDate,format="%Y%m")
-    
+
     hydrogfdodStartDateSearch   <- strftime(intervalHydrogfdod$hydrogfdod.startDate,format="%Y-%m-%d")
     hydrogfdodEndDateSearch     <- strftime(intervalHydrogfdod$hydrogfdod.endDate,format="%Y-%m-%d")
     hydrogfdodStartDateFilename <- strftime(intervalHydrogfdod$hydrogfdod.startDate,format="%Y%m")
     hydrogfdodEndDateFilename   <- strftime(intervalHydrogfdod$hydrogfdod.endDate,format="%Y%m")
-    
+
     odStartDateSearch   <- strftime(intervalOdDaily$od.startDate,format="%Y-%m-%d")
     odEndDateSearch     <- strftime(intervalOdDaily$od.endDate,format="%Y-%m-%d")
     odStartDateFilename <- strftime(intervalOdDaily$od.startDate,format="%Y%m%d")
     odEndDateFilename   <- strftime(intervalOdDaily$od.endDate,format="%Y%m%d")
-    
+
     castIntervals <- list("hindcastStartDateSearch"=hindcastStartDateSearch,
                           "hindcastEndDateSearch"=hindcastEndDateSearch,
 
@@ -651,7 +668,7 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
                           "odEndDateFilename"=odEndDateFilename
                           )
     return(castIntervals)
-    
+
 } # prepare_hindcast_intervals
 
 
@@ -660,7 +677,7 @@ prepare_forecast_intervals <- function(in_forecastIssueDate) # character string 
     # Convert to posix date format
     forecast.IssueDate <- as.Date(in_forecastIssueDate)
     forecast.IssueDate <- as.POSIXlt(forecast.IssueDate)
-    
+
     if (verbose == TRUE) {
       print('Handle inputs:')
       print('forecast.IssueDate:')
@@ -675,7 +692,7 @@ prepare_forecast_intervals <- function(in_forecastIssueDate) # character string 
     ## ------------------------------------------------------------------------------
     # Do not return the posixlt class objects
     # Convert data to character strings in the format yyyymm or yyyymmdd
-    
+
     if (verbose == TRUE) {
       tmp <- strftime(intervalEcoper$ecoper.startDate,format="%Y%m%d")
       print(tmp)
@@ -687,14 +704,14 @@ prepare_forecast_intervals <- function(in_forecastIssueDate) # character string 
     ecoperEndDateSearch     <- strftime(intervalEcoper$ecoper.endDate,format="%Y-%m-%d")
     ecoperStartDateFilename <- strftime(intervalEcoper$ecoper.startDate,format="%Y%m%d")
     ecoperEndDateFilename   <- strftime(intervalEcoper$ecoper.endDate,format="%Y%m%d")
-    
+
     castIntervals <- list("ecoperStartDateSearch"=ecoperStartDateSearch,
                           "ecoperEndDateSearch"=ecoperEndDateSearch,
                           "ecoperStartDateFilename"=ecoperStartDateFilename,
                           "ecoperEndDateFilename"=ecoperEndDateFilename
                           )
     return(castIntervals)
-    
+
 } # prepare_forecast_intervals
 
 
@@ -833,11 +850,11 @@ check_date_interval_netcdf <- function(startDate,
 
 
 # Common
-# This handles the sequence for each x obs  file (iterates opensearch, download each meterological GFD, call function to convert to obs) 
+# This handles the sequence for each x obs  file (iterates opensearch, download each meterological GFD, call function to convert to obs)
 # Retrieve files (pr,tas,tasmin,tasmax) via opensearch and rciop.copy
 # Configurable option to download all files into one dir or individual sub-dirs
 # for pr, tas, tasmin and tasmax.
-download_netcdf <- function(modelConfig,    # sub-dir to use for local download dir, url, query pattern etc 
+download_netcdf <- function(modelConfig,    # sub-dir to use for local download dir, url, query pattern etc
                             xCastsInterval, # dates for search start/stop, expected date in filename to check against
                             netcdfDir,      # base dir to download files too
                             ncSubDir,       # False-one dir, True-separate dir for each variable
@@ -847,14 +864,14 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
   # path_to_store_netcdf_files - temporary dir
   # path to store obs files - res dir
   # expected file name for retrived netcdf files - to compare with after download
-  
+
   if (verbose == TRUE) {
     print("download_netcdf:")
     print(modelConfig)
     print(xCastsInterval)
     print(xCast)
   }
-  
+
   # Constants
   variables   <- c("pr","tas","tasmin","tasmax")
   fileSuffix <- "_fanfar_SMHI.nc"
@@ -870,7 +887,7 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
       query     <- modelConfig$gfdHydrogfdeiQuery
       startDate <- xCastsInterval$hydrogfdeiStartDateSearch
       stopDate  <- xCastsInterval$hydrogfdeiEndDateSearch
-      
+
       search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
       nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
                                             "_hydrogfdei_",fileSuffix)
@@ -878,7 +895,7 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
           print(paste0(nMissing," file(s) missing for hydrogfdei"))
           rciop.log("INFO",paste0(nMissing," file(s) missing for hydrogfdei"))
       }
-      
+
       ## ------------------------------------------------------------------------------
       # Handle hydrogfdod
       urlNC     <- modelConfig$gfdHydrogfdodUrl
@@ -894,7 +911,7 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
           print(paste0(nMissing," file(s) missing for hydrogfdod"))
           rciop.log("INFO",paste0(nMissing," file(s) missing for hydrogfdod"))
       }
-      
+
       ## ------------------------------------------------------------------------------
       # Handle od (od-daily)
       urlNC     <- modelConfig$gfdOdDailyUrl
@@ -943,7 +960,7 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
   } # elevation
   ## ------------------------------------------------------------------------------
   # All meterological gfd parts downloaded to local tmp dir
-  
+
 } # download_netcdf
 
 
@@ -953,7 +970,7 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
 
 # External function
 # Wrapper for netcdf2obs sequence
-process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now 
+process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
                                         modelDataConfig, # Misc model config data, paths to state files, forcing, shape files
                                         forecastIssueDate, # yyyy-mm-dd
                                         hindcastPeriodLength, # Days
@@ -985,7 +1002,7 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
   # Depending on selected dir, copy the files to run dir
   startDate <- prepHindcastInterval$hindcastStartDateSearch
   endDate   <- prepHindcastInterval$hindcastEndDateSearch
-  
+
   netcdf_to_obs_wd <- paste0(TMPDIR,"/netcdf_to_obs")
   #netcdf_to_obs_output <- paste0(netcdf_to_obs_wd,"/output")
   # ToDo: gridLink...
@@ -997,7 +1014,8 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
                                                    ncSubDir=ncSubDir,
                                                    resourceDir=gridMetaDir,
                                                    gridElevPath=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD2elevation.nc",sep="/"),
-                                                   shapeFilePath=paste(modelDataConfig$dirShapeFiles,"SUBID_shapefile.shp", sep="/"),
+                                                   #shapeFilePath=paste(modelDataConfig$dirShapeFiles,"SUBID_shapefile.shp", sep="/"),
+                                                   shapeFilePath=paste(modelDataConfig$dirShapeFiles,"niger-hype.shp", sep="/"),
                                                    outPath=obsDir, # Should maybe be a temporary dir for next step, but need to be available for the corresponding functional call during forecast
                                                    startDate,
                                                    endDate)
@@ -1006,20 +1024,21 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
       }
   #}
   rciop.log("INFO",paste0("run_netcdf_to_obs_gridLinkPreparation END"))
-  
+
   rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs START"))
-  res <- prepare_and_run_netcdf_to_obs(workDir=netcdf_to_obs_wd,
-                                       ncRootDir=netcdfDir,
-                                       ncSubDir=ncSubDir,
-                                       resourceDir=gridMetaDir,
-                                       gridElevPath=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD2elevation.nc",sep="/"),
-                                       shapeFilePath=paste(modelDataConfig$dirShapeFiles,"SUBID_shapefile.shp", sep="/"),
-                                       outPath=obsDir,
-                                       startDate,
-                                       endDate)
-  if (res > 0){
-      rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs, exit code=",res))
-  }
+  # res <- prepare_and_run_netcdf_to_obs(workDir=netcdf_to_obs_wd,
+  #                                      ncRootDir=netcdfDir,
+  #                                      ncSubDir=ncSubDir,
+  #                                      resourceDir=gridMetaDir,
+  #                                      gridElevPath=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD2elevation.nc",sep="/"),
+  #                                      #shapeFilePath=paste(modelDataConfig$dirShapeFiles,"SUBID_shapefile.shp", sep="/"),
+  #                                      shapeFilePath=paste(modelDataConfig$dirShapeFiles,"niger-hype.shp", sep="/"),
+  #                                      outPath=obsDir,
+  #                                      startDate,
+  #                                      endDate)
+  # if (res > 0){
+  #     rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs, exit code=",res))
+  # }
   rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs END"))
 
   #if (obsDir != runDir){
@@ -1033,7 +1052,7 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
   hindcast.forcing <- list("bdate"=bdate,
                            "cdate"=cdate,
                            "edate"=edate)
-  
+
   xobsVar   <- c("var xyz") # ToDo
   xobsSubid <- c("subid xyz") # ToDo
   xobs.input <- list("xobsVar"=xobsVar,
@@ -1050,7 +1069,7 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
 # ToDo: Remove/Replace some inputs, call other func for forecast interval
 # External function
 # Wrapper for netcdf2obs sequence
-process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now 
+process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
                                         modelDataConfig, # Misc model config data, paths to state files, forcing, shape files
                                         forecastIssueDate, # yyyy-mm-dd
                                         netcdfDir, # Input dir with hydrogfd netcdf files
@@ -1067,12 +1086,12 @@ process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
                   netcdfDir,
                   ncSubDir,
                   xCast="forecast")
-  
+
   # Produce the files Pobs.txt, Tobs.txt, TMINobs.txt and TMAXobs.txt
   # Depending on selected dir, copy the files to run dir
   startDate <- prepForecastInterval$ecoperStartDateSearch
   endDate   <- prepForecastInterval$ecoperEndDateSearch
-  
+
   netcdf_to_obs_wd <- paste0(TMPDIR,"/netcdf_to_obs")
   rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs START"))
   res <- prepare_and_run_netcdf_to_obs(workDir=netcdf_to_obs_wd,
@@ -1080,7 +1099,8 @@ process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
                                        ncSubDir=ncSubDir,
                                        resourceDir=gridMetaDir,
                                        gridElevPath=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD2elevation.nc",sep="/"),
-                                       shapeFilePath=paste(modelDataConfig$dirShapeFiles,"SUBID_shapefile.shp", sep="/"),
+                                       #shapeFilePath=paste(modelDataConfig$dirShapeFiles,"SUBID_shapefile.shp", sep="/"),
+                                       shapeFilePath=paste(modelDataConfig$dirShapeFiles,"niger-hype.shp", sep="/"),
                                        outPath=obsDir,
                                        startDate,
                                        endDate)
