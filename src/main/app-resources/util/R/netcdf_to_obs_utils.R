@@ -78,14 +78,6 @@
   }
 }
 
-# {
-#   print("Print some info about session:")
-#   print(.libPaths())
-#   print(sessionInfo())
-#   print(version)
-#   sessionInfo()
-# }
-
 # -------------------------------------------------------------------------------------------
 # Functions
 # -------------------------------------------------------------------------------------------
@@ -321,287 +313,6 @@
   
   # Generate polygons and point layers for GFD grids
   {
-    
-    
-    # Read GFD/GCM netCDF file: time-series data and/or spatial dimensions, for special area of interest if requested.
-    #
-    # this function is not used anymore to read the actual time series data
-    #
-    # however, it is still used when generating the gridLink!!!
-    #
-    readGFDGCMnetcdf444<-function(gfdFile=NULL,           # nc filename
-                               gfdCells=NULL,          # vector with gfd cells of interest (default all cells are returned)
-                               dataOut=T,              # flag to return time series data data frame
-                               aoi=NULL,               # area of interest (if provided, the nearest GFD gridpoints will be returned, set to NULL if all grids are wanted for weighted output)
-                               gfd.poly=NULL,          # polygon layer
-                               gfd.point=NULL,
-                               lldiffmax = (2 * 0.25^2)^0.5+1e-8,
-                               dataOffset=0,
-                               dataScale=1,
-                               ncvarname=NULL){
-      print(paste0("readGFDGCMnetcdf - ","0"))
-      # open nc file
-      {
-        if (! file.exists(gfdFile)){
-          print("gfdFile doesn't exist")
-        }else{
-          print("gfdFile do exist")
-        }
-
-        print(gfdFile) # "/var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910211332_0036/attempt_201910211332_0036_m_000001_0/work/tmp/netcdf-files/pr/pr_hydrogfdei_201906_fanfar_SMHI.nc", checksum ok vid kontroll
-                       # "/var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910211332_0038/attempt_201910211332_0038_m_000001_0/work/tmp/netcdf-files/pr/pr_hydrogfdei_201810_fanfar_SMHI.nc", checksumma ok vid kontroll
-        nc = nc_open(gfdFile) # ToDo: This one outputs error: netcdf: 65536 is not a valid cdfid (java.lang.RuntimeException: PipeMapRed.waitResultThreads(): subprocess failed with code 3)
-        print("nc:")
-        print(nc)
-
-        print(paste0("readGFDGCMnetcdf - ","0.1"))
-      }
-      print(paste0("readGFDGCMnetcdf - ","1"))
-
-      # nc file dimensions
-      {
-        ndim= nc$ndims
-        dimName=nc$dim[[1]]$name
-        for(i in 2:ndim){dimName=c(dimName,nc$dim[[i]]$name)}
-        
-        iLon = which(dimName=="lon")
-        iLat = which(dimName=="lat")
-        iTime = which(dimName=="time")
-        
-        nc.nlon=nc$dim[[iLon]]$len
-        nc.nlat=nc$dim[[iLat]]$len
-        nc.nTime=nc$dim[[iTime]]$len
-        
-        nc.lon=round(nc$dim[[iLon]]$vals, 4)
-        nc.lat=round(nc$dim[[iLat]]$vals, 4)
-        
-        # make a raster to extract cell numbers for faster netcdf readout
-        xres=abs(nc.lon[2]-nc.lon[1])
-        yres=abs(nc.lat[2]-nc.lat[1])
-        nc.raster = raster(nrows=nc.nlat,ncols=nc.nlon,xmn=min(nc.lon)-0.5*xres,xmx=max(nc.lon)+0.5*xres,ymn=min(nc.lat)+0.5*yres,ymx=max(nc.lat)+0.5*yres)
-      }
-      print(paste0("readGFDGCMnetcdf - ","2"))
-      
-      # prepare spatial key, xyijk.nc
-      {
-        xyijk.nc = mat.or.vec(nr = nc.nlat*nc.nlon,5)
-        k=0
-        for(i in 1:nc.nlon){
-          for(j in 1:nc.nlat){
-            xyijk.nc[(i-1)*nc.nlat+j,] = c(nc.lon[i],nc.lat[j],i,j,1e6 + i*1e3 + j)
-          }
-        }
-        print(paste0("readGFDGCMnetcdf - ","3"))
-        
-        xyijk.nc = as.data.frame(xyijk.nc)
-        colnames(xyijk.nc)=c("lon.nc","lat.nc","col.nc","row.nc","id.nc")
-        xyijk.nc$X=xyijk.nc$lon.nc
-        xyijk.nc$Y=xyijk.nc$lat.nc
-        coordinates(xyijk.nc)<-c("X","Y")
-        proj4string(xyijk.nc)<-"+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-        
-        # cellnumber for faster extraction from netcdf files
-        xyijk.nc@data$cell.nc = cellFromRowCol(object = nc.raster,row = xyijk.nc@data$row.nc,col = xyijk.nc@data$col.nc)
-        
-        print(paste0("readGFDGCMnetcdf - ","4"))
-        # add elevation and global ID from global point data set
-        if(!is.null(gfd.point)){
-          xyijk.nc$elev.gfd = NA
-          xyijk.nc$id.gfd    = NA
-          xy.points = coordinates(gfd.point)
-          # added
-          xy.points[,1] = round(xy.points[,1], 4)
-          xy.points[,2] = round(xy.points[,2] ,4)
-
-          # the for-loop is too slow for large nc-domains ...
-          # make a new compiled variable for the matching
-          # make lat from 0 to 180 and lon from 0 to 360
-          ncxy = round((xyijk.nc$lon.nc + 180)*1e4) + round((xyijk.nc$lat.nc + 90)*1e4)*1e6
-          ptxy = round((xy.points[,1] + 180)*1e4) + round((xy.points[,2] + 90)*1e4)*1e6
-          iMatch = match(ncxy,ptxy)
-          xyijk.nc$elev.gfd=gfd.point@data$elev[iMatch]
-          xyijk.nc$id.gfd=gfd.point@data$id[iMatch]
-        }else{
-          xyijk.nc$elev.gfd     = NA
-          xyijk.nc$id.gfd    = NA
-        }
-        print(paste0("readGFDGCMnetcdf - ","5"))
-        
-        # extract polygon data from the global polygons if available
-        if(!is.null(gfd.poly)){
-          nc.poly = gfd.poly[match(xyijk.nc$id.gfd,gfd.poly@data$id),]
-          # add "gfd" column names 
-          colnames(nc.poly@data)<-c("lon.gfd","lat.gfd","col.gfd","row.gfd","id.gfd","elev.gfd")
-          # add the "nc" metadata to the polygon metadata
-          nc.poly@data$lon.nc = xyijk.nc$lon.nc
-          nc.poly@data$lat.nc = xyijk.nc$lat.nc
-          nc.poly@data$col.nc = xyijk.nc$col.nc
-          nc.poly@data$row.nc = xyijk.nc$row.nc
-          nc.poly@data$id.nc = xyijk.nc$id.nc
-          nc.poly@data$cell.nc = xyijk.nc$cell.nc
-         print(paste0("readGFDGCMnetcdf - ","6"))
-        }else{
-          print(paste0("readGFDGCMnetcdf - ","7"))
-          nc.poly=NULL
-        }
-        
-      }
-      
-      # select GFD cells by Area of Interest or by input argument, or all (if aoi and input is missing)
-      {
-        if(is.null(gfdCells) & is.null(aoi)){         # select all
-          print(paste0("readGFDGCMnetcdf - ","8"))
-          gfdCells = 1:(nc.nlon*nc.nlat)
-          xyijk.aoi = xyijk.nc
-          xyijk.aoi@data$lon=xyijk.nc@data$lon.nc
-          xyijk.aoi@data$lat=xyijk.nc@data$lat.nc
-        }else{
-          print(paste0("readGFDGCMnetcdf - ","9"))
-          if(is.null(gfdCells) & !is.null(aoi)){      # by area of interest
-            print(paste0("readGFDGCMnetcdf - ","10"))
-            xyijk.aoi = aoi
-            xyijk.aoi@data$lon=NA
-            xyijk.aoi@data$lat=NA
-            xyijk.aoi@data$lon.nc=NA
-            xyijk.aoi@data$lat.nc=NA
-            xyijk.aoi@data$col.nc=NA
-            xyijk.aoi@data$row.nc=NA
-            xyijk.aoi@data$id.nc=NA
-            xyijk.aoi@data$elev.gfd=NA
-            xyijk.aoi@data$id.gfd=NA
-            
-            xy=coordinates(aoi)
-            xyijk.aoi@data$lon=xy[,1]
-            xyijk.aoi@data$lat=xy[,2]
-            for(i in 1:length(aoi)){
-              lldiff = ((xyijk.aoi@data$lon[i]-xyijk.nc@data$lon.nc)^2 + (xyijk.aoi@data$lat[i]-xyijk.nc@data$lat.nc)^2)^0.5
-              inear  = which(lldiff==min(lldiff))
-              if(lldiff[inear]<=lldiffmax){
-                xyijk.aoi@data$col.nc[i]=xyijk.nc@data$col.nc[inear]
-                xyijk.aoi@data$row.nc[i]=xyijk.nc@data$col.nc[inear]
-                xyijk.aoi@data$id.nc[i]=xyijk.nc@data$id.nc[inear]
-                xyijk.aoi@data$cell.nc[i]=xyijk.nc@data$cell.nc[inear]
-                xyijk.aoi@data$lon.nc[i]=xyijk.nc@data$lon.nc[inear]
-                xyijk.aoi@data$lat.nc[i]=xyijk.nc@data$lat.nc[inear]
-                xyijk.aoi@data$elev.gfd[i]=xyijk.nc@data$elev.gfd[inear]
-                xyijk.aoi@data$id.gfd[i]=xyijk.nc@data$id.gfd[inear]
-              }
-            }
-           print(paste0("readGFDGCMnetcdf - ","11"))
-          }else{
-            print(paste0("readGFDGCMnetcdf - ","12"))
-            # by input argument gfdCells
-            xyijk.aoi = xyijk.nc[gfdCells,]           
-            xyijk.aoi@data$lon=xyijk.aoi@data$lon.nc
-            xyijk.aoi@data$lat=xyijk.aoi@data$lat.nc
-          }
-        }
-      }
-      
-      # get time series data (as HYPE obs-data data frame)
-      if(dataOut){
-        print(paste0("readGFDGCMnetcdf - ","13"))
-        # POSIX time axis
-        {
-          print(paste0("readGFDGCMnetcdf - ","14"))
-          
-          # timeZero from file
-          tzPos = regexpr(pattern = "-",text = nc$dim$time$units)[1]-4
-          timeZero = substr(nc$dim$time$units,tzPos,tzPos+9)
-          
-          # timeScale from file
-          if(substr(nc$dim$time$units,1,5)=="hours"){
-            timeScale = 3600
-          } else if(substr(nc$dim$time$units,1,7) == "seconds") {
-            timeScale = 1
-          }else{
-            timeScale = 86400
-          }
-          print(paste0("readGFDGCMnetcdf - ","15"))
-
-          # timeAxis in POSIX
-          timeVals = nc$dim[[iTime]]$vals
-          timeAxis = as.POSIXct(timeZero,tz = "GMT")+(timeVals)*timeScale
-          
-          # adjust to zero hours
-          timeAxis = as.POSIXct(as.character(timeAxis,format="%Y-%m-%d"),tz="GMT")
-          print(paste0("readGFDGCMnetcdf - ","16"))
-        }
-        
-        # intialize data frame to collect the data
-        {
-          print(paste0("readGFDGCMnetcdf - ","17"))
-          obsData = data.frame("date"=timeAxis)
-          
-          idData   = which(!is.na(xyijk.aoi@data$id.nc))
-          nData   = length(idData)
-          print(paste0("readGFDGCMnetcdf - ","18"))
-
-          obsData = cbind(obsData,NA * mat.or.vec(length(timeAxis),nData))
-          print(paste0("readGFDGCMnetcdf - ","19"))
-
-          # use local id (id.nc) since it is always available
-          colnames(obsData) <- c("date",as.character(xyijk.aoi@data$id.nc[idData]))
-          
-          attr(obsData,"obsid")=xyijk.aoi@data$id.nc[idData]
-          print(paste0("readGFDGCMnetcdf - ","20"))
-        }
-        
-        # Read data
-        {
-          # check which variable to read
-          if(!is.null(ncvarname)){
-            print(paste0("readGFDGCMnetcdf - ","21"))
-            ncvarid = 0
-            for(i in 1:length(nc$var)){
-              if(nc$var[[i]]$name==ncvarname){
-                ncvarid = i
-               print(paste0("readGFDGCMnetcdf - ","22"))
-              }
-            }
-          }else{
-            ncvarid=length(nc$var)
-            print(paste0("readGFDGCMnetcdf - ","23"))
-          }
-          print(paste0("readGFDGCMnetcdf - ","24"))
-          # first read all data from nc file
-          alldata = ncvar_get(nc = nc, varid = nc$var[[ncvarid]],start = c(1,1,1),count = c(nc.nlon,nc.nlat,nc.nTime))
-          print(paste0("readGFDGCMnetcdf - ","25"))
-          
-          # offset and scale
-          alldata = (alldata + dataOffset) * dataScale
-          print(paste0("readGFDGCMnetcdf - ","26"))
-          
-          # then reshape into the obs matrix
-          for(i in 1:nData){
-            # output variable name
-            varName=as.character(xyijk.aoi@data$id.nc[idData[i]])
-            
-            # write to data frame
-            obsData[,varName] = alldata[xyijk.aoi@data$col.nc[idData[i]],xyijk.aoi@data$row.nc[idData[i]],1:nc.nTime]
-          }
-          print(paste0("readGFDGCMnetcdf - ","27"))
-        }
-      }else{
-        obsData = NULL  
-        print(paste0("readGFDGCMnetcdf - ","28"))
-      }
-      
-      # close nc file
-      {
-        nc_close(nc)
-        print(paste0("readGFDGCMnetcdf - ","20"))
-      }
-      
-      # Return list with time series data and/or spatial data
-      {
-        print(paste0("readGFDGCMnetcdf - ","29"))
-        return(list("obsData"=obsData,"gfdFile"=gfdFile,"aoi"=aoi,"xyijk.nc"=xyijk.nc,"xyijk.aoi"=xyijk.aoi,"nc.poly"=nc.poly))
-      }
-      
-    }
-
-
     # Make spatial layers for the GFD gridpoints (point and polygon)
     makeGFDSpatialLayers <- function(grid.nc=NULL,dsn=NULL,layer.point=NULL,layer.poly=NULL,xName="lon",yName="lat",zName="elevation"){
       # read netcdf file with the grid dimensions and (optionally) 
@@ -934,8 +645,7 @@
           output.folder = getwd()
         }
       }
-      print(paste0("gridLinkPreparation - ","1"))
-
+      
       # Parse the grid data inputs
       {
         if(!dir.exists(grid.path)){
@@ -952,7 +662,6 @@
         }
         grid.shapes.dsn = grid.meta
       }
-      print(paste0("gridLinkPreparation - ","2"))
       
       # Generate gridLink if missing 
       {
@@ -971,7 +680,6 @@
                 return(1)
               }
             }
-            print(paste0("gridLinkPreparation - ","3"))
             
             # parse the shapefile arguments
             {
@@ -989,8 +697,7 @@
             {
               subbasin.shp <- spTransform(subbasin.shp,crs("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))          
             }
-            print(paste0("gridLinkPreparation - ","4"))
-
+            
             # check and clean shapefile geometry (if requested)
             if(cleanGeometry){
               print("- - - - - - - - - - - - - - - - - - - - - - - ")
@@ -1005,7 +712,6 @@
               dummy = writeHypeSubbasinShapeFile(x=subbasin.shp,dsn=output.folder,layer=paste(model.shape.layer,"-cleaned",sep=""),areaDigits=0,updateArea=T)
             }
           }
-          print(paste0("gridLinkPreparation - ","5"))
           
           # b. Generate and/or Read netcdf point and polygon layers
           {
@@ -1014,7 +720,6 @@
               
               if(file.exists(grid.elev)){
                 # generate grid layer shapefiles
-                print(paste0("gridLinkPreparation - ","6"))
                 makeGFDSpatialLayers(grid.nc = grid.elev
                                      ,dsn = grid.shapes.dsn
                                      ,layer.point = "grid.point"
@@ -1028,7 +733,6 @@
               }
             }else{
               # read files
-              print(paste0("gridLinkPreparation - ","7"))
               grid.point = readOGR(dsn = grid.shapes.dsn,layer = "grid.point")
               grid.poly  = readOGR(dsn = grid.shapes.dsn,layer = "grid.polygon")
             }
@@ -1045,17 +749,8 @@
               print ("No valid files found in grid.path")
               return(1)
             }
-            print(paste0("gridLinkPreparation - ","8"))
-            print(grid.path)
-            print(grid_file_path[1])
-            if (! dir.exists(grid.path)){
-                print("grid.path doesn't exist")
-            }else{
-                print("grid.path do exist")
-            }
-
             # read file
-            data = readGFDGCMnetcdf444(gfdFile = paste(grid.path,"/",grid_file_path[1],sep="")
+            data = readGFDGCMnetcdf(gfdFile = paste(grid.path,"/",grid_file_path[1],sep="")
                              ,dataOut = F
                              ,aoi = NULL
                              ,gfd.poly = grid.poly
@@ -1071,11 +766,9 @@
 #                                   ,dataScale = 1,
 #                                   ncvarname=var.name,
 #                                   skipData=T)
-          print(paste0("gridLinkPreparation - ","8.1"))
           }
           
           # d. generate new gfdLink list array
-          print(paste0("gridLinkPreparation - ","9"))
           {
             gridLink = gfdCellsOverAOI(
               CRU_elevation.nc = grid.elev
@@ -1089,10 +782,8 @@
           {
             save(list = "gridLink",file = gridLink.file)
           }
-          print(paste0("gridLinkPreparation - ","10"))
           return(0)
         }else{
-          print(paste0("gridLinkPreparation - ","11"))
           return(0)
         }
       }
@@ -1176,14 +867,11 @@
                                dataOffset=0,
                                dataScale=1,
                                ncvarname=NULL){
-      print(paste0("readGFDGCMnetcdf - ","0"))
       # open nc file
       {
-        print(gfdFile)
         nc = nc_open(gfdFile)
       }
-      print(paste0("readGFDGCMnetcdf - ","1"))
-
+      
       # nc file dimensions
       {
         ndim= nc$ndims
@@ -1206,7 +894,6 @@
         yres=abs(nc.lat[2]-nc.lat[1])
         nc.raster = raster(nrows=nc.nlat,ncols=nc.nlon,xmn=min(nc.lon)-0.5*xres,xmx=max(nc.lon)+0.5*xres,ymn=min(nc.lat)+0.5*yres,ymx=max(nc.lat)+0.5*yres)
       }
-      print(paste0("readGFDGCMnetcdf - ","2"))
       
       # prepare spatial key, xyijk.nc
       {
@@ -1217,7 +904,6 @@
             xyijk.nc[(i-1)*nc.nlat+j,] = c(nc.lon[i],nc.lat[j],i,j,1e6 + i*1e3 + j)
           }
         }
-        print(paste0("readGFDGCMnetcdf - ","3"))
         
         xyijk.nc = as.data.frame(xyijk.nc)
         colnames(xyijk.nc)=c("lon.nc","lat.nc","col.nc","row.nc","id.nc")
@@ -1229,7 +915,6 @@
         # cellnumber for faster extraction from netcdf files
         xyijk.nc@data$cell.nc = cellFromRowCol(object = nc.raster,row = xyijk.nc@data$row.nc,col = xyijk.nc@data$col.nc)
         
-        print(paste0("readGFDGCMnetcdf - ","4"))
         # add elevation and global ID from global point data set
         if(!is.null(gfd.point)){
           xyijk.nc$elev.gfd = NA
@@ -1251,7 +936,6 @@
           xyijk.nc$elev.gfd     = NA
           xyijk.nc$id.gfd    = NA
         }
-        print(paste0("readGFDGCMnetcdf - ","5"))
         
         # extract polygon data from the global polygons if available
         if(!is.null(gfd.poly)){
@@ -1265,9 +949,7 @@
           nc.poly@data$row.nc = xyijk.nc$row.nc
           nc.poly@data$id.nc = xyijk.nc$id.nc
           nc.poly@data$cell.nc = xyijk.nc$cell.nc
-         print(paste0("readGFDGCMnetcdf - ","6"))
         }else{
-          print(paste0("readGFDGCMnetcdf - ","7"))
           nc.poly=NULL
         }
         
@@ -1276,15 +958,12 @@
       # select GFD cells by Area of Interest or by input argument, or all (if aoi and input is missing)
       {
         if(is.null(gfdCells) & is.null(aoi)){         # select all
-          print(paste0("readGFDGCMnetcdf - ","8"))
           gfdCells = 1:(nc.nlon*nc.nlat)
           xyijk.aoi = xyijk.nc
           xyijk.aoi@data$lon=xyijk.nc@data$lon.nc
           xyijk.aoi@data$lat=xyijk.nc@data$lat.nc
         }else{
-          print(paste0("readGFDGCMnetcdf - ","9"))
           if(is.null(gfdCells) & !is.null(aoi)){      # by area of interest
-            print(paste0("readGFDGCMnetcdf - ","10"))
             xyijk.aoi = aoi
             xyijk.aoi@data$lon=NA
             xyijk.aoi@data$lat=NA
@@ -1313,9 +992,7 @@
                 xyijk.aoi@data$id.gfd[i]=xyijk.nc@data$id.gfd[inear]
               }
             }
-           print(paste0("readGFDGCMnetcdf - ","11"))
           }else{
-            print(paste0("readGFDGCMnetcdf - ","12"))
             # by input argument gfdCells
             xyijk.aoi = xyijk.nc[gfdCells,]           
             xyijk.aoi@data$lon=xyijk.aoi@data$lon.nc
@@ -1326,10 +1003,8 @@
       
       # get time series data (as HYPE obs-data data frame)
       if(dataOut){
-        print(paste0("readGFDGCMnetcdf - ","13"))
         # POSIX time axis
         {
-          print(paste0("readGFDGCMnetcdf - ","14"))
           
           # timeZero from file
           tzPos = regexpr(pattern = "-",text = nc$dim$time$units)[1]-4
@@ -1343,60 +1018,48 @@
           }else{
             timeScale = 86400
           }
-          print(paste0("readGFDGCMnetcdf - ","15"))
-
+          
           # timeAxis in POSIX
           timeVals = nc$dim[[iTime]]$vals
           timeAxis = as.POSIXct(timeZero,tz = "GMT")+(timeVals)*timeScale
           
           # adjust to zero hours
           timeAxis = as.POSIXct(as.character(timeAxis,format="%Y-%m-%d"),tz="GMT")
-          print(paste0("readGFDGCMnetcdf - ","16"))
         }
         
         # intialize data frame to collect the data
         {
-          print(paste0("readGFDGCMnetcdf - ","17"))
           obsData = data.frame("date"=timeAxis)
           
           idData   = which(!is.na(xyijk.aoi@data$id.nc))
           nData   = length(idData)
-          print(paste0("readGFDGCMnetcdf - ","18"))
-
+          
           obsData = cbind(obsData,NA * mat.or.vec(length(timeAxis),nData))
-          print(paste0("readGFDGCMnetcdf - ","19"))
-
+          
           # use local id (id.nc) since it is always available
           colnames(obsData) <- c("date",as.character(xyijk.aoi@data$id.nc[idData]))
           
           attr(obsData,"obsid")=xyijk.aoi@data$id.nc[idData]
-          print(paste0("readGFDGCMnetcdf - ","20"))
         }
         
         # Read data
         {
           # check which variable to read
           if(!is.null(ncvarname)){
-            print(paste0("readGFDGCMnetcdf - ","21"))
             ncvarid = 0
             for(i in 1:length(nc$var)){
               if(nc$var[[i]]$name==ncvarname){
                 ncvarid = i
-               print(paste0("readGFDGCMnetcdf - ","22"))
               }
             }
           }else{
             ncvarid=length(nc$var)
-            print(paste0("readGFDGCMnetcdf - ","23"))
           }
-          print(paste0("readGFDGCMnetcdf - ","24"))
           # first read all data from nc file
           alldata = ncvar_get(nc = nc, varid = nc$var[[ncvarid]],start = c(1,1,1),count = c(nc.nlon,nc.nlat,nc.nTime))
-          print(paste0("readGFDGCMnetcdf - ","25"))
           
           # offset and scale
           alldata = (alldata + dataOffset) * dataScale
-          print(paste0("readGFDGCMnetcdf - ","26"))
           
           # then reshape into the obs matrix
           for(i in 1:nData){
@@ -1406,22 +1069,18 @@
             # write to data frame
             obsData[,varName] = alldata[xyijk.aoi@data$col.nc[idData[i]],xyijk.aoi@data$row.nc[idData[i]],1:nc.nTime]
           }
-          print(paste0("readGFDGCMnetcdf - ","27"))
         }
       }else{
         obsData = NULL  
-        print(paste0("readGFDGCMnetcdf - ","28"))
       }
       
       # close nc file
       {
         nc_close(nc)
-        print(paste0("readGFDGCMnetcdf - ","20"))
       }
       
       # Return list with time series data and/or spatial data
       {
-        print(paste0("readGFDGCMnetcdf - ","29"))
         return(list("obsData"=obsData,"gfdFile"=gfdFile,"aoi"=aoi,"xyijk.nc"=xyijk.nc,"xyijk.aoi"=xyijk.aoi,"nc.poly"=nc.poly))
       }
       
