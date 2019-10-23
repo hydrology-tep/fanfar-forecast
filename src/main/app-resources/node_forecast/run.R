@@ -332,7 +332,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         log.res=appLogWrite(logText = "something wrong with hindcast model inputs (no run)",fileConn = logFile$fileConn)
         }
 
-    q(save="no", status = 0)
+    #q(save="no", status = 0)
 
     #################################################################################
     ## 6 - Forecast input data
@@ -396,7 +396,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         log.res=appLogWrite(logText = "Xobs data (if any) merged into model directory",fileConn = logFile$fileConn)
     }
 
-    q(save="no", status = 0)
+    #q(save="no", status = 0)
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste("...forecast forcing set"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "forecast model forcing data downloaded and prepared",fileConn = logFile$fileConn)
