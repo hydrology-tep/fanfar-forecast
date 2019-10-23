@@ -995,8 +995,14 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
                                         netcdfDir, # Input dir with hydrogfd netcdf files
                                         ncSubDir, # False-one dir, True-separate dir for each variable
                                         gridMetaDir, # Input dir with grid weight files
+                                        enableCopyObsFilesToRunDir, # Copy produced obs files to run dir
+                                        modelFilesRunDir, # HYPE model data files dir
                                         obsDir) # Output dir for obs files
 {
+  if (enableCopyObsFilesToRunDir == TRUE){
+      rciop.log("INFO","process_forecast_netcdf2obs: Enabled setting to copy obs files to run dir")
+  }
+
   # Prepare hindcast and forecast intervals, start and end dates
   prepHindcastInterval <- prepare_hindcast_intervals(hindcastPeriodLength,
                                                      forecastIssueDate,
@@ -1095,6 +1101,10 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
       xobsfiles <- c(xobsfiles,pobs)
     }
     nFiles <- nFiles + 1
+    if (enableCopyObsFilesToRunDir == TRUE){
+      file.copy(from=pobs,to=modelFilesRunDir,overwrite=TRUE)
+      print(paste0("copy ",pobs, " to ",modelFilesRunDir))
+    }
   }
 
   if (file.exists(tobs)) {
@@ -1104,6 +1114,10 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
       xobsfiles <- c(xobsfiles,tobs)
     }
     nFiles <- nFiles + 1
+    if (enableCopyObsFilesToRunDir == TRUE){
+      file.copy(from=tobs,to=modelFilesRunDir,overwrite=TRUE)
+      print(paste0("copy ",tobs, " to ",modelFilesRunDir))
+    }
   }
 
   if (file.exists(tminobs)) {
@@ -1113,6 +1127,10 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
       xobsfiles <- c(xobsfiles,tminobs)
     }
     nFiles <- nFiles + 1
+    if (enableCopyObsFilesToRunDir == TRUE){
+      file.copy(from=tminobs,to=modelFilesRunDir,overwrite=TRUE)
+      print(paste0("copy ",tminobs, " to ",modelFilesRunDir))
+    }
   }
 
   if (file.exists(tmaxobs)) {
@@ -1122,6 +1140,10 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
       xobsfiles <- c(xobsfiles,tmaxobs)
     }
     nFiles <- nFiles + 1
+    if (enableCopyObsFilesToRunDir == TRUE){
+      file.copy(from=tmaxobs,to=modelFilesRunDir,overwrite=TRUE)
+      print(paste0("copy ",tmaxobs, " to ",modelFilesRunDir))
+    }
   }
   #nFiles  <- 4
   #xobsfiles <- c(pobs,tobs,tminobs,tmaxobs)
@@ -1147,8 +1169,14 @@ process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
                                         netcdfDir, # Input dir with hydrogfd netcdf files
                                         ncSubDir, # False-one dir, True-separate dir for each variable
                                         gridMetaDir, # Input dir with grid weight files
+                                        enableCopyObsFilesToRunDir, # Copy produced obs files to run dir
+                                        modelFilesRunDir = NULL, # HYPE model data files
                                         obsDir) # Output dir for obs files
 {
+  if (enableCopyObsFilesToRunDir == TRUE){
+      rciop.log("INFO","process_forecast_netcdf2obs: Enabled setting to copy obs files to run dir ")
+  }
+
   # Prepare hindcast and forecast intervals, start and end dates
   prepForecastInterval <- prepare_forecast_intervals(forecastIssueDate)
 
@@ -1212,6 +1240,9 @@ process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
       xobsfiles <- c(xobsfiles,pobs)
     }
     nFiles <- nFiles + 1
+    if (enableCopyObsFilesToRunDir == TRUE){
+      file.copy(from=pobs,to=modelFilesRunDir,overwrite=TRUE)
+    }
   }
 
   if (file.exists(tobs)) {
@@ -1221,6 +1252,9 @@ process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
       xobsfiles <- c(xobsfiles,tobs)
     }
     nFiles <- nFiles + 1
+    if (enableCopyObsFilesToRunDir == TRUE){
+      file.copy(from=tobs,to=modelFilesRunDir,overwrite=TRUE)
+    }
   }
 
   if (file.exists(tminobs)) {
@@ -1230,6 +1264,9 @@ process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
       xobsfiles <- c(xobsfiles,tminobs)
     }
     nFiles <- nFiles + 1
+    if (enableCopyObsFilesToRunDir == TRUE){
+      file.copy(from=tminobs,to=modelFilesRunDir,overwrite=TRUE)
+    }
   }
 
   if (file.exists(tmaxobs)) {
@@ -1239,6 +1276,9 @@ process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
       xobsfiles <- c(xobsfiles,tmaxobs)
     }
     nFiles <- nFiles + 1
+    if (enableCopyObsFilesToRunDir == TRUE){
+      file.copy(from=tmaxobs,to=modelFilesRunDir,overwrite=TRUE)
+    }
   }
   #nFiles  <- 4
   #xobsfiles <- c(pobs,tobs,tminobs,tmaxobs)

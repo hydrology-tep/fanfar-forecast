@@ -48,6 +48,12 @@
 ## ------------------------------------------------------------------------------
 nameOfSrcFile <- "/node_forecast/run.R"
 
+# Config parameter for process_hindcast_netcdf2obs and process_forcast_netcdf2obs functions
+# TRUE  - copy obs files directly to model run dir.
+# FALSE - standard hypeapps functions (reads and) copies obs files to model run dir
+cEnableCopyObsFilesToRunDir <- FALSE
+
+
 ## create a date tag to include in output filenames
 
 # Handle HTEP fake input to only run the code in one run slot
@@ -247,6 +253,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                                                dirNCFiles,
                                                                ncSubDir=TRUE,
                                                                modelDataPaths$dirGridMetaData,
+                                                               cEnableCopyObsFilesToRunDir,
+                                                               app.setup$runDir,
                                                                dirObsFiles)
 
         # updateModelInput() uses only:
@@ -365,6 +373,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                                                dirNCFiles,
                                                                ncSubDir=TRUE,
                                                                modelDataPaths$dirGridMetaData,
+                                                               cEnableCopyObsFilesToRunDir,
+                                                               app.setup$runDir,
                                                                dirObsFiles)
         # Minimal variants of original list types
         forecast.forcing <- forecast.forcingandxobs$forecast.forcing
