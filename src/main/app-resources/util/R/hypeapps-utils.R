@@ -761,7 +761,7 @@ getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,mode
     }
 
     if(appName=="forecast"){
-      # Insert some functionality for info-files based on the configuration
+      # Handle copy of info-files from the configuration object, e.g. westafrica-hype-model-1.3.6.zip (less data to zip and upload to store)
       # For now, we only have the complete path+filename
       if(! is.null(modelDataPaths)){
         #print("Files from modelDataPaths")
@@ -2368,7 +2368,7 @@ updateModelInput<-function(appSetup=NULL,appInput=NULL,hindcast=NULL,modelForcin
     return(writeInfo(info$info.lines,filenm = paste(appSetup$runDir,"info.txt",sep="/")))
     
   }
-}
+} # updateModelInput
 
 ## -------------------------------------------------------------------------------
 ## prepare application outputs

@@ -215,7 +215,9 @@ process_input_model_configuration <- function(applConfig=NULL, # Application con
   }
   
   # Return information as a list
-  outputModelConfig <- list("modelDataSubDir"=modelDataSubDir,
+  outputModelConfig <- list("modelConfigObjectDir"=local.model_config_dir,
+    
+                            "modelDataSubDir"=modelDataSubDir,
                             "modelDataUrl"=modelDataUrl,
                             "modelDataQuery"=modelDataQuery,
                             "modelDataComment"=modelDataComment,
@@ -338,9 +340,13 @@ process_input_hype_model_data <- function(applConfig,  # Application configurati
       dirStateFiles     <- paste(dirModelFiles,"statefiles",sep="/")
       
       # Individual files - these info files should maybe be fetched from the model/application config object? (parallel files to dependencies.txt in zip-file)
-      fileInfoTxtColdStart <- paste(dirModelFiles,"info-coldstart-19791994.txt",sep="/")
-      fileInfoTxtHindcast  <- paste(dirModelFiles,"info-hindcast.txt",sep="/")
-      fileInfoTxtForecast  <- paste(dirModelFiles,"info-forecast.txt",sep="/")
+      #fileInfoTxtColdStart <- paste(dirModelFiles,"info-coldstart-19791994.txt",sep="/")
+      #fileInfoTxtHindcast  <- paste(dirModelFiles,"info-hindcast.txt",sep="/") # With this path, already done in updateModelInput() as standard
+      #fileInfoTxtForecast  <- paste(dirModelFiles,"info-forecast.txt",sep="/")
+      print("INFO Using info-coldstart-19791994.txt, info-hindcast.txt and info-forcast.txt from the configuration object, westafrica-hype-model-1.3.6.zip")
+      fileInfoTxtColdStart <- paste(modelConfig$modelConfigObjectDir,"info-coldstart-19791994.txt",sep="/")
+      fileInfoTxtHindcast  <- paste(modelConfig$modelConfigObjectDir,"info-hindcast.txt",sep="/")
+      fileInfoTxtForecast  <- paste(modelConfig$modelConfigObjectDir,"info-forecast.txt",sep="/")
   }
 
   # Check that dirs/files do exists
