@@ -415,9 +415,9 @@ determine_interval_hydrogfdei <- function(hindcastStartDate,
       mday_as_char <- strftime(hydrogfdei.endDate,format="%d")
       mday_as_num  <- as.numeric(mday_as_char)
       if (mday_as_num < 10) {
-          hydrogfdei.endDate$mon <- hydrogfdei.endDate$mon - 4
+          hydrogfdei.endDate$mon <- hydrogfdei.endDate$mon - 5 # 4+1 due to round off below
       }else {
-          hydrogfdei.endDate$mon <- hydrogfdei.endDate$mon - 3
+          hydrogfdei.endDate$mon <- hydrogfdei.endDate$mon - 4
       }
 
       # Round off to end of this month
@@ -1006,7 +1006,7 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
   # Prepare hindcast and forecast intervals, start and end dates
   prepHindcastInterval <- prepare_hindcast_intervals(hindcastPeriodLength,
                                                      forecastIssueDate,
-                                                     in_reforecast = TRUE,
+                                                     in_reforecast = TRUE, # ToDo: reforecast or operational from config as input
                                                      "19700101") # ToDo: Get date from latest Hype state filename
   # Download hydrogfd elevation netcdf file
   download_netcdf(modelConfig,
@@ -1074,8 +1074,13 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
 
   # Return the same type structure as function getModelForcing() and readXobsData(), but minimal
   bdate <- as.Date(startDate)
-  cdate <- as.Date(prepHindcastInterval$hydrogfdeiEndDateSearch)
   edate <- as.Date(endDate)
+
+  # cdate = edate - 60 days:
+  calc.date <- as.POSIXlt(edate)
+  calc.date$mday <- calc.date$mday - 60
+  cdate <- as.Date(calc.date)
+
   hindcast.forcing <- list("bdate"=bdate,
                            "cdate"=cdate,
                            "edate"=edate)
