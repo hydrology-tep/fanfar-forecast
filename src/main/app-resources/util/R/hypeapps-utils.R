@@ -281,7 +281,12 @@ getHypeAppInput<-function(appName){
       basinset    <- rciop.getparam("basinset")    # output subbasins
       rpcout      <- rciop.getparam("rpcout")      # Return periods levels file
       xobs        <- rciop.getparam("xobs")        # EO/Insitu data Xobs file
-      hcperiodlen <- rciop.getparam("hcperiodlen")   # Hindcast period length (days)
+      hcperiodlen <- rciop.getparam("hcperiodlen") # Hindcast period length (days)
+
+      if(hcperiodlen < 123){
+        if(app.sys=="tep"){rciop.log ("ERROR", "Hindcast period length to short","/util/R/hypeapps-utils.R")}
+        q(save="no", status=1)
+      }
 
       # temporarily commenting out the assimilation in the forecast application (David 20170827)
       assimOn     <- rciop.getparam("assimOn")     # Assimilation on/off
@@ -759,7 +764,7 @@ getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,mode
       # Insert some functionality for info-files based on the configuration
       # For now, we only have the complete path+filename
       if(! is.null(modelDataPaths)){
-        print("Files from modelDataPaths")
+        #print("Files from modelDataPaths")
         if(! is.null(modelDataPaths$fileInfoTxtColdStart)){
           file.copy(from=modelDataPaths$fileInfoTxtColdStart,to=modelFilesRunDir,overwrite=T)
           rciop.log ("DEBUG", paste0("cp ",modelDataPaths$fileInfoTxtColdStart," to ",modelFilesRunDir),"/util/R/hypeapps-utils.R")
