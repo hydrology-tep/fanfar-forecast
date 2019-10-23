@@ -94,18 +94,20 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     # Global options defined in application.xml
     rciop.log("INFO", "Processing user selection:")
     applRuntimeOptions <- process_application_runtime_options()
-    #rciop.log("INFO", applRuntimeOptions)
-    #print(applRuntimeOptions)
+
+    print("applRuntimeOptions (output from process_application_runtime_options):")
+    print(applRuntimeOptions)
 
     ## Read the main input
     ## This is the reference link to the model configuration
     rciop.log("INFO", paste("Processing input from stdin:", input, sep=" "))
     modelConfigData <- process_input_model_configuration(applRuntimeOptions,
                                                          input) #,TMPDIR)
-    rciop.log("INFO", modelConfigData)
+    print("modelConfigData (output from process_input_model_configuration):")
+    print(modelConfigData)
 
     ## ------------------------------------------------------------------------------
-    ## load hypeapps environment and additional R utility functions
+    ## Load hypeapps environment and additional R utility functions
     if(app.sys=="tep"){
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/hypeapps-environment.R",sep="/"))
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/hypeapps-utils.R", sep="/"))
@@ -117,7 +119,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         source("application/util/R/hypeapps-environment.R")
         source("application/util/R/hypeapps-utils.R")
     }
-    ## open application logfile
+
+    ## Open application logfile
     forecastIssueDate <- rciop.getparam("idate")
     fileDate <- gsub("-", "", as.character(forecastIssueDate))
     logFile=appLogOpen(appName = app.name, tmpDir = getwd(),appDate = fileDate,prefix="000")
@@ -126,7 +129,6 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     git_con <- file(paste0(Sys.getenv("_CIOP_APPLICATION_PATH"), "/git_commit.txt"),"r")
     git_commit <- readLines(git_con,n=1)
     close(git_con)
-    #git_commit <- system(paste0("cd ", Sys.getenv("_CIOP_APPLICATION_PATH"), " ; git rev-parse HEAD"), intern=T)
     log.res=appLogWrite(logText = paste0("Running using git commit ", git_commit), fileConn = logFile$fileConn)
 
 
@@ -135,14 +137,6 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## ------------------------------------------------------------------------------
     ## Handle application input parameters, rciop.get_param()
     app.input <- getHypeAppInput(appName = app.name)
-
-    ## ------------------------------------------------------------------------------
-    # Handle options for run-time configuration, e.g. switch between HYPE models etc.
-    # Global options defined in application.xml
-    #rciop.log("INFO", paste("Processing user selection:", input, sep=" "))
-    #applRuntimeOptions <- process_application_runtime_options()
-    #rciop.log("INFO", applRuntimeOptions)
-    #print(applRuntimeOptions)
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste(" hypeapps inputs and parameters read"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "Inputs and parameters read",fileConn = logFile$fileConn)
@@ -212,8 +206,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                             appInput   = app.input,
                                             dataSource = forcing.data.source,
                                             hindcast   = T)
-        print("hindcast.forcing returned1:")
-        print(hindcast.forcing)
+        # print("hindcast.forcing (output from getModelForcing):")
+        # print(hindcast.forcing)
 
         # getModelForcing returns:
         # return(list("status"=T, # TRUE
@@ -234,8 +228,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         xobs.data <- getXobsData(appInput = app.input, # xobsNum, xobs, xobsURL
                                  appSetup = app.setup) # model run dir, res dir etc.
 
-        print("xobs.data1.3:")
+        print("xobs.data 1.3 (output from getXobsData):")
         print(xobs.data)
+
         if(app.sys=="tep"){rciop.log ("DEBUG", paste("xobs data downloaded from catalogue"), nameOfSrcFile)}
         log.res=appLogWrite(logText = "xobs data (if any) downloaded from catalogue",fileConn = logFile$fileConn)
     }
@@ -257,22 +252,16 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                                                app.setup$runDir,
                                                                dirObsFiles)
 
-        # updateModelInput() uses only:
-        # hindcast.forcing$bdate # as.Date
-        # hindcast.forcing$cdate # as.Date
-        # hindcast.forcing$edate # as.Date
-        # xobs.input$xobsVar # list
-        # xobs.input$xobsSubid # list
-
         # Minimal variants of original list types
         hindcast.forcing <- hindcast.forcingandxobs$hindcast.forcing
         #xobs.input       <- hindcast.forcingandxobs$xobs.input
         xobs.data        <- hindcast.forcingandxobs$xobs.data
-        print("hindcast.forcing returned2:")
+
+        print("hindcast.forcing (output from process_hindcast_netcdf2obs):")
         print(hindcast.forcing)
-        # print("xobs.input returned2:")
+        # print("xobs.input (output from process_hindcast_netcdf2obs):")
         # print(xobs.input)
-        print("xobs.data returned2:")
+        print("xobs.data (output from process_hindcast_netcdf2obs):")
         print(xobs.data)
     }
 
@@ -280,8 +269,10 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## read downloaded Xobs input file(s) - merge into one Xobs.txt in the model run folder
     xobs.input <- readXobsData(appSetup = app.setup,
                                 xobsData = xobs.data)
-    print("xobs.input returned1:")
+
+    print("xobs.input (output from readXobsData):")
     print(xobs.input)
+
     if(app.sys=="tep"){rciop.log ("DEBUG", paste("xobs data merged to model rundir"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "Xobs data (if any) merged into model directory",fileConn = logFile$fileConn)
 
@@ -290,9 +281,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     #if (applRuntimeOptions$metHC == cMetHCVariant1) {
     hindcast.input <- updateModelInput(appSetup = app.setup, appInput = app.input,
                                        hindcast = T, modelForcing = hindcast.forcing, xobsInput = xobs.input)
-    print("hindcast.input:")
+
+    print("hindcast.input (output from updateModelInput):")
     print(hindcast.input)
-    #q(save="no", status = 0)
 
     #}
     #if (applRuntimeOptions$metHC == cMetHCVariant2) {
@@ -332,7 +323,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         log.res=appLogWrite(logText = "something wrong with hindcast model inputs (no run)",fileConn = logFile$fileConn)
         }
 
-    #q(save="no", status = 0)
+    q(save="no", status = 0)
 
     #################################################################################
     ## 6 - Forecast input data
@@ -344,7 +335,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                             appInput   = app.input,
                                             dataSource = forcing.data.source,
                                             hindcast   = F)
-        print("forecast.forcing returned1:")
+        print("forecast.forcing (output from getModelForcing):")
         print(forecast.forcing)
         #   return(list("status"=T, # TRUE
         #               "localFile"=downloadInfo$localFile, # "/var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910161533_0110/attempt_201910161533_0110_m_000000_0/work/tmp/20190926.zip"
@@ -378,11 +369,11 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                                                dirObsFiles)
         # Minimal variants of original list types
         forecast.forcing <- forecast.forcingandxobs$forecast.forcing
-        print("forecast.forcing returned2:")
-        print(forecast.forcing)
+        xobs.data        <- forecast.forcingandxobs$xobs.data
 
-        xobs.data <- forecast.forcingandxobs$xobs.data
-        print("xobs.data returned2:")
+        print("forecast.forcing (output from process_forecast_netcdf2obs):")
+        print(forecast.forcing)
+        print("xobs.data (output from process_forecast_netcdf2obs):")
         print(xobs.data)
 
         ## ------------------------------------------------------------------------------
@@ -390,13 +381,15 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         xobs.input <- readXobsData(appSetup = app.setup,
                                    xobsData = xobs.data)
         #xobs.input <- NULL
-        print("xobs.input returned1:")
+
+        print("xobs.input (output from readXobsData):")
         print(xobs.input)
+
         if(app.sys=="tep"){rciop.log ("DEBUG", paste("xobs data merged to model rundir"), nameOfSrcFile)}
         log.res=appLogWrite(logText = "Xobs data (if any) merged into model directory",fileConn = logFile$fileConn)
     }
 
-    #q(save="no", status = 0)
+    q(save="no", status = 0)
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste("...forecast forcing set"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "forecast model forcing data downloaded and prepared",fileConn = logFile$fileConn)
@@ -405,6 +398,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## modify some model files based on input parameters
     forecast.input <- updateModelInput(appSetup = app.setup, appInput = app.input,
                                        hindcast = F, modelForcing = forecast.forcing, xobsInput = NULL) # ToDo:xobsInput = xobs.input
+
+    print("forecast.input (output from updateModelInput):")
+    print(forecast.input)
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste("...forecast inputs modified"), nameOfSrcFile)}
     log.res=appLogWrite(logText = "forecast model input files modified",fileConn = logFile$fileConn)
