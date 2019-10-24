@@ -1,6 +1,10 @@
 ## This file may be used to create an environment using:
 ## $ conda create --name <env> --file <this file>
 ## platform: linux-64
+
+# Used R libraries/packages in current source code
+# (Hopefully a later version of R to reduce any dependency problems that may arise
+# when adding additional R packages)
 r-rciop
 r-data.table
 r-sp
@@ -11,33 +15,35 @@ r-raster
 r-maptools
 r-foreign
 r-lmomco
+
+# Version due to gdal
 geos=3.5.0
+
+# Added due to HYPE 5.8.0, to build executable in sandbox and newer version of libgfortran3.so during run-time
 gcc=4.8.5
 
-#This shouldn't be necessary r-essentials
+#This shouldn't be necessary
+# r-essentials
+
+
 
 #r-ncdf4=1.16.1
 #r-base=3.6
-
 #libnetcdf=4.3.3.1
-
 #r-essentials
 
 #Error in dyn.load(file, DLLpath = DLLpath, ...) : 
 #  unable to load shared object '/opt/anaconda/lib/R/library/rgeos/libs/rgeos.so':
 #  libgeos-3.5.0.so: cannot open shared object file: No such file or directory
 
-# Due to gdal:
-#geos=3.5.0
 
-# sudo conda install --revision 0
-# sudo yum remove miniconda
-
-#sudo yum install hdf5.x86_64 netcdf4-python.x86_64
+#sudo conda install --revision 0
+#sudo yum remove miniconda
+#sudo yum remove hdf netcdf
 #sudo yum install miniconda
+#sudo yum install hdf5.x86_64 netcdf4-python.x86_64 # add these to "user guide" and pom.xml, also sudo yum downgrade proj # from 4.8 to 4.7
 #sudo conda install -y --file fanfar-forecast-retrieve-opensearch/src/main/app-resources/dependencies/R/new_attempt_packages.list
-
-# yum list installed: 
+#yum list installed
 #hdf5.x86_64                          1.8.5.patch1-10.el6        @epel           
 #hdf5-devel.x86_64                    1.8.5.patch1-10.el6        @epel           
 #miniconda.x86_64                     4.4.10-1.el6               @ciop-stable    
@@ -46,9 +52,6 @@ gcc=4.8.5
 #netcdf4-python.x86_64                1.0.2-1.el6                @epel           
 
 
-# Test these instead of shared variants:
+# Test these instead of shared variants, does conda "recompile" some packages that have dependency during install?:
 #netcdf-static.x86_64
 #hdf5-static.x86_64
-
-# sudo yum remove hdf netcdf
-# sudo yum install netcdf-static.x86_64 hdf5-static.x86_64 miniconda
