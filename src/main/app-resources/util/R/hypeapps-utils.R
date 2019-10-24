@@ -1356,7 +1356,7 @@ getGFDzipFromTep<-function(issueDateNum=as.POSIXct("2017-01-01", tz = "GMT"),
 ##                          combining archive and downloadable hindcast data
 ##
 ##  output = list with forcing files
-getHindcastForcingData<-function(startDate,endDate,appSetup,obsFiles,outDir,useRdata=F){
+getHindcastForcingData<-function(startDate,endDate,appInput,appSetup,obsFiles,outDir,useRdata=F){
   
   # 1. check if Archive and Hindcasts are needed
   useArchive  = F ; if(startDate<=forcing.archive.end){useArchive  = T}
@@ -1455,7 +1455,7 @@ getHindcastForcingData<-function(startDate,endDate,appSetup,obsFiles,outDir,useR
       nIssueDates=0
       
       while(notFound){
-        issueDate.Num = ymd2posix(y1,m1,d1)+123*86400
+        issueDate.Num = ymd2posix(y1,m1,d1)+appInput$hcperiodlen*86400 # 123
         # try downloading hindcast with issue date equal to the requested
         downloadInfo = getGFDzipFromTep(issueDateNum = issueDate.Num,
                                         modelName=appSetup$modelName,
@@ -1548,7 +1548,7 @@ getHindcastForcingData<-function(startDate,endDate,appSetup,obsFiles,outDir,useR
     WritePTQobs(x = obsData,paste(outDir,obsFiles[i],sep="/"))
   }
   return(paste(outDir,obsFiles,sep="/"))
-}
+} # getHindcastForcingData
 
 ## -------------------------------------------------------------------------------
 ## mergeObsfiles - function to merge a set of obsfiles from two directories and write
@@ -1770,7 +1770,7 @@ getModelForcing<-function(appSetup,appInput,dataSource="local",hindcast=T){
         nIssueDates=0
         
         while(notFound){
-          issueDate.Num = ymd2posix(y1,m1,d1)+123*86400
+          issueDate.Num = ymd2posix(y1,m1,d1)+appInput$hcperiodlen*86400 # 123
           # try downloading hindcast with issue date equal to the requested
           downloadInfo = getGFDzipFromTep(issueDateNum = issueDate.Num,
                                           modelName=appSetup$modelName,
@@ -2068,7 +2068,7 @@ getModelForcing<-function(appSetup,appInput,dataSource="local",hindcast=T){
           # pad with archive dna hindcast data bdate:cdate into hindcastTemp2
           hindcastDir2 = paste(appSetup$tmpDir,"/forcing/hindcastTemp2",sep="")
           dir.create(hindcastDir2,recursive = T,showWarnings = F)
-          getHindcastForcingData(bdate.Num,cdate.Num,appSetup,obsFiles=forcing.files,hindcastDir2,useRdata=F)
+          getHindcastForcingData(bdate.Num,cdate.Num,appInput,appSetup,obsFiles=forcing.files,hindcastDir2,useRdata=F)
           
           # merge with the current hindcast data into runDir            
           mergeObsFiles(hindcastDir,hindcastDir2,appSetup$runDir,bdate.Num,edate,obsFiles=forcing.files)
@@ -2135,7 +2135,7 @@ getModelForcing<-function(appSetup,appInput,dataSource="local",hindcast=T){
   }else{
     return(list("status"=F,"localFile"=NULL,"issueDate"=NA,"archive"=F))
   }       
-}
+} # getModelForcing
 
 ## -------------------------------------------------------------------------------
 ## modify some model input files
