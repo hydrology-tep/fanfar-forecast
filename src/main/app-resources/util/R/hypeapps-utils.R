@@ -283,6 +283,7 @@ getHypeAppInput<-function(appName){
       xobs        <- rciop.getparam("xobs")        # EO/Insitu data Xobs file
       hcperiodlen <- rciop.getparam("hcperiodlen") # Hindcast period length (days)
 
+      hcperiodlen <- as.numeric(hcperiodlen)
       if(hcperiodlen < 123){
         if(app.sys=="tep"){rciop.log ("ERROR", "Hindcast period length to short","/util/R/hypeapps-utils.R")}
         q(save="no", status=1)
