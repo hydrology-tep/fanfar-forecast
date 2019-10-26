@@ -761,37 +761,40 @@ getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,mode
       #}
     }
 
-    if(appName=="forecast"){
-      # Handle copy of info-files from the configuration object, e.g. westafrica-hype-model-1.3.6.zip (less data to zip and upload to store)
-      # For now, we only have the complete path+filename
-      if(! is.null(modelDataPaths)){
-        #print("Files from modelDataPaths")
-        if(! is.null(modelDataPaths$fileInfoTxtColdStart)){
-          file.copy(from=modelDataPaths$fileInfoTxtColdStart,to=modelFilesRunDir,overwrite=T)
-          rciop.log ("DEBUG", paste0("cp ",modelDataPaths$fileInfoTxtColdStart," to ",modelFilesRunDir),"/util/R/hypeapps-utils.R")
-          destFile <- paste0(modelFilesRunDir,"/info-coldstart-19791994.txt") # ToDo: Hardcoded, remove
-          if (! file.exists(destFile)){
-              print(paste0("File missing: ",destFile))
+    enableInfoFilesFromAlternativeConfObject <- FALSE
+    if(enableInfoFilesFromAlternativeConfObject) {
+      if(appName=="forecast"){
+        # Handle copy of info-files from the configuration object, e.g. westafrica-hype-model-1.3.6.zip (less data to zip and upload to store)
+        # For now, we only have the complete path+filename
+        if(! is.null(modelDataPaths)){
+          #print("Files from modelDataPaths")
+          if(! is.null(modelDataPaths$fileInfoTxtColdStart)){
+            file.copy(from=modelDataPaths$fileInfoTxtColdStart,to=modelFilesRunDir,overwrite=T)
+            rciop.log ("DEBUG", paste0("cp ",modelDataPaths$fileInfoTxtColdStart," to ",modelFilesRunDir),"/util/R/hypeapps-utils.R")
+            destFile <- paste0(modelFilesRunDir,"/info-coldstart-19791994.txt") # ToDo: Hardcoded, remove
+            if (! file.exists(destFile)){
+                print(paste0("File missing: ",destFile))
+            }
           }
-        }
-        if(! is.null(modelDataPaths$fileInfoTxtHindcast)){
-          file.copy(from=modelDataPaths$fileInfoTxtHindcast,to=modelFilesRunDir,overwrite=T)
-          rciop.log ("DEBUG", paste0("cp ",modelDataPaths$fileInfoTxtHindcast," to ",modelFilesRunDir),"/util/R/hypeapps-utils.R")
-          destFile <- paste0(modelFilesRunDir,"/info-hindcast.txt") # ToDo: Hardcoded, remove
-          if (! file.exists(destFile)){
-              print(paste0("File missing: ",destFile))
+          if(! is.null(modelDataPaths$fileInfoTxtHindcast)){
+            file.copy(from=modelDataPaths$fileInfoTxtHindcast,to=modelFilesRunDir,overwrite=T)
+            rciop.log ("DEBUG", paste0("cp ",modelDataPaths$fileInfoTxtHindcast," to ",modelFilesRunDir),"/util/R/hypeapps-utils.R")
+            destFile <- paste0(modelFilesRunDir,"/info-hindcast.txt") # ToDo: Hardcoded, remove
+            if (! file.exists(destFile)){
+                print(paste0("File missing: ",destFile))
+            }
           }
-        }
-        if(! is.null(modelDataPaths$fileInfoTxtForecast)){
-          file.copy(from=modelDataPaths$fileInfoTxtForecast,to=modelFilesRunDir,overwrite=T)
-          rciop.log ("DEBUG", paste0("cp ",modelDataPaths$fileInfoTxtForecast," to ",modelFilesRunDir),"/util/R/hypeapps-utils.R")
-          destFile <- paste0(modelFilesRunDir,"/info-forecast.txt") # ToDo: Hardcoded, remove
-          if (! file.exists(destFile)){
-              print(paste0("File missing: ",destFile))
+          if(! is.null(modelDataPaths$fileInfoTxtForecast)){
+            file.copy(from=modelDataPaths$fileInfoTxtForecast,to=modelFilesRunDir,overwrite=T)
+            rciop.log ("DEBUG", paste0("cp ",modelDataPaths$fileInfoTxtForecast," to ",modelFilesRunDir),"/util/R/hypeapps-utils.R")
+            destFile <- paste0(modelFilesRunDir,"/info-forecast.txt") # ToDo: Hardcoded, remove
+            if (! file.exists(destFile)){
+                print(paste0("File missing: ",destFile))
+            }
           }
-        }
-      } # modelDataPaths
-    } # app = forecast
+        } # modelDataPaths
+      } # app = forecast
+    } # enableInfoFilesFromAlternativeConfObject
 
   }
   

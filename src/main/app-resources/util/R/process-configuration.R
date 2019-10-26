@@ -122,8 +122,8 @@ process_input_model_configuration <- function(applConfig=NULL, # Application con
   # User emptied the default value in field 'HYPE model configuration' to some degree?
   # It cannot be completely empty due to condition of the main while loop in run.R.
   # Paste this in a web browser to check for alternative zip-files: https://recast.terradue.com/t2api/search/hydro-smhi/models?uid
-  if (is.null(applInput) || nchar(applInput) < 103){
-      print("Input emptied by user...")
+  urlLen <- 103
+  if (is.null(applInput) || nchar(applInput) < urlLen){
       # User
       if(applConfig$hydModel == cHydModelVariant1){
           print("Using default URL for Niger-HYPE model configuration object")
@@ -349,7 +349,7 @@ process_input_hype_model_data <- function(applConfig,  # Application configurati
       fileInfoTxtForecast  <- paste(modelConfig$modelConfigObjectDir,"info-forecast.txt",sep="/")
   }
 
-  # Check that dirs/files do exists
+  # Check that dirs/files do exist
   check_dir_exist(dirGridMetaData)
   check_dir_exist(dirModelFiles)
   check_dir_exist(dirForcingArchive)
