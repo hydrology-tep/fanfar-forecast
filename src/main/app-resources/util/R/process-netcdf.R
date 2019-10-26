@@ -995,14 +995,11 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
                                         netcdfDir, # Input dir with hydrogfd netcdf files
                                         ncSubDir, # False-one dir, True-separate dir for each variable
                                         gridMetaDir, # Input dir with grid weight files
-                                        enableCopyObsFilesToRunDir, # Copy produced obs files to run dir
+                                        #enableCopyObsFilesToRunDir, # Copy produced obs files to run dir
                                         modelFilesRunDir, # HYPE model data files dir
-                                        obsDir) # Output dir for obs files
+                                        obsDir, # Output dir for obs files
+                                        debugPublishFiles=FALSE) # Condition to publish files during development
 {
-  if (enableCopyObsFilesToRunDir == TRUE){
-      rciop.log("INFO","process_forecast_netcdf2obs: Enabled setting to copy obs files to run dir")
-  }
-
   # Prepare hindcast and forecast intervals, start and end dates
   prepHindcastInterval <- prepare_hindcast_intervals(hindcastPeriodLength,
                                                      forecastIssueDate,
@@ -1023,13 +1020,10 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
                   xCast="hindcast")
 
   # Produce the files Pobs.txt, Tobs.txt, TMINobs.txt and TMAXobs.txt
-  # Depending on selected dir, copy the files to run dir
   startDate <- prepHindcastInterval$hindcastStartDateSearch
   endDate   <- prepHindcastInterval$hindcastEndDateSearch
 
   netcdf_to_obs_wd <- paste0(TMPDIR,"/netcdf_to_obs")
-  #netcdf_to_obs_output <- paste0(netcdf_to_obs_wd,"/output")
-  # ToDo: gridLink...
   # ToDo: Do this once... when criteria is new or changed
   rciop.log("INFO",paste0("run_netcdf_to_obs_gridLinkPreparation START"))
   #if (! dir.exists(gridMetaDir)){ # or a certain file (file.exists)
@@ -1065,14 +1059,10 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
   }
   rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs END"))
 
-  #if (obsDir != runDir){
-  #  # Copy obs files to run dir
-  #}
-
   # List files in output dir
   print(list.files(obsDir))
 
-  # Return the same type structure as function getModelForcing() and readXobsData(), but minimal
+  # Return the same type structure as function getModelForcing(), but minimal
   bdate <- as.Date(startDate)
   edate <- as.Date(endDate)
 
@@ -1081,86 +1071,77 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
   calc.date$mday <- calc.date$mday - 60
   cdate <- as.Date(calc.date)
 
-  hindcast.forcing <- list("bdate"=bdate,
-                           "cdate"=cdate,
-                           "edate"=edate)
-
-  # xobsVar   <- c("var xyz") # ToDo
-  # xobsSubid <- c("subid xyz") # ToDo
-  # xobs.input <- list("xobsVar"=xobsVar,
-  #                    "xobsSubid"=xobsSubid)
-
-  # ToDo: Not hardcoded
-  nFiles    <- 0
-  xobsfiles <- NULL
-
+  # Produced files to copy to run dir
   pobs    <- paste(obsDir,"Pobs.txt",sep="/")
   tobs    <- paste(obsDir,"Tobs.txt",sep="/")
   tminobs <- paste(obsDir,"TMINobs.txt",sep="/")
   tmaxobs <- paste(obsDir,"TMAXobs.txt",sep="/")
+  forckey <- paste(obsDir,"ForcKey.txt",sep="/")
+  nFiles  <- 0
 
   if (file.exists(pobs)) {
-    if (nFiles == 0) {
-      xobsfiles <- c(pobs)
-    }else{
-      xobsfiles <- c(xobsfiles,pobs)
-    }
-    nFiles <- nFiles + 1
-    if (enableCopyObsFilesToRunDir == TRUE){
+      nFiles <- nFiles + 1
       file.copy(from=pobs,to=modelFilesRunDir,overwrite=TRUE)
       print(paste0("copy ",pobs, " to ",modelFilesRunDir))
-    }
+      if (debugPublishFiles == TRUE) {
+        toFile = paste(obsDir,"Pobs-netcdf-to-obs-hindcast.txt",sep="/")
+        file.copy(from=pobs,to=toFile)
+        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+      }
   }
 
   if (file.exists(tobs)) {
-    if (nFiles == 0) {
-      xobsfiles <- c(tobs)
-    }else{
-      xobsfiles <- c(xobsfiles,tobs)
-    }
-    nFiles <- nFiles + 1
-    if (enableCopyObsFilesToRunDir == TRUE){
+      nFiles <- nFiles + 1
       file.copy(from=tobs,to=modelFilesRunDir,overwrite=TRUE)
       print(paste0("copy ",tobs, " to ",modelFilesRunDir))
-    }
+      if (debugPublishFiles == TRUE) {
+        toFile = paste(obsDir,"Tobs-netcdf-to-obs-hindcast.txt",sep="/")
+        file.copy(from=tobs,to=toFile)
+        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+      }
   }
 
   if (file.exists(tminobs)) {
-    if (nFiles == 0) {
-      xobsfiles <- c(tminobs)
-    }else{
-      xobsfiles <- c(xobsfiles,tminobs)
-    }
-    nFiles <- nFiles + 1
-    if (enableCopyObsFilesToRunDir == TRUE){
+      nFiles <- nFiles + 1
       file.copy(from=tminobs,to=modelFilesRunDir,overwrite=TRUE)
       print(paste0("copy ",tminobs, " to ",modelFilesRunDir))
-    }
+      if (debugPublishFiles == TRUE) {
+        toFile = paste(obsDir,"TMINobs-netcdf-to-obs-hindcast.txt",sep="/")
+        file.copy(from=tminobs,to=toFile)
+        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+      }
   }
 
   if (file.exists(tmaxobs)) {
-    if (nFiles == 0) {
-      xobsfiles <- c(tmaxobs)
-    }else{
-      xobsfiles <- c(xobsfiles,tmaxobs)
-    }
-    nFiles <- nFiles + 1
-    if (enableCopyObsFilesToRunDir == TRUE){
+      nFiles <- nFiles + 1
       file.copy(from=tmaxobs,to=modelFilesRunDir,overwrite=TRUE)
       print(paste0("copy ",tmaxobs, " to ",modelFilesRunDir))
-    }
+      if (debugPublishFiles == TRUE) {
+        toFile = paste(obsDir,"TMAXobs-netcdf-to-obs-hindcast.txt",sep="/")
+        file.copy(from=tmaxobs,to=toFile)
+        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+      }
   }
-  #nFiles  <- 4
-  #xobsfiles <- c(pobs,tobs,tminobs,tmaxobs)
 
-  xobs.data <- list("xobsNum"=nFiles,
-                    "xobsFile"=xobsfiles)
+  if (file.exists(forckey)) {
+      nFiles <- nFiles + 1
+      file.copy(from=forckey,to=modelFilesRunDir,overwrite=TRUE)
+      print(paste0("copy ",forckey, " to ",modelFilesRunDir))
+      if (debugPublishFiles == TRUE) {
+        toFile = paste(obsDir,"ForcKey-netcdf-to-obs-hindcast.txt",sep="/")
+        file.copy(from=forckey,to=toFile)
+        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+      }
+  }
 
-  output <- list("hindcast.forcing"=hindcast.forcing,
-                 #"xobs.input"=xobs.input)
-                 "xobs.data"=xobs.data)
+  if (nFiles < 5) {
+    rciop.log ("ERROR","process_hindcast_netcdf2obs(): too few files produced","")
+  }
 
-  return (output)
+  hindcast.forcing <- list("bdate"=bdate,
+                           "cdate"=cdate,
+                           "edate"=edate)
+  return (hindcast.forcing)
 
 } # process_hindcast_netcdf2obs
 
@@ -1174,14 +1155,11 @@ process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
                                         netcdfDir, # Input dir with hydrogfd netcdf files
                                         ncSubDir, # False-one dir, True-separate dir for each variable
                                         gridMetaDir, # Input dir with grid weight files
-                                        enableCopyObsFilesToRunDir, # Copy produced obs files to run dir
+                                        #enableCopyObsFilesToRunDir, # Copy produced obs files to run dir
                                         modelFilesRunDir = NULL, # HYPE model data files
-                                        obsDir) # Output dir for obs files
+                                        obsDir, # Output dir for obs files
+                                        debugPublishFiles=FALSE) # Condition to publish files during development
 {
-  if (enableCopyObsFilesToRunDir == TRUE){
-      rciop.log("INFO","process_forecast_netcdf2obs: Enabled setting to copy obs files to run dir ")
-  }
-
   # Prepare hindcast and forecast intervals, start and end dates
   prepForecastInterval <- prepare_forecast_intervals(forecastIssueDate)
 
@@ -1193,7 +1171,6 @@ process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
                   xCast="forecast")
 
   # Produce the files Pobs.txt, Tobs.txt, TMINobs.txt and TMAXobs.txt
-  # Depending on selected dir, copy the files to run dir
   startDate <- prepForecastInterval$ecoperStartDateSearch
   endDate   <- prepForecastInterval$ecoperEndDateSearch
 
@@ -1214,10 +1191,6 @@ process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
   }
   rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs END"))
 
-  #if (obsDir != runDir){
-  #  # Copy obs files to run dir
-  #}
-
   # List files in output dir
   print(list.files(obsDir))
 
@@ -1225,76 +1198,75 @@ process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
   bdate <- as.Date(startDate)
   cdate <- as.Date(startDate)
   edate <- as.Date(endDate)
-  forecast.forcing <- list("bdate"=bdate,
-                           "cdate"=cdate,
-                           "edate"=edate)
-
-  # ToDo: Not hardcoded
-  nFiles    <- 0
-  xobsfiles <- NULL
 
   pobs    <- paste(obsDir,"Pobs.txt",sep="/")
   tobs    <- paste(obsDir,"Tobs.txt",sep="/")
   tminobs <- paste(obsDir,"TMINobs.txt",sep="/")
   tmaxobs <- paste(obsDir,"TMAXobs.txt",sep="/")
+  forckey <- paste(obsDir,"ForcKey.txt",sep="/")
+  nFiles  <- 0
 
   if (file.exists(pobs)) {
-    if (nFiles == 0) {
-      xobsfiles <- c(pobs)
-    }else{
-      xobsfiles <- c(xobsfiles,pobs)
-    }
-    nFiles <- nFiles + 1
-    if (enableCopyObsFilesToRunDir == TRUE){
+      nFiles <- nFiles + 1
       file.copy(from=pobs,to=modelFilesRunDir,overwrite=TRUE)
-    }
+      print(paste0("copy ",pobs, " to ",modelFilesRunDir))
+      if (debugPublishFiles == TRUE) {
+        toFile = paste(obsDir,"Pobs-netcdf-to-obs-forecast.txt",sep="/")
+        file.copy(from=pobs,to=toFile)
+        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+      }
   }
 
   if (file.exists(tobs)) {
-    if (nFiles == 0) {
-      xobsfiles <- c(tobs)
-    }else{
-      xobsfiles <- c(xobsfiles,tobs)
-    }
-    nFiles <- nFiles + 1
-    if (enableCopyObsFilesToRunDir == TRUE){
+      nFiles <- nFiles + 1
       file.copy(from=tobs,to=modelFilesRunDir,overwrite=TRUE)
-    }
+      print(paste0("copy ",tobs, " to ",modelFilesRunDir))
+      if (debugPublishFiles == TRUE) {
+        toFile = paste(obsDir,"Tobs-netcdf-to-obs-forecast.txt",sep="/")
+        file.copy(from=tobs,to=toFile)
+        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+      }
   }
 
   if (file.exists(tminobs)) {
-    if (nFiles == 0) {
-      xobsfiles <- c(tminobs)
-    }else{
-      xobsfiles <- c(xobsfiles,tminobs)
-    }
-    nFiles <- nFiles + 1
-    if (enableCopyObsFilesToRunDir == TRUE){
+      nFiles <- nFiles + 1
       file.copy(from=tminobs,to=modelFilesRunDir,overwrite=TRUE)
-    }
+      print(paste0("copy ",tminobs, " to ",modelFilesRunDir))
+      if (debugPublishFiles == TRUE) {
+        toFile = paste(obsDir,"TMINobs-netcdf-to-obs-forecast.txt",sep="/")
+        file.copy(from=tminobs,to=toFile)
+        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+      }
   }
 
   if (file.exists(tmaxobs)) {
-    if (nFiles == 0) {
-      xobsfiles <- c(tmaxobs)
-    }else{
-      xobsfiles <- c(xobsfiles,tmaxobs)
-    }
-    nFiles <- nFiles + 1
-    if (enableCopyObsFilesToRunDir == TRUE){
+      nFiles <- nFiles + 1
       file.copy(from=tmaxobs,to=modelFilesRunDir,overwrite=TRUE)
-    }
+      print(paste0("copy ",tmaxobs, " to ",modelFilesRunDir))
+      if (debugPublishFiles == TRUE) {
+        toFile = paste(obsDir,"TMAXobs-netcdf-to-obs-forecast.txt",sep="/")
+        file.copy(from=tmaxobs,to=toFile)
+        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+      }
   }
-  #nFiles  <- 4
-  #xobsfiles <- c(pobs,tobs,tminobs,tmaxobs)
 
-  xobs.data <- list("xobsNum"=nFiles,
-                    "xobsFile"=xobsfiles)
+  if (file.exists(forckey)) {
+      nFiles <- nFiles + 1
+      file.copy(from=forckey,to=modelFilesRunDir,overwrite=TRUE)
+      print(paste0("copy ",forckey, " to ",modelFilesRunDir))
+      if (debugPublishFiles == TRUE) {
+        toFile = paste(obsDir,"ForcKey-netcdf-to-obs-forecast.txt",sep="/")
+        file.copy(from=forckey,to=toFile)
+        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+      }
+  }
 
-  #output <- list("forecast.forcing"=forecast.forcing)
-  output <- list("forecast.forcing"=forecast.forcing,
-                 "xobs.data"=xobs.data)
-
-  return (output)
+  if (nFiles < 5) {
+    rciop.log ("ERROR","process_hindcast_netcdf2obs(): too few files produced","")
+  }
+  forecast.forcing <- list("bdate"=bdate,
+                           "cdate"=cdate,
+                           "edate"=edate)
+  return (forecast.forcing)
 
 } # process_forecast_netcdf2obs
