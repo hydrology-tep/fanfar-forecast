@@ -796,18 +796,25 @@ check_date_interval_netcdf <- function(startDate,
                                        filePrefix,
                                        fileSuffix)
 {
+  ##tas_ei-monthly_200608_fanfar_SMHI.nc
   #tasmin_hydrogfdei_201906_fanfar_SMHI.nc
   #tasmin_hydrogfdod_201908_fanfar_SMHI.nc
   #tas_od-daily_20190917_fanfar_SMHI.nc
   #tasmin_ecoper_2019091800_fanfar_SMHI.nc # 00_fanfar_SMHI.nc
   nMissingFiles <- 0
 
-  # Constants
-  variables <- c("pr","tas","tasmin","tasmax")
+  if (grepl("ei-monthly",filePrefix,fixed=TRUE)) {
+      variables <- c("pr","tas")
+  } else {
+      variables <- c("pr","tas","tasmin","tasmax")
+  }
 
   interval <- NULL
   dateFormat <- NULL
-  if (grepl("hydrogfdei",filePrefix,fixed=TRUE)) {
+  if (grepl("ei-monthly",filePrefix,fixed=TRUE)) {
+      interval <- "month"
+      dateFormat <- "%Y%m"
+  } else if (grepl("hydrogfdei",filePrefix,fixed=TRUE)) {
       interval <- "month"
       dateFormat <- "%Y%m"
   } else if (grepl("hydrogfdod",filePrefix,fixed=TRUE)) {
@@ -900,7 +907,35 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
 
   if (xCast == "hindcast"){
       ## ------------------------------------------------------------------------------
-      # Handle hydrogfdei
+      # Handle ei-monthly, data from 197901 to 'now - 4 months' (hydrogfdei)
+      # No tasmin or tasmax, only pr and tas
+
+      # For now, use the date interval for hydrogfdei. End months should be the same for both file types.
+      # This variant covers at least earlier years.
+      urlNC     <- modelConfig$gfdEiMonthlyUrl
+      query     <- modelConfig$gfdEiMonthlyQuery
+      startDate <- xCastsInterval$hydrogfdeiStartDateSearch
+      stopDate  <- xCastsInterval$hydrogfdeiEndDateSearch
+
+      #Error in nc$var[[ncvarid]] : 
+      #attempt to select less than one element in get1index <real>
+      #Calls: process_hindcast_netcdf2obs ... readGridsAndWriteSingleObsFile -> ncvar_get -> mode
+      # Duplicates due to some with the same time interval with hydrogfdei?
+      # Else only download files until end date, and for hydrogfdei start from end date + 1 month?
+
+      disableEiMonthly <- TRUE
+      if (disableEiMonthly == TRUE) {
+      search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
+      nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
+                                            "_ei-monthly_",fileSuffix)
+      if (nMissing > 0){
+          print(paste0(nMissing," file(s) missing for ei-monthly"))
+          rciop.log("INFO",paste0(nMissing," file(s) missing for ei-monthly"))
+      }
+      } # disableEiMonthly
+
+      ## ------------------------------------------------------------------------------
+      # Handle hydrogfdei, starts at 201601
       urlNC     <- modelConfig$gfdHydrogfdeiUrl
       query     <- modelConfig$gfdHydrogfdeiQuery
       startDate <- xCastsInterval$hydrogfdeiStartDateSearch

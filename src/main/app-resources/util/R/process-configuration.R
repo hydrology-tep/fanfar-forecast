@@ -111,6 +111,11 @@ process_input_model_configuration <- function(applConfig=NULL, # Application con
   gfdEcoperDailyUrl     <- NULL
   gfdEcoperDailyQuery   <- NULL
   gfdEcoperDailyComment <- NULL
+
+  gfdEiMonthlySubDir  <- NULL
+  gfdEiMonthlyUrl     <- NULL
+  gfdEiMonthlyQuery   <- NULL
+  gfdEiMonthlyComment <- NULL
   
   gfdElevationSubDir  <- NULL
   gfdElevationUrl     <- NULL
@@ -205,7 +210,13 @@ process_input_model_configuration <- function(applConfig=NULL, # Application con
       gfdEcoperQuery   <- model_config_data[r,'querypattern']
       gfdEcoperComment <- model_config_data[r,'info']
     }
-    # Skip subdir 'ei-monthly' and 'od-monthly'
+    if (subdir == 'ei-monthly') {
+      gfdEiMonthlySubDir  <- model_config_data[r,'subdir']
+      gfdEiMonthlyUrl     <- model_config_data[r,'url']
+      gfdEiMonthlyQuery   <- model_config_data[r,'querypattern']
+      gfdEiMonthlyComment <- model_config_data[r,'info']
+    }
+    # Skip subdir 'od-monthly'
     if (subdir == 'elevation') {
       gfdElevationSubDir  <- model_config_data[r,'subdir']
       gfdElevationUrl     <- model_config_data[r,'url']
@@ -246,6 +257,11 @@ process_input_model_configuration <- function(applConfig=NULL, # Application con
                             "gfdEcoperUrl"=gfdEcoperUrl,
                             "gfdEcoperQuery"=gfdEcoperQuery,
                             "gfdEcoperComment"=gfdEcoperComment,
+
+                            "gfdEiMonthlySubDir"=gfdEiMonthlySubDir,
+                            "gfdEiMonthlyUrl"=gfdEiMonthlyUrl,
+                            "gfdEiMonthlyQuery"=gfdEiMonthlyQuery,
+                            "gfdEiMonthlyComment"=gfdEiMonthlyComment,
                             
                             "gfdElevationSubDir"=gfdElevationSubDir,
                             "gfdElevationUrl"=gfdElevationUrl,
