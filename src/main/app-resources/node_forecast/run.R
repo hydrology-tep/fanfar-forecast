@@ -504,14 +504,14 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
         forecast.run = system(command = app.setup$runCommand,intern = T)
 
-        hyssLogFile = dir(path = app.setup$runDir, pattern =".log")
-        if(length(hyssLogFile)>=0){
-            for(j in 1:length(hyssLogFile)){
-                toFile <- paste0(app.setup$runDir, "/", "007_", fileDate, "_", gsub("hyss", "forecast_hyss",hyssLogFile[j]))
-                file.copy(from = paste(app.setup$runDir,hyssLogFile[j],sep="/"),to = toFile)
-                rciop.publish(path=toFile, recursive=FALSE, metalink=TRUE)
-             }
-        }
+        # hyssLogFile = dir(path = app.setup$runDir, pattern =".log")
+        # if(length(hyssLogFile)>=0){
+        #     for(j in 1:length(hyssLogFile)){
+        #         toFile <- paste0(app.setup$runDir, "/", "007_", fileDate, "_", gsub("hyss", "forecast_hyss",hyssLogFile[j]))
+        #         file.copy(from = paste(app.setup$runDir,hyssLogFile[j],sep="/"),to = toFile)
+        #         rciop.publish(path=toFile, recursive=FALSE, metalink=TRUE)
+        #      }
+        # }
 
         log.res=appLogWrite(logText = "... forecast model run ready",fileConn = logFile$fileConn)
         if(app.sys=="tep"){rciop.log ("DEBUG", " ...forecast model run ready", nameOfSrcFile)}
