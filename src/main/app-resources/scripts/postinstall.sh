@@ -9,8 +9,7 @@
 # user guide for setting up a sandbox environment.
 #
 
-#/opt/anaconda/bin/conda install -y --file /application/dependencies/R/packages.list
-/opt/anaconda/bin/conda install -y --file /application/dependencies/R/new_attempt_packages.list
+/opt/anaconda/bin/conda install -y --file /application/dependencies/R/packages.list
 
 # Now when postprocessing (maps, trigger etc) moved to fanfar-postprocessing.git we shouldn't need
 # to change version of library/package jpeg

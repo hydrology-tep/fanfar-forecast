@@ -31,7 +31,7 @@ popd
 echo "Install base SW libraries and components via yum"
 # proj?
 # libgfortran for HYPE 5.x.0 built with gcc 4.4.7
-sudo yum install -y miniconda proj libgfortran hdf5.x86_64 netcdf.x86_64
+sudo yum install -y miniconda proj libgfortran hdf5 netcdf
 exit_code=$?
 if [ $exit_code -ne 0 ]; then
     echo "Problem installing with yum, aborting"

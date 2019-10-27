@@ -4,8 +4,6 @@
     <jobTemplate id="template_hypeapps">
       <streamingExecutable>/application/node_forecast/run.R</streamingExecutable>
       <defaultParameters>
-        <!-- The model config object may or may not differ between niger-hype and west-africa-hype. If they differ we need to handle this. Now this can manually be selected on H-TEP via drag and drop. -->
-        <parameter id="model" title="HYPE model configuration" abstract="HYPE model configuration" minOccurs="0" maxOccurs="1" scope="runtime" type="LiteralData">https://recast.terradue.com/t2api/search/hydro-smhi/models?uid=9345ED73B72F49E6FF31B07B57013BC519210E24</parameter> <!-- ToDo: Rename id to modelConfig or similar -->
 
         <parameter id="hydmodel" title="Hydrological model" abstract="Hydrological model" minOccurs="1" maxOccurs="2" scope="runtime" type="LiteralData">
           <options>
@@ -39,7 +37,7 @@
           <options>
             <option>Operational</option>
             <option>Reforecast</option>
-            <default>Reforecast</default> 
+            <default>Reforecast</default> <!-- ToDo: Change to Operational -->
           </options>
         </parameter>
 
@@ -183,6 +181,11 @@
         </parameter>
 
         <parameter id="hypeStateDate" title="HYPE state file date (yyyymmdd)" abstract="Date for test until code available" minOccurs="1" maxOccurs="1" scope="runtime" type="LiteralData">19931003</parameter>
+
+        <!-- The model config object may or may not differ between niger-hype and west-africa-hype. If they differ we need to handle this. Now this can manually be selected on H-TEP via drag and drop. -->
+        <!-- ToDo: Rename id to modelConfig or similar -->
+        <!-- <parameter id="model" title="HYPE model configuration" abstract="HYPE model configuration" minOccurs="0" maxOccurs="1" scope="runtime" type="LiteralData">https://recast.terradue.com/t2api/search/hydro-smhi/models?uid=40A27455C9498A70A4C12E458E527499331B96AE</parameter> -->
+        <parameter id="model" title="HYPE model configuration" abstract="HYPE model configuration" minOccurs="0" maxOccurs="1" scope="runtime" type="LiteralData">-</parameter>
 
       </defaultParameters>
       
