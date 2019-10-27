@@ -433,9 +433,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         outStateDate <- forecast.forcingandxobs$cdate
         outStateDate <- gsub("-", "", as.character(outStateDate))
         stateFile <- paste0(app.setup$runDir,"/hindcast","/state_save",outStateDate,".txt")
-    	if(file.exists(stateFile)) {
+        if(file.exists(stateFile)) {
             file.copy(from=stateFile,to=app.setup$runDir,overwrite=TRUE)
-    	}else {
+        }else {
             rciop.log("INFO",paste0("File missing: ",stateFile,nameOfSrcFile))
             #q()
         }
@@ -539,18 +539,18 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     }
     log.res=appLogWrite(logText = "HypeApp outputs prepared",fileConn = logFile$fileConn)
 
-    trigger_distribution_outfiles <- NULL # or remove this section since no plots or maps are longer produced
-    # Prepare for trigger distribution
-    # Written by jafet.andersson@smhi.se
-    if(length(app.outfiles>1)){
-        for (i in app.outfiles) {
-            if (grepl("forecast_mapWarningLevel.txt", i)) {
-                map_file <- i
-                print(paste0("app.input$idate: ",app.input$idate)) # Only year present previous run??? idate ok here...
-                trigger_distribution_outfiles <- TriggerDistribution(dirname(map_file), app.input$idate)
-            }
-        }
-    }
+    # trigger_distribution_outfiles <- NULL # or remove this section since no plots or maps are longer produced
+    # # Prepare for trigger distribution
+    # # Written by jafet.andersson@smhi.se
+    # if(length(app.outfiles>1)){
+    #     for (i in app.outfiles) {
+    #         if (grepl("forecast_mapWarningLevel.txt", i)) {
+    #             map_file <- i
+    #             print(paste0("app.input$idate: ",app.input$idate)) # Only year present previous run??? idate ok here...
+    #             trigger_distribution_outfiles <- TriggerDistribution(dirname(map_file), app.input$idate)
+    #         }
+    #     }
+    # }
 
     if(app.sys=="tep"){
         for(k in 1:length(app.outfiles)){
@@ -558,12 +558,12 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         }
         log.res=appLogWrite(logText = "HypeApp outputs published",fileConn = logFile$fileConn)
 
-        if(length(trigger_distribution_outfiles) > 0){
-            for(k in 1:length(trigger_distribution_outfiles)){
-                rciop.publish(path=trigger_distribution_outfiles[k], recursive=FALSE, metalink=TRUE)
-            }
-            log.res=appLogWrite(logText = "trigger distribution outputs published",fileConn = logFile$fileConn)
-        }
+        # if(length(trigger_distribution_outfiles) > 0){
+        #     for(k in 1:length(trigger_distribution_outfiles)){
+        #         rciop.publish(path=trigger_distribution_outfiles[k], recursive=FALSE, metalink=TRUE)
+        #     }
+        #     log.res=appLogWrite(logText = "trigger distribution outputs published",fileConn = logFile$fileConn)
+        # }
     }
 
     ## close and publish the logfile
