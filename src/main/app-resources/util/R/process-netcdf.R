@@ -1,10 +1,10 @@
 #! /usr/bin/Rscript
 
 # Constants
-verbose <- TRUE
-#verbose <- FALSE
-#verboseX2 <- TRUE
-verboseX2 <- FALSE
+#verbose <- TRUE
+verbose <- FALSE
+#verboseVerbose <- TRUE
+verboseVerbose <- FALSE
 
 # Includes that the sourced R-files uses
 library(ncdf4)
@@ -337,7 +337,7 @@ days_per_month <- function(year, month)
     month_days[2] <- 29
   }
   day <- month_days[month]
-  if (verboseX2 == TRUE) {
+  if (verboseVerbose == TRUE) {
     print('days_per_month: year month lastdayofmonth')
     print(year)
     print(month)
@@ -614,7 +614,7 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
     # Do not return the posixlt class objects
     # Convert data to character strings in the format yyyymm or yyyymmdd
 
-    if (verbose == TRUE) {
+    if (verboseVerbose == TRUE) {
       tmp <- strftime(intervalHindcast$hindcast.startDate,format="%Y%m")
       print(tmp)
       tmp <- strftime(intervalHindcast$hindcast.endDate,format="%Y%m")
@@ -982,10 +982,6 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
 } # download_netcdf
 
 
-# Possibly split into two functions
-# one for hindcast sequence and
-# one for forcast sequence
-
 # External function
 # Wrapper for netcdf2obs sequence
 process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
@@ -1025,7 +1021,6 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
 
   netcdf_to_obs_wd <- paste0(TMPDIR,"/netcdf_to_obs")
   # ToDo: Do this once... when criteria is new or changed
-  rciop.log("INFO",paste0("run_netcdf_to_obs_gridLinkPreparation START"))
   #if (! dir.exists(gridMetaDir)){ # or a certain file (file.exists)
       res <- run_netcdf_to_obs_gridLinkPreparation(workDir=netcdf_to_obs_wd,
                                                    ncRootDir=netcdfDir,
@@ -1041,9 +1036,7 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
           rciop.log("INFO",paste0("run_netcdf_to_obs_gridLinkPreparation, exit code=",res))
       }
   #}
-  rciop.log("INFO",paste0("run_netcdf_to_obs_gridLinkPreparation END"))
 
-  rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs START"))
   res <- prepare_and_run_netcdf_to_obs(workDir=netcdf_to_obs_wd,
                                        ncRootDir=netcdfDir,
                                        ncSubDir=ncSubDir,
@@ -1057,10 +1050,11 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
   if (res > 0){
       rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs, exit code=",res))
   }
-  rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs END"))
 
-  # List files in output dir
-  print(list.files(obsDir))
+  if (verboseVerbose == TRUE) {
+      # List files in output dir
+      print(list.files(obsDir))
+  }
 
   # Return the same type structure as function getModelForcing(), but minimal
   bdate <- as.Date(startDate)
@@ -1146,7 +1140,6 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
 } # process_hindcast_netcdf2obs
 
 
-# ToDo: Remove/Replace some inputs, call other func for forecast interval
 # External function
 # Wrapper for netcdf2obs sequence
 process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
@@ -1175,7 +1168,6 @@ process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
   endDate   <- prepForecastInterval$ecoperEndDateSearch
 
   netcdf_to_obs_wd <- paste0(TMPDIR,"/netcdf_to_obs")
-  rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs START"))
   res <- prepare_and_run_netcdf_to_obs(workDir=netcdf_to_obs_wd,
                                        ncRootDir=netcdfDir,
                                        ncSubDir=ncSubDir,
@@ -1189,10 +1181,11 @@ process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
   if (res > 0){
       rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs, exit code=",res))
   }
-  rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs END"))
 
-  # List files in output dir
-  print(list.files(obsDir))
+  if (verboseVerbose == TRUE) {
+      # List files in output dir
+      print(list.files(obsDir))
+  }
 
   # Return the same type structure as function getModelForcing(), but minimal
   bdate <- as.Date(startDate)

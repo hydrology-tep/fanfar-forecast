@@ -50,8 +50,8 @@
 nameOfSrcFile <- "/node_forecast/run.R"
 verbose <- TRUE
 #verbose <- FALSE
-#verboseX2 <- TRUE
-verboseX2 <- FALSE
+#verboseVerbose <- TRUE
+verboseVerbose <- FALSE
 
 debugPublish <- TRUE
 
@@ -100,29 +100,6 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     }
 
     ## ------------------------------------------------------------------------------
-    # Handle options for run-time configuration, e.g. switch between HYPE models etc.
-    # Global options defined in application.xml
-    rciop.log("INFO", "Processing user selection:")
-    applRuntimeOptions <- process_application_runtime_options()
-
-    if (verbose == TRUE) {
-        print("applRuntimeOptions (output from process_application_runtime_options):")
-        print(applRuntimeOptions)
-    }
-
-    ## ------------------------------------------------------------------------------
-    ## Read the main input
-    ## This is the reference link to the model configuration
-    rciop.log("INFO", paste("Processing input from stdin:", input, sep=" "))
-    modelConfigData <- process_input_model_configuration(applRuntimeOptions,
-                                                         input) #,TMPDIR)
-
-    if (verbose == TRUE) {
-        print("modelConfigData (output from process_input_model_configuration):")
-        print(modelConfigData)
-    }
-
-    ## ------------------------------------------------------------------------------
     ## Load hypeapps environment and additional R utility functions
     if(app.sys=="tep"){
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-netcdf.R",sep="/"))
@@ -149,9 +126,33 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
 
     #################################################################################
-    ## 2 - Application user inputs
+    ## 2 - Application inputs
     ## ------------------------------------------------------------------------------
-    ## Handle application input parameters, rciop.get_param()
+    # Handle options for run-time configuration. Global options defined in application.xml
+    # Process user options/selections to later select between different variants
+    # of models, datasets etc.
+    rciop.log("INFO", "Processing user selection:")
+    applRuntimeOptions <- process_application_runtime_options()
+
+    if (verbose == TRUE) {
+        print("applRuntimeOptions (output from process_application_runtime_options):")
+        print(applRuntimeOptions)
+    }
+
+    ## ------------------------------------------------------------------------------
+    ## Read the main input (from stdin). This is the reference link to the application configuration object
+    ## Extract information from file dependencies.txt, part of the application configuration object
+    rciop.log("INFO", paste("Processing input from stdin:", input, sep=" "))
+    modelConfigData <- process_input_model_configuration(applRuntimeOptions,
+                                                         input)
+
+    if (verbose == TRUE) {
+        print("modelConfigData (output from process_input_model_configuration):")
+        print(modelConfigData)
+    }
+
+    ## ------------------------------------------------------------------------------
+    ## Handle application input parameters, rciop.get_param(), for internal hypeapps functionality
     app.input <- getHypeAppInput(appName = app.name)
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste(" hypeapps inputs and parameters read"), nameOfSrcFile)}
@@ -166,7 +167,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         log.res=appLogWrite(logText = "Using configuration from hypeapps-model-settings.R",fileConn = logFile$fileConn)
     }else if (app.sys=="tep") {
         ## ------------------------------------------------------------------------------
-        ## Get HYPE model data dirs
+        ## Get HYPE model dataset
         rciop.log("INFO", "Processing config for model data", nameOfSrcFile)
         modelDataPaths <- process_input_hype_model_data(applRuntimeOptions,modelConfigData) # ,paste0(TMPDIR,"/hype-model-data"))
 
@@ -176,9 +177,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         forcing.archive.path <- modelDataPaths$dirForcingArchive # Instead of forcing.archive.url
         state.files.path     <- modelDataPaths$dirStateFiles     # Instead of state.files.url
         #shapefiles          <- modelDataPaths$dirShapeFiles
-        rciop.log("INFO path", model.files.path)
-        rciop.log("INFO path", forcing.archive.path)
-        rciop.log("INFO path", state.files.path)
+        #rciop.log("INFO path", model.files.path)
+        #rciop.log("INFO path", forcing.archive.path)
+        #rciop.log("INFO path", state.files.path)
         #ToDo: When switching between different HYPE model datasets, we may need to output a list of filenames (currently hardcoded filenames)
     }
 
@@ -211,7 +212,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                  stateFilesIN = state.files,
                                  modelDataPaths = modelDataPaths)
 
-    if (verboseX2 == TRUE) {
+    if (verboseVerbose == TRUE) {
         print("app.setup (output from getHypeAppSetup):")
         print(app.setup)
     }
@@ -238,16 +239,6 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             print("hindcast.forcing (output from getModelForcing):")
             print(hindcast.forcing)
         }
-        # getModelForcing returns:
-        # return(list("status"=T, # TRUE
-        #            "localFile"=downloadInfo$localFile,# "/var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910161533_0110/attempt_201910161533_0110_m_000000_0/work/tmp/20190926.zip"
-        #            "issueDate"=issueDate.Num, # "2019-09-26 GMT"
-        #            "archive"=F, # FALSE
-        #            "bdate"=bdate, # "2019-01-01 01:00:00 CET"
-        #            "cdate"=cdate, # "2019-05-26 GMT"
-        #            "edate"=edate, # "2019-09-25 GMT"
-        #            "outstateDate"=outstateDate, # "2019-09-26 GMT"
-        #            "stateFile"=stateFile)) # "/var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910161533_0110/attempt_201910161533_0110_m_000000_0/work/tmp/model/forecast/niger-hype/state_save20190101.txt"
 
         if(app.sys=="tep"){rciop.log ("DEBUG", paste("hindcast forcing set"), nameOfSrcFile)}
         log.res=appLogWrite(logText = "Hindcast forcing data downloaded and prepared",fileConn = logFile$fileConn)
@@ -395,18 +386,6 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             print("forecast.forcing (output from getModelForcing):")
             print(forecast.forcing)
         }
-        #   return(list("status"=T, # TRUE
-        #               "localFile"=downloadInfo$localFile, # "/var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910161533_0110/attempt_201910161533_0110_m_000000_0/work/tmp/20190926.zip"
-        #               "issueDate"=issueDate.Num, # "2019-09-27 GMT" # Should be 26...
-        #               "archive"=F, # FALSE
-        #               "bdate"=bdate, # "2019-09-26 GMT"
-        #               "cdate"=cdate, # "2019-09-26 GMT"
-        #               "edate"=edate, # "2019-10-05 GMT"
-        #               "outstateDate"=outstateDate, # NA
-        #               "stateFile"=stateFile)) # "/var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910161533_0110/attempt_201910161533_0110_m_000000_0/work/tmp/model/forecast/niger-hype/state_save20190926.txt"
-
-        # As previously set for forecast
-        #xobs.input <- NULL
     }
 
     if ((applRuntimeOptions$metHC == cMetHCVariant2) &&

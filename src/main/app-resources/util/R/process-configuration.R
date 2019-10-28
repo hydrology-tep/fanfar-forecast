@@ -69,17 +69,17 @@ process_application_runtime_options <- function()
 } # process_application_runtime_options
 
 
-# Extract information from file dependencies.txt, part of the model/application config object
+# Extract information from file dependencies.txt, part of the application configuration object
 # Output is now urls to configuration items to later be downloaded, e.g.:
-# modelData   - locating HYPE model (config) data. Data files etc.
-# gfdHydrogfd - locating netcdf files
+# modelData   - locating HYPE model dataset. Data files etc.
+# gfdHydrogfd - locating netcdf files for HydroGFD2
 process_input_model_configuration <- function(applConfig=NULL, # Application configuration from user, ToDo
                                               applInput=NULL)  # Input to application from stdin
-                                              #tmpDir)    # Local dir for temporary items only
 {
-  # Download and read model config object from the applications input
-  # Parse file dependencies.txt
-  # Return all data in a list (skip the data frame)
+  # Download the configuration object from the applications input reference url
+  # For non-valid reference urls, use the defined urls in this function
+  # Read file dependencies.txt, part of the downloaded configuration object
+  # Return all data in a list
   
   # Outputs
   modelDataSubDir  <- NULL
@@ -119,7 +119,7 @@ process_input_model_configuration <- function(applConfig=NULL, # Application con
   
   # Query the input reference
   
-  # User emptied the default value in field 'HYPE model configuration' to some degree?
+  # Check if the input reference url is valid, else use the defaults below
   # It cannot be completely empty due to condition of the main while loop in run.R.
   # Paste this in a web browser to check for alternative zip-files: https://recast.terradue.com/t2api/search/hydro-smhi/models?uid
   urlLen <- 103
@@ -253,8 +253,6 @@ process_input_model_configuration <- function(applConfig=NULL, # Application con
                             "gfdElevationComment"=gfdElevationComment
   )
   
-  #print(outputModelConfig)
-  #rciop.log("INFO model config", outputModelConfig)
   return (outputModelConfig)
 }
 
@@ -275,11 +273,10 @@ check_file_exist <- function(absPath)
 }
 
 
-# Download HYPE model (config) data from the url part of the model/application config object
+# Download HYPE dataset from the url - part of the model configuration object
 # Output is paths to downloaded data
 process_input_hype_model_data <- function(applConfig,  # Application configuration from user, ToDo
                                           modelConfig) # Application model config object (urls)
-                                          #tmpDir)      # Dir to store downloaded items
 {
   # Outputs
   dirGridMetaData   <- NULL
@@ -302,8 +299,8 @@ process_input_hype_model_data <- function(applConfig,  # Application configurati
   input_enclosure <- system(command = opensearchCmd,intern = T)
   rciop.log("INFO", input_enclosure)
   
-  # Download the Hype model specific data dir(s)
-  modelDataDirs <- rciop.copy(input_enclosure, TMPDIR, uncompress=TRUE) # tmpDir
+  # Download HYPE dataset model specific data dir(s)
+  modelDataDirs <- rciop.copy(input_enclosure, TMPDIR, uncompress=TRUE)
   if (modelDataDirs$exit.code==0) {
     local.modelDataDirs <- modelDataDirs$output
   }
@@ -343,7 +340,9 @@ process_input_hype_model_data <- function(applConfig,  # Application configurati
       #fileInfoTxtColdStart <- paste(dirModelFiles,"info-coldstart-19791994.txt",sep="/")
       #fileInfoTxtHindcast  <- paste(dirModelFiles,"info-hindcast.txt",sep="/") # With this path, already done in updateModelInput() as standard
       #fileInfoTxtForecast  <- paste(dirModelFiles,"info-forecast.txt",sep="/")
-      print("INFO Using info-coldstart-19791994.txt, info-hindcast.txt and info-forcast.txt from the configuration object, westafrica-hype-model-1.3.6.zip")
+
+      # Currently disabled in hypeapps-utils.R, not used
+      #print("INFO Using info-coldstart-19791994.txt, info-hindcast.txt and info-forcast.txt from the configuration object, westafrica-hype-model-1.3.6.zip")
       fileInfoTxtColdStart <- paste(modelConfig$modelConfigObjectDir,"info-coldstart-19791994.txt",sep="/")
       fileInfoTxtHindcast  <- paste(modelConfig$modelConfigObjectDir,"info-hindcast.txt",sep="/")
       fileInfoTxtForecast  <- paste(modelConfig$modelConfigObjectDir,"info-forecast.txt",sep="/")
@@ -374,6 +373,6 @@ process_input_hype_model_data <- function(applConfig,  # Application configurati
   )
   
   #print(outputModelData)
-  rciop.log("INFO", outputModelData)
+  #rciop.log("INFO", outputModelData)
   return (outputModelData)
 } # process_input_hype_model_data
