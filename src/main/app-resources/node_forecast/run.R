@@ -139,9 +139,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## ------------------------------------------------------------------------------
     ## Open application logfile
     ## create a date tag to include in output filenames
-    forecastIssueDate <- rciop.getparam("idate")
-    fileDate <- gsub("-", "", as.character(forecastIssueDate))
-    logFile=appLogOpen(appName = app.name, tmpDir = getwd(),appDate = fileDate,prefix="000")
+    logFile=appLogOpen(appName = app.name, tmpDir = getwd(),appDate = app.date,prefix="000")
 
     ## ------------------------------------------------------------------------------
     # Get git commit
@@ -356,7 +354,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         hyssLogFile = dir(path = app.setup$runDir, pattern =".log")
         if(length(hyssLogFile)>=0){
             for(j in 1:length(hyssLogFile)){
-                toFile <- paste0(app.setup$runDir, "/", "000_", fileDate, "_", gsub("hyss", "hindcast_hyss",hyssLogFile[j]))
+                toFile <- paste0(app.setup$runDir, "/", "000_", app.date, "_", gsub("hyss", "hindcast_hyss",hyssLogFile[j]))
                 file.copy(from = paste(app.setup$runDir,hyssLogFile[j],sep="/"),to = toFile)
                 rciop.publish(path=toFile, recursive=FALSE, metalink=TRUE)
              }
@@ -507,7 +505,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         # hyssLogFile = dir(path = app.setup$runDir, pattern =".log")
         # if(length(hyssLogFile)>=0){
         #     for(j in 1:length(hyssLogFile)){
-        #         toFile <- paste0(app.setup$runDir, "/", "007_", fileDate, "_", gsub("hyss", "forecast_hyss",hyssLogFile[j]))
+        #         toFile <- paste0(app.setup$runDir, "/", "007_", app.date, "_", gsub("hyss", "forecast_hyss",hyssLogFile[j]))
         #         file.copy(from = paste(app.setup$runDir,hyssLogFile[j],sep="/"),to = toFile)
         #         rciop.publish(path=toFile, recursive=FALSE, metalink=TRUE)
         #      }
@@ -533,7 +531,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     app.outfiles <- prepareHypeAppsOutput(appSetup  = app.setup, appInput = app.input,
                                           modelInput = forecast.input, modelForcing = forecast.forcing,
                                           runRes = attr(forecast.run,"status"),
-                                          appDate = fileDate)
+                                          appDate = app.date)
     if(length(app.outfiles)>1){
         app.outfiles=sort(app.outfiles,decreasing = F)
     }
@@ -580,28 +578,3 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## exit with appropriate status code
     q(save="no", status = 0)
 } # while(length(input
-
-# Oct 16 09:23 000_20191016_0437_forecast_hyss_000_191016_0439.log
-# Oct 16 09:23 000_20191016_0437_hindcast_hyss_000_191016_0439.log
-# Oct 16 09:23 000_20191016_0437_hypeapps-forecast.log
-# Oct 16 09:23 001_20191016_0437_forecast_0004244_discharge-forecast.png
-# Oct 16 09:23 001_20191016_0437_forecast_0004244_discharge-forecast.pngw
-# Oct 16 09:23 001_20191016_0437_forecast_mapWarningLevel.png
-# Oct 16 09:23 001_20191016_0437_forecast_mapWarningLevel.pngw
-# Oct 16 09:23 002_20191016_0437_forecast_0004244.csv
-# Oct 16 09:23 002_20191016_0437_hindcast_0004244.csv
-# Oct 16 09:23 003_20191016_0437_forecast_0004244.txt
-# Oct 16 09:23 003_20191016_0437_hindcast_0004244.txt           <<<<<< app.date
-# Oct 16 09:23 004_20191015_email_message.txt                   <<<<<< app.input$idate
-# Oct 16 09:23 004_20191015_sms_message.txt
-# Oct 16 09:23 004_20191016_0437_forecast_mapCOUT.txt
-# Oct 16 09:23 004_20191016_0437_forecast_mapWarningLevel.txt
-# Oct 16 09:23 004_20191016_0437_hindcast_mapCOUT.txt
-# Oct 16 09:23 005_20191016_0437_forecast_timeCOUT.txt
-# Oct 16 09:23 005_20191016_0437_hindcast_timeCOUT.txt
-# Oct 16 09:23 006_20191016_0437_forecast_simass.txt
-# Oct 16 09:23 006_20191016_0437_forecast_subass1.txt
-# Oct 16 09:23 006_20191016_0437_hindcast_simass.txt
-# Oct 16 09:23 006_20191016_0437_hindcast_subass1.txt
-# Oct 16 09:23 niger-hype-rp-cout.txt
-# Oct 16 09:23 subbasin_shp.zip
