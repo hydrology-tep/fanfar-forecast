@@ -94,9 +94,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         setwd(TMPDIR)
         rciop.log("DEBUG", paste(" R session working directory set to ",TMPDIR,sep=""), nameOfSrcFile)
 
-        # Source non-HYPE files
+        ## ------------------------------------------------------------------------------
+        ## Source non-hypeapps functions
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-configuration.R",sep="/"))
-        source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-netcdf.R",sep="/"))
     }
 
     ## ------------------------------------------------------------------------------
@@ -125,10 +125,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## ------------------------------------------------------------------------------
     ## Load hypeapps environment and additional R utility functions
     if(app.sys=="tep"){
+        source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-netcdf.R",sep="/"))
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/hypeapps-environment.R",sep="/"))
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/hypeapps-utils.R", sep="/"))
-
-        source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/TriggerDistribution.r", sep="/"))
 
         rciop.log ("DEBUG", paste(" libraries loaded and utilities sourced"), nameOfSrcFile)
     }else if(app.sys=="win"){
