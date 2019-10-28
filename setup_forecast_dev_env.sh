@@ -1,12 +1,13 @@
 #! /bin/env bash
 
 update_users_bashrc_file=0
-conda_packages_file=new_attempt_packages.list # packages.list
+conda_packages_file=packages.list
 repo_url=https://github.com/hydrology-tep/fanfar-forecast
 git_branch=develop
 local_dir=fanfar-forecast
 
 echo "Download git repository fanfar-forecast from github"
+sleep 3
 git clone ${repo_url} ${local_dir}
 exit_code=$?
 if [ $exit_code -ne 0 ]; then
@@ -29,6 +30,7 @@ fi
 popd
 
 echo "Install base SW libraries and components via yum"
+sleep 3
 # proj?
 # libgfortran for HYPE 5.x.0 built with gcc 4.4.7
 sudo yum install -y miniconda proj libgfortran hdf5 netcdf
@@ -40,23 +42,25 @@ fi
 
 # Due to run-time problems
 echo "Downgrade proj from version 4.8 to 4.7"
+sleep 3
 sudo yum downgrade proj
 
 echo "Install additional SW libraries and components via conda"
+sleep 3
 # Since post-processing moved to fanfar-postprocessing and
 # 'netcdf to obs' do not use cdo, we ignore the previous used conda
 # environments cairo-env and cdo-env and only use the default base environemnt
 
 if [ "x${update_users_bashrc_file}" == "x1" ]; then
     echo "Update users .bashrc with path to conda"
-    echo "export PATH=/opt/anaconda/bin/:$PATH" >> ~/.bashrc
+    echo "export PATH=/opt/anaconda/bin:$PATH" >> ~/.bashrc
     source ~/.bashrc
 #else
-#    export PATH=/opt/anaconda/bin/:$PATH
+#    export PATH=/opt/anaconda/bin:$PATH
 fi
 
 # Source above may not affect this session, do this anyway for this session
-export PATH=/opt/anaconda/bin/:$PATH
+export PATH=/opt/anaconda/bin:$PATH
 
 sudo conda install -y --file ${local_dir}/src/main/app-resources/dependencies/R/${conda_packages_file}
 exit_code=$?
@@ -66,8 +70,10 @@ if [ $exit_code -ne 0 ]; then
 fi
 
 echo "Install the fanfar-forecast application in /application/"
+sleep 3
 pushd ${local_dir}
 mvn clean install
 popd
 
+echo ""
 echo "Done"
