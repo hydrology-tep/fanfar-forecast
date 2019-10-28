@@ -399,14 +399,6 @@ determine_interval_hydrogfdei <- function(hindcastStartDate,
                                           forecastIssueDate,
                                           in_reforecast)
 {
-    # Output NULL if date not earlier than 201601
-    eimonthly.startDate <- NULL
-    eimonthly.endDate   <- NULL
-
-    eiBreakFirstDailyFiles <- "2016-01-01"
-    eiBreakFirstDailyFiles <- as.Date(eiBreakFirstDailyFiles)
-    eiBreakFirstDailyFiles <- as.POSIXlt(eiBreakFirstDailyFiles)
-
     hydrogfdei.startDate <- hindcastStartDate
     if (in_reforecast == FALSE) {
       # Operational
@@ -438,30 +430,14 @@ determine_interval_hydrogfdei <- function(hindcastStartDate,
       hydrogfdei.endDate$mday <- hydrogfdei.endDate$mday + (mday_last - hydrogfdei.endDate$mday)
     }
 
-    # Interval ready, handle what to retrieve from ei-monthly files (only pr and tas)
-    # Use hydrogfdei files for the remaining interval (also tasmin and tasmax)
-    if (hydrogfdei.startDate < eiBreakFirstDailyFiles) {
-      eimonthly.startDate   <- hydrogfdei.startDate
-      eimonthly.endDate     <- eiBreakFirstDailyFiles
-      # Change from 2016-01-01 to 2015-12-31
-      eimonthly.endDate$mday <- eimonthly.endDate$mday - 1
-
-      hydrogfdei.startDate <- eiBreakFirstDailyFiles
-    }
-
     if (verbose == TRUE) {
-      print('EI-monthly:')
-      print(eimonthly.startDate)
-      print(eimonthly.endDate)
       print('HydroGFDEI:')
       print(hydrogfdei.startDate)
       print(hydrogfdei.endDate)
       print('')
     }
 
-    output <- list("eimonthly.startDate"=eimonthly.startDate,
-                   "eimonthly.endDate"=eimonthly.endDate,
-                   "hydrogfdei.startDate"=hydrogfdei.startDate,
+    output <- list("hydrogfdei.startDate"=hydrogfdei.startDate,
                    "hydrogfdei.endDate"=hydrogfdei.endDate)
 
     return (output)
@@ -644,14 +620,6 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
       tmp <- strftime(intervalHindcast$hindcast.endDate,format="%Y%m")
       print(tmp)
 
-      if (! is.null(intervalHydrogfdei$eimonthly.startDate)) {
-        tmp <- strftime(intervalHydrogfdei$eimonthly.startDate,format="%Y%m")
-        print(tmp)
-      }
-      if (! is.null(intervalHydrogfdei$eimonthly.endDate)) {
-        tmp <- strftime(intervalHydrogfdei$eimonthly.endDate,format="%Y%m")
-        print(tmp)
-      }
       tmp <- strftime(intervalHydrogfdei$hydrogfdei.startDate,format="%Y%m")
       print(tmp)
       tmp <- strftime(intervalHydrogfdei$hydrogfdei.endDate,format="%Y%m")
@@ -668,22 +636,6 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
 
     hindcastStartDateSearch <- strftime(intervalHindcast$hindcast.startDate,format="%Y-%m-%d")
     hindcastEndDateSearch   <- strftime(intervalHindcast$hindcast.endDate,format="%Y-%m-%d")
-
-    if (! is.null(intervalHydrogfdei$eimonthly.startDate)) {
-      eiMonthlyStartDateSearch   <- strftime(intervalHydrogfdei$eimonthly.startDate,format="%Y-%m-%d")
-      eiMonthlyStartDateFilename <- strftime(intervalHydrogfdei$eimonthly.startDate,format="%Y%m")
-    } else {
-      # Keep NULL as output
-      eiMonthlyStartDateSearch   <- intervalHydrogfdei$eimonthly.startDate
-      eiMonthlyStartDateFilename <- intervalHydrogfdei$eimonthly.startDate
-    }
-    if (! is.null(intervalHydrogfdei$eimonthly.endDate)) {
-      eiMonthlyEndDateSearch     <- strftime(intervalHydrogfdei$eimonthly.endDate,format="%Y-%m-%d")
-      eiMonthlyEndDateFilename   <- strftime(intervalHydrogfdei$eimonthly.endDate,format="%Y%m")
-    } else {
-      eiMonthlyEndDateSearch     <- intervalHydrogfdei$eimonthly.endDate
-      eiMonthlyEndDateFilename   <- intervalHydrogfdei$eimonthly.endDate
-    }
 
     hydrogfdeiStartDateSearch   <- strftime(intervalHydrogfdei$hydrogfdei.startDate,format="%Y-%m-%d")
     hydrogfdeiEndDateSearch     <- strftime(intervalHydrogfdei$hydrogfdei.endDate,format="%Y-%m-%d")
@@ -702,11 +654,6 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
 
     castIntervals <- list("hindcastStartDateSearch"=hindcastStartDateSearch,
                           "hindcastEndDateSearch"=hindcastEndDateSearch,
-
-                          "eiMonthlyStartDateSearch"=eiMonthlyStartDateSearch,
-                          "eiMonthlyEndDateSearch"=eiMonthlyEndDateSearch,
-                          "eiMonthlyStartDateFilename"=eiMonthlyStartDateFilename,
-                          "eiMonthlyEndDateFilename"=eiMonthlyEndDateFilename,
 
                           "hydrogfdeiStartDateSearch"=hydrogfdeiStartDateSearch,
                           "hydrogfdeiEndDateSearch"=hydrogfdeiEndDateSearch,
@@ -849,25 +796,18 @@ check_date_interval_netcdf <- function(startDate,
                                        filePrefix,
                                        fileSuffix)
 {
-  ##tas_ei-monthly_200608_fanfar_SMHI.nc
   #tasmin_hydrogfdei_201906_fanfar_SMHI.nc
   #tasmin_hydrogfdod_201908_fanfar_SMHI.nc
   #tas_od-daily_20190917_fanfar_SMHI.nc
   #tasmin_ecoper_2019091800_fanfar_SMHI.nc # 00_fanfar_SMHI.nc
   nMissingFiles <- 0
 
-  if (grepl("ei-monthly",filePrefix,fixed=TRUE)) {
-      variables <- c("pr","tas")
-  } else {
-      variables <- c("pr","tas","tasmin","tasmax")
-  }
+  # Constants
+  variables <- c("pr","tas","tasmin","tasmax")
 
   interval <- NULL
   dateFormat <- NULL
-  if (grepl("ei-monthly",filePrefix,fixed=TRUE)) {
-      interval <- "month"
-      dateFormat <- "%Y%m"
-  } else if (grepl("hydrogfdei",filePrefix,fixed=TRUE)) {
+  if (grepl("hydrogfdei",filePrefix,fixed=TRUE)) {
       interval <- "month"
       dateFormat <- "%Y%m"
   } else if (grepl("hydrogfdod",filePrefix,fixed=TRUE)) {
@@ -960,34 +900,7 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
 
   if (xCast == "hindcast"){
       ## ------------------------------------------------------------------------------
-      # Handle ei-monthly, data from 197901 to 'now - 4 months' (hydrogfdei)
-      # No tasmin or tasmax, only pr and tas
-      urlNC     <- modelConfig$gfdEiMonthlyUrl
-      query     <- modelConfig$gfdEiMonthlyQuery
-      startDate <- xCastsInterval$eiMonthlyStartDateSearch
-      stopDate  <- xCastsInterval$eiMonthlyEndDateSearch
-
-      #Error in nc$var[[ncvarid]] : 
-      #attempt to select less than one element in get1index <real>
-      #Calls: process_hindcast_netcdf2obs ... readGridsAndWriteSingleObsFile -> ncvar_get -> mode
-      #[1] "... START reading/writing NETCDF to OBS..."
-      #[1] " ... checking time period in netcdf files - updating read order if needed"
-      #[1] "...reading NETCDF files..."
-      #[1] "/var/lib/hadoop-0.20/cache/mapred/mapred/local/taskTracker/tomcat/jobcache/job_201910221102_0288/attempt_201910221102_0288_m_000000_0/work/tmp/netcdf-files/pr/pr_ei-monthly_200910_fanfar_SMHI.nc"
-
-      downloadEiMonthly <- (! is.null(startDate) && ! is.null(stopDate))
-      if (downloadEiMonthly == TRUE) {
-          search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-          nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
-                                                "_ei-monthly_",fileSuffix)
-          if (nMissing > 0){
-              print(paste0(nMissing," file(s) missing for ei-monthly"))
-              rciop.log("INFO",paste0(nMissing," file(s) missing for ei-monthly"))
-          }
-      }
-
-      ## ------------------------------------------------------------------------------
-      # Handle hydrogfdei, starts at 201601
+      # Handle hydrogfdei
       urlNC     <- modelConfig$gfdHydrogfdeiUrl
       query     <- modelConfig$gfdHydrogfdeiQuery
       startDate <- xCastsInterval$hydrogfdeiStartDateSearch
