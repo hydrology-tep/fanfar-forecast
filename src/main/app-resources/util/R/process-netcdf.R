@@ -1,8 +1,10 @@
 #! /usr/bin/Rscript
 
 # Constants
-#verbose <- TRUE
-verbose <- FALSE
+nameOfSrcFile_PN <- "/util/R/process-netcdf.R"
+
+verbose <- TRUE
+#verbose <- FALSE
 #verboseVerbose <- TRUE
 verboseVerbose <- FALSE
 
@@ -22,7 +24,7 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
                                                   startDate, # yyyy-mm-dd
                                                   endDate)# yyyy-mm-dd
 {
-    if (verbose == TRUE) {
+    if (verboseVerbose == TRUE) {
         print('run_netcdf_to_obs_gridLinkPreparation():')
         print(paste0("workDir: ",workDir))
         print(paste0("ncRootDir: ",ncRootDir))
@@ -57,7 +59,7 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
     # Source the utility file
     fileToSource <- paste0(Sys.getenv("_CIOP_APPLICATION_PATH"), "/util/R/netcdf_to_obs_utils.R")
     if (! file.exists(fileToSource)){
-        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",fileToSource))
+        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",fileToSource),nameOfSrcFile_PN)
         q(save="no", status = 0) # 77
     }
     source(fileToSource)
@@ -75,13 +77,13 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
 
     resource_dir_path <- resourceDir # NULL => code sets output to output.path
     if (! file.exists(resource_dir_path)){ # dir.exists
-        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",resource_dir_path))
+        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",resource_dir_path),nameOfSrcFile_PN)
         #q(save="no", status = 0)
     }
 
     grid_elev_path <- gridElevPath
     if (! file.exists(grid_elev_path)){
-        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",grid_elev_path))
+        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",grid_elev_path),nameOfSrcFile_PN)
         #q(save="no", status = 0)
     }
 
@@ -96,7 +98,7 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
     # Model input
     shape_file_path <- shapeFilePath
     if (! file.exists(shape_file_path)){
-        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",shape_file_path))
+        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",shape_file_path),nameOfSrcFile_PN)
         #q(save="no", status = 0)
     }
 
@@ -155,7 +157,7 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
                                     ,cleanGeometry = cleanGeometry
                                     ,crsProj = crsProjProc)
     if (isGridLink > 0){
-        rciop.log("INFO", paste0("Aborting netcdf to obs - gridLinkPreparation(): ",isGridLink))
+        rciop.log("INFO", paste0("Aborting netcdf to obs - gridLinkPreparation(): ",isGridLink),nameOfSrcFile_PN)
         #q(save="no", status = 76)
         #status <- status + 1
     }
@@ -179,7 +181,7 @@ prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
                                           startDate, # yyyy-mm-dd
                                           endDate)# yyyy-mm-dd
 {
-    if (verbose == TRUE) {
+    if (verboseVerbose == TRUE) {
         print('prepare_and_run_netcdf_to_obs():')
         print(paste0("workDir: ",workDir))
         print(paste0("ncRootDir: ",ncRootDir))
@@ -204,7 +206,7 @@ prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
     # Source the utility file
     fileToSource <- paste0(Sys.getenv("_CIOP_APPLICATION_PATH"), "/util/R/netcdf_to_obs_utils.R")
     if (! file.exists(fileToSource)){
-        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",fileToSource))
+        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",fileToSource),nameOfSrcFile_PN)
         #q(save="no", status = 77)
     }
     source(fileToSource)
@@ -222,13 +224,13 @@ prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
 
     resource_dir_path <- resourceDir
     if (! file.exists(resource_dir_path)){
-        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",resource_dir_path))
+        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",resource_dir_path),nameOfSrcFile_PN)
         #q(save="no", status = 77)
     }
 
     grid_elev_path <- gridElevPath
     if (! file.exists(grid_elev_path)){
-        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",grid_elev_path))
+        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",grid_elev_path),nameOfSrcFile_PN)
         #q(save="no", status = 77)
     }
 
@@ -243,7 +245,7 @@ prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
     # Model input
     shape_file_path <- shapeFilePath
     if (! file.exists(shape_file_path)){
-        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",shape_file_path))
+        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",shape_file_path),nameOfSrcFile_PN)
         #q(save="no", status = 77)
     }
 
@@ -304,7 +306,7 @@ prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
                           ,time.end          = timeEnd.1
                           ,weightedOrNearest = weightedOrNearest)
     if (readWriteResult > 0){
-        rciop.log("INFO", paste0("Aborting netcdf to obs - readGridsAndWriteObs(): ",readWriteResult))
+        rciop.log("INFO", paste0("Aborting netcdf to obs - readGridsAndWriteObs(): ",readWriteResult),nameOfSrcFile_PN)
         #q(save="no", status = 76)
         #status <- status + 2
     }
@@ -681,7 +683,7 @@ prepare_forecast_intervals <- function(in_forecastIssueDate) # character string 
     forecast.IssueDate <- as.Date(in_forecastIssueDate)
     forecast.IssueDate <- as.POSIXlt(forecast.IssueDate)
 
-    if (verbose == TRUE) {
+    if (verboseVerbose == TRUE) {
       print('Handle inputs:')
       print('forecast.IssueDate:')
       print(forecast.IssueDate)
@@ -696,7 +698,7 @@ prepare_forecast_intervals <- function(in_forecastIssueDate) # character string 
     # Do not return the posixlt class objects
     # Convert data to character strings in the format yyyymm or yyyymmdd
 
-    if (verbose == TRUE) {
+    if (verboseVerbose == TRUE) {
       tmp <- strftime(intervalEcoper$ecoper.startDate,format="%Y%m%d")
       print(tmp)
       tmp <- strftime(intervalEcoper$ecoper.endDate,format="%Y%m%d")
@@ -733,10 +735,10 @@ search_and_download <- function(urlNC,
   }
   opensearchCmd=paste0(osClientApp," '",urlNC,query,"'"," enclosure")
   message(opensearchCmd)
-  input_enclosure <- system(command = opensearchCmd,intern = T)
-  if (length(input_enclosure >= 1)) {
-      for (url in 1:length(input_enclosure)) {
-         rciop.copy(input_enclosure[url],local.netcdfDir)
+  res_enclosure <- system(command = opensearchCmd,intern = T)
+  if (length(res_enclosure >= 1)) {
+      for (url in 1:length(res_enclosure)) {
+         rciop.copy(res_enclosure[url],local.netcdfDir)
       }
   }
 
@@ -771,11 +773,11 @@ search_and_download_netcdf <- function(urlNC,
       if (! dir.exists(local.netcdfDir)) { dir.create(local.netcdfDir) }
       opensearchCmd=paste0(osClientApp," '",urlNC,"'"," -p ","'count=unlimited'"," -p ","'cat=",catQuery,"'"," -p ","'start=",startDate,secStartDay,"'"," -p ","'stop=",stopDate,secEndDay,"'"," enclosure")
       message(opensearchCmd)
-      input_enclosure <- system(command = opensearchCmd,intern = T)
-      if (length(input_enclosure >= 1)) {
+      res_enclosure <- system(command = opensearchCmd,intern = T)
+      if (length(res_enclosure >= 1)) {
           #if (! dir.exists(local.netcdfDir)) { dir.create(local.netcdfDir) }
-          for (url in 1:length(input_enclosure)) {
-              rciop.copy(input_enclosure[url],local.netcdfDir)
+          for (url in 1:length(res_enclosure)) {
+              rciop.copy(res_enclosure[url],local.netcdfDir)
           }
       }
       if (ncSubDir == FALSE){
@@ -883,7 +885,7 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
   # path to store obs files - res dir
   # expected file name for retrived netcdf files - to compare with after download
 
-  if (verbose == TRUE) {
+  if (verboseVerbose == TRUE) {
     print("download_netcdf:")
     print(modelConfig)
     print(xCastsInterval)
@@ -911,7 +913,7 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
                                             "_hydrogfdei_",fileSuffix)
       if (nMissing > 0){
           print(paste0(nMissing," file(s) missing for hydrogfdei"))
-          rciop.log("INFO",paste0(nMissing," file(s) missing for hydrogfdei"))
+          rciop.log("INFO",paste0(nMissing," file(s) missing for hydrogfdei"),nameOfSrcFile_PN)
       }
 
       ## ------------------------------------------------------------------------------
@@ -927,7 +929,7 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
                                             "_hydrogfdod_",fileSuffix)
       if (nMissing > 0){
           print(paste0(nMissing," file(s) missing for hydrogfdod"))
-          rciop.log("INFO",paste0(nMissing," file(s) missing for hydrogfdod"))
+          rciop.log("INFO",paste0(nMissing," file(s) missing for hydrogfdod"),nameOfSrcFile_PN)
       }
 
       ## ------------------------------------------------------------------------------
@@ -942,7 +944,7 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
                                             "_od-daily_",fileSuffix)
       if (nMissing > 0){
           print(paste0(nMissing," file(s) missing for od-daily"))
-          rciop.log("INFO",paste0(nMissing," file(s) missing for od-daily"))
+          rciop.log("INFO",paste0(nMissing," file(s) missing for od-daily"),nameOfSrcFile_PN)
       }
   } # hindcast
   if (xCast == "forecast"){
@@ -958,7 +960,7 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
                                             "_ecoper_",paste0("00",fileSuffix))
       if (nMissing > 0){
           print(paste0(nMissing," file(s) missing for ecoper"))
-          rciop.log("INFO",paste0(nMissing," file(s) missing for ecoper"))
+          rciop.log("INFO",paste0(nMissing," file(s) missing for ecoper"),nameOfSrcFile_PN)
       }
   } # forecast
   if (xCast == "elevation"){
@@ -973,7 +975,7 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
       search_and_download(urlNC,query,ncRootDir=netcdfDir,ncSubDir=subDir)
       expFilename <- paste(netcdfDir,subDir,"HydroGFD2elevation.nc",sep="/")
       if (! file.exists(expFilename)){
-          rciop.log("INFO",paste0("Missing file: ",expFilename))
+          rciop.log("INFO",paste0("Missing file: ",expFilename),nameOfSrcFile_PN)
       }
   } # elevation
   ## ------------------------------------------------------------------------------
@@ -1033,7 +1035,7 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
                                                    startDate,
                                                    endDate)
       if (res > 0){
-          rciop.log("INFO",paste0("run_netcdf_to_obs_gridLinkPreparation, exit code=",res))
+          rciop.log("INFO",paste0("run_netcdf_to_obs_gridLinkPreparation, exit code=",res),nameOfSrcFile_PN)
       }
   #}
 
@@ -1048,7 +1050,7 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
                                        startDate,
                                        endDate)
   if (res > 0){
-      rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs, exit code=",res))
+      rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs, exit code=",res),nameOfSrcFile_PN)
   }
 
   if (verboseVerbose == TRUE) {
@@ -1129,7 +1131,7 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
   }
 
   if (nFiles < 5) {
-    rciop.log ("ERROR","process_hindcast_netcdf2obs(): too few files produced","")
+    rciop.log ("ERROR","process_hindcast_netcdf2obs(): too few files produced",nameOfSrcFile_PN)
   }
 
   hindcast.forcing <- list("bdate"=bdate,
@@ -1179,7 +1181,7 @@ process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
                                        startDate,
                                        endDate)
   if (res > 0){
-      rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs, exit code=",res))
+      rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs, exit code=",res),nameOfSrcFile_PN)
   }
 
   if (verboseVerbose == TRUE) {
@@ -1255,7 +1257,7 @@ process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
   }
 
   if (nFiles < 5) {
-    rciop.log ("ERROR","process_hindcast_netcdf2obs(): too few files produced","")
+    rciop.log ("ERROR","process_hindcast_netcdf2obs(): too few files produced",nameOfSrcFile_PN)
   }
   forecast.forcing <- list("bdate"=bdate,
                            "cdate"=cdate,

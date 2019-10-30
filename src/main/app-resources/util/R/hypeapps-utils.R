@@ -321,43 +321,59 @@ getHypeAppInput<-function(appName){
           outvars=paste(outvars,outvars.id[i],sep=",")
         }
       }
-      # parse the basinselect and basinset intputs
-      basinSplit = trimws(strsplit(basinselect,split = ",")[[1]])
-      nBasin=length(basinSplit)
-      for(i in 1:nBasin){
-        basinSplit2=trimws(strsplit(basinSplit[i],split = " ")[[1]])
-        bID=basinSplit2[length(basinSplit2)]
-        bName=substr(basinSplit[i],1,nchar(basinSplit[i])-nchar(bID)-1)
-        if(i==1){
-          basins.name=bName
-          basins.id=bID
-        }else{
-          basins.name=c(basins.name,bName)
-          basins.id=c(basins.id,bID)
+
+      # parse the basinselect and basinset inputs
+      if(length(basinselect) <= 0){
+        basins      <- NULL
+        basins.name <- ""
+        basins.id   <- ""
+        basins.num  <- 0
+      }else{
+        basinSplit = trimws(strsplit(basinselect,split = ",")[[1]])
+        nBasin=length(basinSplit)
+        for(i in 1:nBasin){
+          basinSplit2=trimws(strsplit(basinSplit[i],split = " ")[[1]])
+          bID=basinSplit2[length(basinSplit2)]
+          bName=substr(basinSplit[i],1,nchar(basinSplit[i])-nchar(bID)-1)
+          if(i==1){
+            basins.name=bName
+            basins.id=bID
+          }else{
+            basins.name=c(basins.name,bName)
+            basins.id=c(basins.id,bID)
+          }
         }
-      }
-      basins.num=nBasin
-      basins=basins.id[1]
-      if(nBasin>1){
-        for(i in 1:(nBasin-1)){
-          basins=paste(basins,basins.id[i+1],sep=",")   
+        basins.num=nBasin
+        basins=basins.id[1]
+        if(nBasin>1){
+          for(i in 1:(nBasin-1)){
+            basins=paste(basins,basins.id[i+1],sep=",")   
+          }
         }
-      }
-      if(basinset!="-9999" & nchar(basinset)>0){
-        basinSplit=trimws(strsplit(basinset,split = ",")[[1]])
-        # check if any of the basins in basinset was already selected by the basinselect
-        iBasin=match(basinSplit,basins.id)
-        iAdd=which(is.na(iBasin))
-        if(length(iAdd)>0){
-          basinAdd=basinSplit[iAdd]
-          for(i in 1:length(iAdd)){
-            basins=paste(basins,basinAdd[i],sep=",")
-            basins.name=c(basins.name,"NN")
-            basins.num=basins.num+1
-            basins.id=c(basins.id,basinAdd[i])
-          }      
+      } # if(nchar(basinselect <= 0
+      if(length(basinset) <= 0){
+        basins      <- NULL
+        basins.name <- ""
+        basins.id   <- ""
+        basins.num  <- 0
+      }else{
+        if(basinset!="-9999" & nchar(basinset)>0){
+          basinSplit=trimws(strsplit(basinset,split = ",")[[1]])
+          # check if any of the basins in basinset was already selected by the basinselect
+          iBasin=match(basinSplit,basins.id)
+          iAdd=which(is.na(iBasin))
+          if(length(iAdd)>0){
+            basinAdd=basinSplit[iAdd]
+            for(i in 1:length(iAdd)){
+              basins=paste(basins,basinAdd[i],sep=",")
+              basins.name=c(basins.name,"NN")
+              basins.num=basins.num+1
+              basins.id=c(basins.id,basinAdd[i])
+            }      
+          }
         }
-      }
+      } # if(length(basinset) <= 0
+      
       # If xobs !=-9999, parse the input to URLs
       if(length(xobs)>0){
         xobsNum=0
@@ -877,7 +893,7 @@ getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,mode
   }
   
   ## return period magnitudes default files OR file from input
-  if(appName=="forecast"){
+  if(appName=="forecast" & (length(appInput$rpfile) > 0)){
     rpFileCOUT=NULL
 
     rciop.log ("DEBUG", paste(" appInput$rpfile= ", appInput$rpfile, sep=""), "getHypeSetup")
@@ -2330,23 +2346,26 @@ updateModelInput<-function(appSetup=NULL,appInput=NULL,hindcast=NULL,modelForcin
     }
     
     # output basins (from appInput and from xobsInput)
-    outputBasins = as.integer(strsplit(appInput$outbasins,split=",")[[1]])
-    if(!is.null(xobsInput)){
-      for(i in 1:length(xobsInput$xobsSubid)){
-        if(!is.na(xobsInput$xobsSubid[i])){
-          outputBasins = unique(outputBasins,xobsInput$xobsSubid[i])
-        }        
-      }
-    }
-    if(length(outputBasins)>1){
-      outBasins=as.character(outputBasins[1])
-      for(i in 2:length(outputBasins)){
-        outBasins=paste(outBasins,as.character(outputBasins[i]),sep=",")
-      }
+    if(length(appInput$outbasins) <= 0){
+      outBasins <- ""
     }else{
-      outBasins=as.character(outputBasins)
-    }
-    
+      outputBasins = as.integer(strsplit(appInput$outbasins,split=",")[[1]])
+      if(!is.null(xobsInput)){
+        for(i in 1:length(xobsInput$xobsSubid)){
+          if(!is.na(xobsInput$xobsSubid[i])){
+            outputBasins = unique(outputBasins,xobsInput$xobsSubid[i])
+          }        
+        }
+      }
+      if(length(outputBasins)>1){
+        outBasins=as.character(outputBasins[1])
+        for(i in 2:length(outputBasins)){
+          outBasins=paste(outBasins,as.character(outputBasins[i]),sep=",")
+        }
+      }else{
+        outBasins=as.character(outputBasins)
+      }
+    } # if(length(appInput$outbasins) <= 0
     
     # basinoutput
     info$info.lines[info$basinoutput_variable.lineNr]=paste('basinoutput variable',gsub(pattern=",",replacement = " ",outVariables),sep=" ")
@@ -2773,37 +2792,39 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
       }
       
       # basin outputfiles
-      outbasins = strsplit(appInput$outbasins,split = ",")[[1]]
-      zeroString="0000000000000000000000000000000"
       basinFiles=NULL
-      if(length(outbasins)>0){
-        for(i in 1:length(outbasins)){
-          outFile=paste(outbasins[i],".txt",sep="")
-          ni=nchar(outFile)
-          for(j in 1:length(allFiles)){
-            nj=nchar(allFiles[j])
-            if(nj>=ni){
-              if(substr(allFiles[j],nj-ni+1,nj)==outFile){
-                if(nj>ni){
-                  if(substr(allFiles[j],1,nj-ni)==substr(zeroString,1,nj-ni)){
+      if(length(appInput$outbasins) > 0){
+        outbasins = strsplit(appInput$outbasins,split = ",")[[1]]
+        zeroString="0000000000000000000000000000000"
+        if(length(outbasins)>0){
+          for(i in 1:length(outbasins)){
+            outFile=paste(outbasins[i],".txt",sep="")
+            ni=nchar(outFile)
+            for(j in 1:length(allFiles)){
+              nj=nchar(allFiles[j])
+              if(nj>=ni){
+                if(substr(allFiles[j],nj-ni+1,nj)==outFile){
+                  if(nj>ni){
+                    if(substr(allFiles[j],1,nj-ni)==substr(zeroString,1,nj-ni)){
+                      if(app.sys=="tep"){
+                        file.copy(from = paste(appSetup$resDir[k],allFiles[j],sep="/"), 
+                                  to = paste(outDir[k],paste(prefix.bas,prodTag,allFiles[j],sep="_"),sep="/"))
+                        basinFiles=c(basinFiles,allFiles[j])
+                      }
+                    }
+                  }else{
                     if(app.sys=="tep"){
                       file.copy(from = paste(appSetup$resDir[k],allFiles[j],sep="/"), 
                                 to = paste(outDir[k],paste(prefix.bas,prodTag,allFiles[j],sep="_"),sep="/"))
                       basinFiles=c(basinFiles,allFiles[j])
                     }
                   }
-                }else{
-                  if(app.sys=="tep"){
-                    file.copy(from = paste(appSetup$resDir[k],allFiles[j],sep="/"), 
-                              to = paste(outDir[k],paste(prefix.bas,prodTag,allFiles[j],sep="_"),sep="/"))
-                    basinFiles=c(basinFiles,allFiles[j])
-                  }
                 }
               }
             }
           }
         }
-      }
+      } # if(length(appInput$outbasins
       # transform basinoutput files to csv format
       if(length(basinFiles)>0){
         for(i in 1:length(basinFiles)){

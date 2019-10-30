@@ -1,21 +1,26 @@
 #!/opt/anaconda/bin/Rscript --vanilla --slave --quiet
 
 # Constants
-nameOfSrcFile <- "/util/R/process-configuration.R"
+nameOfSrcFile_PC <- "/util/R/process-configuration.R"
 
 verbose <- TRUE
 #verbose <- FALSE
 
 # Constants application.xml (tag option)
+cModelConfigVariant1 <- "WestAfrica-HYPE + HydroGFD 2.0 + ECOPER"
+cModelConfigVariants <- c(cModelConfigVariant1)
+
+# Global constants not part of application.xml that
+# may be used for comparsion in if-statements etc.
 cHydModelVariant1 <- "Niger-HYPE"
 cHydModelVariant2 <- "WestAfrica-HYPE"
 cHydModelVariants <- c(cHydModelVariant1,cHydModelVariant2)
 
-cMetHCVariant1 <- "GFD 1.3 (SMHI)"
-cMetHCVariant2 <- "HydroGFD 2.0 (SMHI)"
+cMetHCVariant1 <- "GFD 1.3"
+cMetHCVariant2 <- "HydroGFD 2.0"
 cMetHCVariants <- c(cMetHCVariant1,cMetHCVariant2)
 
-cMetFCVariant1 <- "ECOPER (SMHI)"
+cMetFCVariant1 <- "ECOPER"
 cMetFCVariants <- c(cMetFCVariant1)
 
 cRunTypeVariant1 <- "Operational"
@@ -28,42 +33,56 @@ cRunTypeVariants <- c(cRunTypeVariant1,cRunTypeVariant2)
 process_application_runtime_options <- function()
 {
     # Outputs
-    hydModel <- NULL
-    metHC    <- NULL
-    metFC    <- NULL
+    modelConfig <- NULL
+
+    # hydModel <- NULL
+    # metHC    <- NULL
+    # metFC    <- NULL
     runType  <- NULL
 
-    hydModelIn <- rciop.getparam("hydmodel")
-    if (hydModelIn == cHydModelVariant1){ hydModel <- cHydModelVariant1 }
-    if (hydModelIn == cHydModelVariant2){ hydModel <- cHydModelVariant2 }
+    # hydModelIn <- rciop.getparam("hydmodel")
+    # if (hydModelIn == cHydModelVariant1){ hydModel <- cHydModelVariant1 }
+    # if (hydModelIn == cHydModelVariant2){ hydModel <- cHydModelVariant2 }
 
-    metHCIn <- rciop.getparam("methc")
-    if (metHCIn == cMetHCVariant1){ metHC <- cMetHCVariant1 }
-    if (metHCIn == cMetHCVariant2){ metHC <- cMetHCVariant2 }
+    # metHCIn <- rciop.getparam("methc")
+    # if (metHCIn == cMetHCVariant1){ metHC <- cMetHCVariant1 }
+    # if (metHCIn == cMetHCVariant2){ metHC <- cMetHCVariant2 }
 
-    metFCIn <- rciop.getparam("metfc")
-    if (metFCIn == cMetFCVariant1){ metFC <- cMetFCVariant1 }
+    # metFCIn <- rciop.getparam("metfc")
+    # if (metFCIn == cMetFCVariant1){ metFC <- cMetFCVariant1 }
+
+    modelConfigIn <- rciop.getparam("model_config")
+    if (modelConfigIn == cModelConfigVariant1) {
+        modelConfig <- cModelConfigVariant1
+        
+        # ToDo: Necessary any longer
+        # hydModel <- cHydModelVariant2
+        # metHC    <- cMetHCVariant2
+        # metFC    <- cMetFCVariant1
+    }
 
     runTypeIn <- rciop.getparam("runtype")
     if (runTypeIn == cRunTypeVariant1){ runType <- cRunTypeVariant1 }
     if (runTypeIn == cRunTypeVariant2){ runType <- cRunTypeVariant2 }
 
     # ToDo: Remove when date parsed from HYPE state filename etc.
-    hypeStateDate <- rciop.getparam("hypeStateDate")
+    #hypeStateDate <- rciop.getparam("hypeStateDate")
 
-    rciop.log("INFO", "-------Global configuration options:-------", nameOfSrcFile)
-    rciop.log("INFO", paste0("hydModel:      ",hydModel), nameOfSrcFile)
-    rciop.log("INFO", paste0("metHC:         ",metHC), nameOfSrcFile)
-    rciop.log("INFO", paste0("metFC:         ",metFC), nameOfSrcFile)
-    rciop.log("INFO", paste0("runType:       ",runType), nameOfSrcFile)
-    #rciop.log("INFO", paste0("hypeStateDate: ", hypeStateDate), nameOfSrcFile)
-    rciop.log("INFO", "-------------------------------------------", nameOfSrcFile)
+    rciop.log("INFO", "-------Global configuration options:-------", nameOfSrcFile_PC)
+    rciop.log("INFO", paste0("modelConfig:   ",modelConfig), nameOfSrcFile_PC)
+    # rciop.log("INFO", paste0("hydModel:      ",hydModel), nameOfSrcFile_PC)
+    # rciop.log("INFO", paste0("metHC:         ",metHC), nameOfSrcFile_PC)
+    # rciop.log("INFO", paste0("metFC:         ",metFC), nameOfSrcFile_PC)
+    rciop.log("INFO", paste0("runType:       ",runType), nameOfSrcFile_PC)
+    #rciop.log("INFO", paste0("hypeStateDate: ", hypeStateDate), nameOfSrcFile_PC)
+    rciop.log("INFO", "-------------------------------------------", nameOfSrcFile_PC)
 
-    outputApplRuntimeOptions <- list("hydModel"=hydModel,
-                                     "metHC"=metHC,
-                                     "metFC"=metFC,
-                                     "runType"=runType,
-                                     "hypeStateDate"=hypeStateDate
+    outputApplRuntimeOptions <- list("modelConfig"=modelConfig,
+                                    #  "hydModel"=hydModel,
+                                    #  "metHC"=metHC,
+                                    #  "metFC"=metFC,
+                                     "runType"=runType
+                                     #"hypeStateDate"=hypeStateDate
                                     )
 
 } # process_application_runtime_options
@@ -125,19 +144,20 @@ process_input_model_configuration <- function(applConfig=NULL, # Application con
   urlLen <- 103
   if (is.null(applInput) || nchar(applInput) < urlLen){
       # User
-      if(applConfig$hydModel == cHydModelVariant1){
-          print("Using default URL for Niger-HYPE model configuration object")
-          urlAndQuery <- 'https://recast.terradue.com/t2api/search/hydro-smhi/models?uid=9345ED73B72F49E6FF31B07B57013BC519210E24'
-          opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
-      }
-      else if(applConfig$hydModel == cHydModelVariant2){
+      # if(applConfig$hydModel == cHydModelVariant1){
+      #     print("Using default URL for Niger-HYPE model configuration object")
+      #     urlAndQuery <- 'https://recast.terradue.com/t2api/search/hydro-smhi/models?uid=9345ED73B72F49E6FF31B07B57013BC519210E24'
+      #     opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
+      # }
+      #else if(applConfig$hydModel == cHydModelVariant2){
+      if (applRuntimeOptions$modelConfig == cModelConfigVariant1) {
           print("Using default URL for WestAfrica-HYPE model configuration object")
           urlAndQuery <- 'https://recast.terradue.com/t2api/search/hydro-smhi/models?uid=40A27455C9498A70A4C12E458E527499331B96AE'
           opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
       }else{
           print("UNSUPPORTED URL for HYPE model configuration object")
           # Exit the application
-          rciop.log("ERROR", "Unsupported configuration",nameOfSrcFile)
+          rciop.log("ERROR", "Unsupported configuration",nameOfSrcFile_PC)
           q(save="no",status=99)
       }
   }else {
@@ -154,7 +174,7 @@ process_input_model_configuration <- function(applConfig=NULL, # Application con
   if (model_config_dir$exit.code==0) {
     local.model_config_dir <- model_config_dir$output # Returns path to local dir or file, dir in this case
   }else {
-    rciop.log("ERROR", "Could not access the model configuration file.",nameOfSrcFile)
+    rciop.log("ERROR", "Could not access the model configuration file.",nameOfSrcFile_PC)
     q(save="no",status=99)
   }
   
@@ -260,7 +280,7 @@ process_input_model_configuration <- function(applConfig=NULL, # Application con
 check_dir_exist <- function(absPath)
 {
     if(is.null(absPath) || !dir.exists(absPath)) {
-        rciop.log("INFO",paste0("Dir missing: ",absPath),nameOfSrcFile)
+        rciop.log("INFO",paste0("Dir missing: ",absPath),nameOfSrcFile_PC)
     }
 }
 
@@ -268,7 +288,7 @@ check_dir_exist <- function(absPath)
 check_file_exist <- function(absPath)
 {
     if(is.null(absPath) || !file.exists(absPath)) {
-        rciop.log("INFO",paste0("File missing: ",absPath),nameOfSrcFile)
+        rciop.log("INFO",paste0("File missing: ",absPath),nameOfSrcFile_PC)
     }
 }
 
@@ -310,22 +330,23 @@ process_input_hype_model_data <- function(applConfig,  # Application configurati
   }
   
   # Support different HYPE model data versions via input/configuration
-  if(applConfig$hydModel == cHydModelVariant1){
-      dirModelFiles <- paste(local.modelDataDirs,"v2.23",sep="/")
+  # if(applConfig$hydModel == cHydModelVariant1){
+  #     dirModelFiles <- paste(local.modelDataDirs,"v2.23",sep="/")
       
-      # Dirs (absolute paths)
-      #dirGridMetaData   <-
-      dirForcingArchive <- paste(dirModelFiles,"forcingarchive",sep="/")
-      dirReturnLevels   <- paste(dirModelFiles,"returnlevels",sep="/")
-      dirShapeFiles     <- paste(dirModelFiles,"shapefiles",sep="/")
-      dirStateFiles     <- paste(dirModelFiles,"statefiles",sep="/")
+  #     # Dirs (absolute paths)
+  #     #dirGridMetaData   <-
+  #     dirForcingArchive <- paste(dirModelFiles,"forcingarchive",sep="/")
+  #     dirReturnLevels   <- paste(dirModelFiles,"returnlevels",sep="/")
+  #     dirShapeFiles     <- paste(dirModelFiles,"shapefiles",sep="/")
+  #     dirStateFiles     <- paste(dirModelFiles,"statefiles",sep="/")
       
-      # Individual files - these info files should maybe be fetched from the model/application config object? (parallel files to dependencies.txt in zip-file)
-      fileInfoTxtColdStart <- paste(dirModelFiles,"info-coldstart-19791994.txt",sep="/")
-      fileInfoTxtHindcast  <- paste(dirModelFiles,"info-hindcast.txt",sep="/")
-      fileInfoTxtForecast  <- paste(dirModelFiles,"info-forecast.txt",sep="/")
-  }
-  if(applConfig$hydModel == cHydModelVariant2){
+  #     # Individual files - these info files should maybe be fetched from the model/application config object? (parallel files to dependencies.txt in zip-file)
+  #     fileInfoTxtColdStart <- paste(dirModelFiles,"info-coldstart-19791994.txt",sep="/")
+  #     fileInfoTxtHindcast  <- paste(dirModelFiles,"info-hindcast.txt",sep="/")
+  #     fileInfoTxtForecast  <- paste(dirModelFiles,"info-forecast.txt",sep="/")
+  # }
+  #if(applConfig$hydModel == cHydModelVariant2){
+  if (applRuntimeOptions$modelConfig == cModelConfigVariant1) {
       dirModelFiles <- paste(local.modelDataDirs,"v1.3.6",sep="/")
       
       # Dirs (absolute paths)
