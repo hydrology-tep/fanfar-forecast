@@ -2721,7 +2721,7 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
         
       # copy log-files from rundir to outdirs (only when k==1)
       if (k==2) {
-        hyssLogFile = dir(path = appSetup$runDir, pattern =".log")
+        hyssLogFile = dir(path = appSetup$runDir, pattern ="hyss")
         if(app.sys=="tep"){
           if(length(hyssLogFile)>=0){
                file.copy(from = paste(appSetup$runDir,tail(hyssLogFile, 1),sep="/"),
