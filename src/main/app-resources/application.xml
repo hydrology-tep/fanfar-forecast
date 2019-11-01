@@ -29,13 +29,14 @@
             <option>River Discharge (m3/s) COUT</option>           
             <option>Air Temperature (C) CTMP</option>
             <option>Precipitation (mm/day) CPRC</option>
-            <option>Simulated surface runoff (mm/day) CROS</option>
+            <option>Surface Runoff (mm/day) CROS</option>
             <option>Evapotranspiration (mm/day) EVAP</option>
             <option>Total Runoff (mm/day) CRUN</option>
             <option>Soil Moisture (-) fraction of plant avalable water in the root zone SRFF</option>
+            <!-- 4 options in 1 - works ok with current code <option>Evapotranspiration (mm/day) EVAP,River Discharge (m3/s) COUT,Precipitation (mm/day) CPRC,Surface Runoff (mm/day) CROS</option> -->
             <option>Lake Water Level (m) WCOM</option>
             <option>Total Surface Water Area (km2) lakes rivers and floodplains CSWA</option>
-            <default>River Discharge (m3/s) COUT</default> 
+            <default>River Discharge (m3/s) COUT</default>
           </options>
         </parameter>
 
