@@ -2160,7 +2160,8 @@ getModelForcing<-function(appSetup,appInput,dataSource="local",hindcast=T){
 ## -------------------------------------------------------------------------------
 ## modify some model input files
 updateModelInput<-function(appSetup=NULL,appInput=NULL,hindcast=NULL,modelForcing=NULL,xobsInput=NULL){
-  
+  cAppendVariableValues <- TRUE
+
   if(appSetup$appName=="historical"){
     
     # TD. check start and end data versus available dates in forcing data (should be given in modelForcing input list)
@@ -2334,6 +2335,40 @@ updateModelInput<-function(appSetup=NULL,appInput=NULL,hindcast=NULL,modelForcin
         }
       }
     }
+
+    # Append data for variables read from info file
+    outputVariablesFromInfoFile <- NULL
+    if(cAppendVariableValues == TRUE){
+      OutVarData = info$basinoutput_variable
+      if(nchar(OutVarData) > 0){
+        if(is.null(outputVariablesFromInfoFile)){
+          outputVariablesFromInfoFile = strsplit(OutVarData,split = " ")[[1]]
+        }else{
+          outputVariablesFromInfoFile = c(outputVariablesFromInfoFile,strsplit(OutVarData,split = " ")[[1]])
+        }
+      }
+      OutVarData = info$timeoutput_variable
+      if(nchar(OutVarData) > 0){
+        if(is.null(outputVariablesFromInfoFile)){
+          outputVariablesFromInfoFile = strsplit(OutVarData,split = " ")[[1]]
+        }else{
+          outputVariablesFromInfoFile = c(outputVariablesFromInfoFile,strsplit(OutVarData,split = " ")[[1]])
+        }
+      }
+      OutVarData = info$mapoutput_variable
+      if(nchar(OutVarData) > 0){
+        if(is.null(outputVariablesFromInfoFile)){
+          outputVariablesFromInfoFile = strsplit(OutVarData,split = " ")[[1]]
+        }else{
+          outputVariablesFromInfoFile = c(outputVariablesFromInfoFile,strsplit(OutVarData,split = " ")[[1]])
+        }
+      }
+    } # cAppendVariableValues
+
+    if(! is.null(outputVariablesFromInfoFile)){
+      outputVariables = c(outputVariables,outputVariablesFromInfoFile)
+    }
+
     outputVariables = tolower(outputVariables)
     outputVariables = unique(outputVariables)
     if(length(outputVariables)>1){
