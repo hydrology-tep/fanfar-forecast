@@ -354,6 +354,11 @@ determine_interval_hindcast <- function(forecastIssueDate,
                                         hindcastDays, # Integer/Numeric
                                         hypeStateDate)
 {
+    # Constants
+    # HydroGFD 2 files on the store are available from 1979
+    cFilesHydroGFD2EIStartDate <- as.Date("1979-01-01")
+    cFilesHydroGFD2EIStartDate <- as.POSIXlt(cFilesHydroGFD2EIStartDate)
+
     # Hindcast start date
     hindcast.startDate      <- forecastIssueDate
     hindcast.startDate$mday <- hindcast.startDate$mday - hindcastDays
@@ -379,7 +384,14 @@ determine_interval_hindcast <- function(forecastIssueDate,
       # or: Limit hindcast start date to the first day of the hydrological year (sep 1 ->aug 31)
     }
 
-    hindcast.endDate <- forecastIssueDate
+    # Limited in this function instead of in determine_interval_hydrogfdei() since output parameter
+    # may be used by other functions
+    if (hindcast.startDate < cFilesHydroGFD2EIStartDate) {
+      print("Limiting hindcast start date due to available files for HydroGFD 2")
+      hindcast.startDate <- cFilesHydroGFD2EIStartDate
+    }
+
+    hindcast.endDate      <- forecastIssueDate
     hindcast.endDate$mday <- hindcast.endDate$mday - 1
 
     if (verbose == TRUE) {
