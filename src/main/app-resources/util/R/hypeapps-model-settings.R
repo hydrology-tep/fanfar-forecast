@@ -59,11 +59,11 @@ for(i in 1980:2019){
 }
 
 # [EDIT HERE] hype2csv URL
-hype2csv.url = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23/hype2csv/niger-hype2csv.txt"
-hype2csv.file = "niger-hype2csv.txt"
+#hype2csv.url = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23/hype2csv/niger-hype2csv.txt"
+#hype2csv.file = "niger-hype2csv.txt"
 
 # [EDIT HERE] sub-basin shapefile URL (shapefile.url should point to shapefile [model.name].shp, and in the same folder should be .dbf, .prj and .shx)
-shapefile.url   = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23/shapefiles"
+#shapefile.url   = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23/shapefiles"
 shapefile.layer = "niger-hype"
 shapefile.ext   = c(".shp",".prj",".dbf",".shx") 
 
