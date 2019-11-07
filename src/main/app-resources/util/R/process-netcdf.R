@@ -750,8 +750,19 @@ search_and_download <- function(urlNC,
   res_enclosure <- system(command = opensearchCmd,intern = T)
   if (length(res_enclosure >= 1)) {
       for (url in 1:length(res_enclosure)) {
-         rciop.copy(res_enclosure[url],local.netcdfDir)
+          res_file <- rciop.copy(res_enclosure[url],local.netcdfDir)
+          if (res_file$exit.code == 0) {
+              path_plus_filename <- res_file$output
+              # Not used, future?
+          }else {
+              # file was already available in dir (re-downloaded) - $status = character(0)
+              if (length(res_file$output) == 0) {
+                  print(paste0("File with unknown name are already available in the local dir",local.netcdfDir))
+              }
+          }
       }
+  }else {
+      print(paste("No search result for: ",opensearchCmd))
   }
 
 } # search_and_download
@@ -789,9 +800,21 @@ search_and_download_netcdf <- function(urlNC,
       if (length(res_enclosure >= 1)) {
           #if (! dir.exists(local.netcdfDir)) { dir.create(local.netcdfDir) }
           for (url in 1:length(res_enclosure)) {
-              rciop.copy(res_enclosure[url],local.netcdfDir)
+              res_file <- rciop.copy(res_enclosure[url],local.netcdfDir)
+              if (res_file$exit.code == 0) {
+                  path_plus_filename <- res_file$output
+                  # Not used, future?
+              }else {
+                  # file was already available in dir (re-downloaded) - $status = character(0)
+                  if (length(res_file$output) == 0) {
+                      print(paste0("File with unknown name are already available in the local dir",local.netcdfDir))
+                  }
+              }
           }
+      }else {
+          print(paste("No search result for: ",opensearchCmd))
       }
+      
       if (ncSubDir == FALSE){
           if (var == 1){
             break # for loop
@@ -814,10 +837,12 @@ check_date_interval_netcdf <- function(startDate,
   #tasmin_hydrogfdod_201908_fanfar_SMHI.nc
   #tas_od-daily_20190917_fanfar_SMHI.nc
   #tasmin_ecoper_2019091800_fanfar_SMHI.nc # 00_fanfar_SMHI.nc
-  nMissingFiles <- 0
 
   # Constants
   variables <- c("pr","tas","tasmin","tasmax")
+  
+  # Outputs
+  nMissingFiles <- 0
 
   interval <- NULL
   dateFormat <- NULL
@@ -886,6 +911,7 @@ check_date_interval_netcdf <- function(startDate,
 # Retrieve files (pr,tas,tasmin,tasmax) via opensearch and rciop.copy
 # Configurable option to download all files into one dir or individual sub-dirs
 # for pr, tas, tasmin and tasmax.
+# Returns the number of missing files
 download_netcdf <- function(modelConfig,    # sub-dir to use for local download dir, url, query pattern etc
                             xCastsInterval, # dates for search start/stop, expected date in filename to check against
                             netcdfDir,      # base dir to download files too
@@ -908,10 +934,14 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
   variables   <- c("pr","tas","tasmin","tasmax")
   fileSuffix <- "_fanfar_SMHI.nc"
 
+  # Outputs
+  nMissingFiles <- 0
+
   if (! dir.exists(netcdfDir)){
     dir.create(netcdfDir)
   }
 
+  nMissing <- 0
   if (xCast == "hindcast"){
       ## ------------------------------------------------------------------------------
       # Handle hydrogfdei
@@ -927,6 +957,7 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
           print(paste0(nMissing," file(s) missing for hydrogfdei"))
           rciop.log("INFO",paste0(nMissing," file(s) missing for hydrogfdei"),nameOfSrcFile_PN)
       }
+      nMissingFiles <- nMissingFiles + nMissing
 
       ## ------------------------------------------------------------------------------
       # Handle hydrogfdod
@@ -943,6 +974,7 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
           print(paste0(nMissing," file(s) missing for hydrogfdod"))
           rciop.log("INFO",paste0(nMissing," file(s) missing for hydrogfdod"),nameOfSrcFile_PN)
       }
+      nMissingFiles <- nMissingFiles + nMissing
 
       ## ------------------------------------------------------------------------------
       # Handle od (od-daily)
@@ -958,6 +990,7 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
           print(paste0(nMissing," file(s) missing for od-daily"))
           rciop.log("INFO",paste0(nMissing," file(s) missing for od-daily"),nameOfSrcFile_PN)
       }
+      nMissingFiles <- nMissingFiles + nMissing
   } # hindcast
   if (xCast == "forecast"){
       ## ------------------------------------------------------------------------------
@@ -974,6 +1007,7 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
           print(paste0(nMissing," file(s) missing for ecoper"))
           rciop.log("INFO",paste0(nMissing," file(s) missing for ecoper"),nameOfSrcFile_PN)
       }
+      nMissingFiles <- nMissingFiles + nMissing
   } # forecast
   if (xCast == "elevation"){
       ## ------------------------------------------------------------------------------
@@ -987,12 +1021,15 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
       search_and_download(urlNC,query,ncRootDir=netcdfDir,ncSubDir=subDir)
       expFilename <- paste(netcdfDir,subDir,"HydroGFD2elevation.nc",sep="/")
       if (! file.exists(expFilename)){
+          nMissing <- 1
           rciop.log("INFO",paste0("Missing file: ",expFilename),nameOfSrcFile_PN)
       }
+      nMissingFiles <- nMissingFiles + nMissing
   } # elevation
   ## ------------------------------------------------------------------------------
   # All meterological gfd parts downloaded to local tmp dir
 
+  return (nMissingFiles)
 } # download_netcdf
 
 
@@ -1016,18 +1053,26 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
                                                      in_reforecast = TRUE, # ToDo: reforecast or operational from config as input
                                                      "19700101") # ToDo: Get date from latest Hype state filename
   # Download hydrogfd elevation netcdf file
-  download_netcdf(modelConfig,
-                  xCastsInterval = prepHindcastInterval, # Not used
-                  netcdfDir,
-                  ncSubDir,
-                  xCast="elevation")
+  nMissingFiles <- download_netcdf(modelConfig,
+                                   xCastsInterval = prepHindcastInterval,
+                                   netcdfDir,
+                                   ncSubDir,
+                                   xCast="elevation")
+  if (nMissingFiles > 0) {
+      rciop.log("ERROR","Aborting due to missing HydroGFD 2 netcdf file(s)",nameOfSrcFile_PN)
+      q(save="no", status = 2)
+  }
 
   # For the calculated time interval, search and download hydrogfd netcdf files
-  download_netcdf(modelConfig,
-                  xCastsInterval = prepHindcastInterval, # Now different types... either have one type only...
-                  netcdfDir,
-                  ncSubDir,
-                  xCast="hindcast")
+  nMissingFiles <- download_netcdf(modelConfig,
+                                   xCastsInterval = prepHindcastInterval,
+                                   netcdfDir,
+                                   ncSubDir,
+                                   xCast="hindcast")
+  if (nMissingFiles > 0) {
+      rciop.log("ERROR","Aborting due to missing HydroGFD 2 netcdf file(s)",nameOfSrcFile_PN)
+      q(save="no", status = 2)
+  }
 
   # Produce the files Pobs.txt, Tobs.txt, TMINobs.txt and TMAXobs.txt
   startDate <- prepHindcastInterval$hindcastStartDateSearch
@@ -1171,11 +1216,15 @@ process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
   prepForecastInterval <- prepare_forecast_intervals(forecastIssueDate)
 
   # For the calculated time interval, search and download hydrogfd netcdf files
-  download_netcdf(modelConfig,
-                  xCastsInterval = prepForecastInterval, # Now different types... either have one type only...
-                  netcdfDir,
-                  ncSubDir,
-                  xCast="forecast")
+  nMissingFiles <- download_netcdf(modelConfig,
+                                   xCastsInterval = prepForecastInterval, # Now different types... either have one type only...
+                                   netcdfDir,
+                                   ncSubDir,
+                                   xCast="forecast")
+  if (nMissingFiles > 0) {
+      rciop.log("ERROR","Aborting due to missing HydroGFD 2 netcdf file(s)",nameOfSrcFile_PN)
+      q(save="no", status = 2)
+  }
 
   # Produce the files Pobs.txt, Tobs.txt, TMINobs.txt and TMAXobs.txt
   startDate <- prepForecastInterval$ecoperStartDateSearch
