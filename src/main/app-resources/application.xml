@@ -18,9 +18,9 @@
 
         <parameter id="runtype" title="Run type (Operational/Reforecast)" abstract="Operational - scheduled run for automatic operational production. Reforecast - re-run forecast or with other options" minOccurs="1" maxOccurs="1" scope="runtime" type="LiteralData">
           <options>
-            <!-- <option>Operational</option> -->
+            <option>Operational</option>
             <option>Reforecast</option>
-            <default>Reforecast</default> <!-- ToDo: Change to Operational as default when implemented-->
+            <default>Operational</default>
           </options>
         </parameter>
 

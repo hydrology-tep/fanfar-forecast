@@ -256,6 +256,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                                                modelDataPaths,
                                                                app.input$idate,
                                                                app.input$hcperiodlen,
+                                                               applRuntimeOptions$runType == cRunTypeVariant2, # Re-forecast
                                                                dirNCFiles,
                                                                ncSubDir=TRUE,
                                                                modelDataPaths$dirGridMetaData,

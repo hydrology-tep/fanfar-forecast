@@ -349,6 +349,50 @@ days_per_month <- function(year, month)
 }
 
 
+# Common
+# Search for the latest item depending on url and query.
+# Returns a list with status and date as a character string. On error status = 1
+search_and_locate_latest_date <- function(url,
+                                          query)
+{
+    # Constants
+    osClientApp <- "opensearch-client"
+
+    # Outputs
+    status   <- 1 # Not ok
+    yyyymmdd <- ""
+
+    # Latest, without specifying any date
+    opensearchCmd=paste0(osClientApp," '",url,"'"," -p ","'count=1'"," -p ","'cat=",query,"'"," enclosure")
+    message(opensearchCmd)
+    res_enclosure <- system(command = opensearchCmd,intern = T)
+    #Example res_enclosure:"https://store.terradue.com/hydro-smhi/fanfar/Operational/hydrogfdei/2019/07/tasmin_hydrogfdei_201907_fanfar_SMHI.nc"
+
+    if (nchar(res_enclosure > 0)) {
+        # Locate and extract date from filename in returned http url
+        # .*  - match any character
+        # ()  - capturing group with expected match for 6 single digits
+        # \\1 - reference to first captured pattern
+        yearmon <- gsub(pattern=".*([0-9]{6}).*",replace="\\1", res_enclosure)
+        if (nchar(yearmon) >= 6) { 
+            yyyy <- substr(yearmon,1,4)
+            mm   <- substr(yearmon,5,6)
+            dd   <- days_per_month(as.numeric(yyyy),as.numeric(mm))
+        
+            yyyymmdd <- paste(yyyy,mm,dd,sep="-")
+            status   <- 0
+        }else{
+            paste("Could not locate date in filename")
+        }
+    }
+
+    output <- list("status"=status,
+                   "date"=yyyymmdd)
+
+    return (output)
+} # search_and_locate_latest_date
+
+
 # In/Out - objects of posix date classes
 determine_interval_hindcast <- function(forecastIssueDate,
                                         hindcastDays, # Integer/Numeric
@@ -411,17 +455,28 @@ determine_interval_hindcast <- function(forecastIssueDate,
 # In/Out - objects of posix date classes
 determine_interval_hydrogfdei <- function(hindcastStartDate,
                                           forecastIssueDate,
-                                          in_reforecast)
+                                          in_reforecast,
+                                          in_url,
+                                          in_query)
 {
     hydrogfdei.startDate <- hindcastStartDate
+
     if (in_reforecast == FALSE) {
       # Operational
+      res <- search_and_locate_latest_date(in_url,in_query)
+      if (res$status == 0) {
+          hydrogfdei.endDate <- res$date
+          hydrogfdei.endDate <- as.Date(hydrogfdei.endDate)
+          hydrogfdei.endDate <- as.POSIXlt(hydrogfdei.endDate)
+          if (hydrogfdei.endDate < hydrogfdei.startDate) {
+              rciop.log("ERROR",paste("Aborting, the latest hydrogfdei netcdf file are too old: ",hydrogfdei.endDate),nameOfSrcFile_PN)
+              q(save="no", status = 3)
+          }
+      }else{
+          rciop.log("ERROR","Aborting, not able to locate the latest hydrogfdei netcdf file",nameOfSrcFile_PN)
+          q(save="no", status = 3)
+      }
 
-      # Should be: last day in the most recent hydrogfdei file (as new input parameter)
-      # Now the last file is 201906
-      hydrogfdei.endDate <- "2019-06-30"
-      hydrogfdei.endDate <- as.Date(hydrogfdei.endDate)
-      hydrogfdei.endDate <- as.POSIXlt(hydrogfdei.endDate)
     }else {
       # Re-forecast
       hydrogfdei.endDate <- forecastIssueDate
@@ -467,18 +522,29 @@ determine_interval_hydrogfdei <- function(hindcastStartDate,
 # In/Out - objects of posix date classes
 determine_interval_hydrogfdod <- function(hydrogfdeiEndDate,
                                           forecastIssueDate,
-                                          in_reforecast)
+                                          in_reforecast,
+                                          in_url,
+                                          in_query)
 {
     hydrogfdod.startDate      <- hydrogfdeiEndDate
     hydrogfdod.startDate$mday <- hydrogfdod.startDate$mday + 1 # day
+
     if (in_reforecast == FALSE) {
       # Operational
+      res <- search_and_locate_latest_date(in_url,in_query)
+      if (res$status == 0) {
+          hydrogfdod.endDate <- res$date
+          hydrogfdod.endDate <- as.Date(hydrogfdod.endDate)
+          hydrogfdod.endDate <- as.POSIXlt(hydrogfdod.endDate)
+          if (hydrogfdod.endDate < hydrogfdod.startDate) {
+              rciop.log("ERROR",paste("Aborting, the latest hydrogfdod netcdf file are too old: ",hydrogfdod.endDate),nameOfSrcFile_PN)
+              q(save="no", status = 3)
+          }
+      }else{
+          rciop.log("ERROR","Aborting, not able to locate the latest hydrogfdod netcdf file",nameOfSrcFile_PN)
+          q(save="no", status = 3)
+      }
 
-      # Should be: last day in the most recent hydrogfdod file (as new input parameter)
-      # Now the last file is 201908
-      hydrogfdod.endDate <- "2019-08-31"
-      hydrogfdod.endDate <- as.Date(hydrogfdod.endDate)
-      hydrogfdod.endDate <- as.POSIXlt(hydrogfdod.endDate)
     }else {
       # Re-forecast
       hydrogfdod.endDate <- forecastIssueDate
@@ -563,7 +629,8 @@ determine_interval_ecoper <- function(forecastIssueDate)
 prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
                                        in_forecastIssueDate, # character string with dashes
                                        in_reforecast = TRUE,
-                                       in_hypeStateFileDate) # character string without dashes
+                                       in_hypeStateFileDate, # character string without dashes
+                                       in_modelConfig) # for mode Operational, url and query to locate netcdf files
 {
     # Dates internally in function uses class posixlt (list)
 
@@ -617,13 +684,17 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
     # HydroGFDEI (monthly)
     intervalHydrogfdei <- determine_interval_hydrogfdei(intervalHindcast$hindcast.startDate,
                                                         forecast.IssueDate,
-                                                        in_reforecast)
+                                                        in_reforecast,
+                                                        in_modelConfig$gfdHydrogfdeiUrl,   # Operational
+                                                        in_modelConfig$gfdHydrogfdeiQuery) # Operational
 
     ## ------------------------------------------------------------------------------
     # HydroGFDOD (monthly)
     intervalHydrogfdod <- determine_interval_hydrogfdod(intervalHydrogfdei$hydrogfdei.endDate,
                                                         forecast.IssueDate,
-                                                        in_reforecast)
+                                                        in_reforecast,
+                                                        in_modelConfig$gfdHydrogfdodUrl,   # Operational
+                                                        in_modelConfig$gfdHydrogfdodQuery) # Operational
 
     ## ------------------------------------------------------------------------------
     # OD (daily)
@@ -1045,6 +1116,7 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
                                         modelDataConfig, # Misc model config data, paths to state files, forcing, shape files
                                         forecastIssueDate, # yyyy-mm-dd
                                         hindcastPeriodLength, # Days
+                                        reforecast, # True - reforecast, False - operational
                                         netcdfDir, # Input dir with hydrogfd netcdf files
                                         ncSubDir, # False-one dir, True-separate dir for each variable
                                         gridMetaDir, # Input dir with grid weight files
@@ -1056,8 +1128,9 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
   # Prepare hindcast and forecast intervals, start and end dates
   prepHindcastInterval <- prepare_hindcast_intervals(hindcastPeriodLength,
                                                      forecastIssueDate,
-                                                     in_reforecast = TRUE, # ToDo: reforecast or operational from config as input
-                                                     "19700101") # ToDo: Get date from latest Hype state filename
+                                                     reforecast, # TRUE, # ToDo: reforecast or operational from config as input
+                                                     "19700101", # ToDo: Get date from latest Hype state filename
+                                                     modelConfig)
   # Download hydrogfd elevation netcdf file
   nMissingFiles <- download_netcdf(modelConfig,
                                    xCastsInterval = prepHindcastInterval,
