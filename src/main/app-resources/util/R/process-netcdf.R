@@ -434,6 +434,12 @@ determine_interval_hydrogfdei <- function(hindcastStartDate,
           hydrogfdei.endDate$mon <- hydrogfdei.endDate$mon - 4
       }
 
+      # For shorter hindcast period lengths
+      # E.g. idate: 2019-10-05, hc per len 123 => hc start: 2019-06-01, hc end: 2019-05-05 !
+      if (hydrogfdei.endDate < hydrogfdei.startDate) {
+          hydrogfdei.endDate$mon <- hydrogfdei.endDate$mon + 1
+      }
+
       # Round off to end of this month
       mon_as_char  <- strftime(hydrogfdei.endDate,format="%m")
       mon_as_num   <- as.numeric(mon_as_char)
