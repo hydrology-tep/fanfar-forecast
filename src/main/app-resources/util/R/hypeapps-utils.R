@@ -2451,17 +2451,18 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
   # Create folder for data to be published
   outDir = paste(appSetup$tmpDir,'output',sep="/")
   dir.create(outDir,recursive = T,showWarnings = F)
-  
+
   ## output file prefixes, to order the results better
-  prefix.img =paste("001","_",appDate,sep="")
-  prefix.csv =paste("002","_",appDate,sep="")
-  prefix.bas =paste("003","_",appDate,sep="")
-  prefix.map =paste("004","_",appDate,sep="")
-  prefix.tim =paste("005","_",appDate,sep="")
-  prefix.oth =paste("006","_",appDate,sep="")
-  prefix.log =paste("000","_",appDate,sep="")
-  prefix.wl.txt = paste("004","_",appDate,sep="")
-  prefix.wl.png = paste("001","_",appDate,sep="")
+  prefixDate =paste0("_r",appDate,"_i",gsub(pattern="-",replacement="",appInput$idate))
+  prefix.img =paste0("001",prefixDate)
+  prefix.csv =paste0("002",prefixDate)
+  prefix.bas =paste0("003",prefixDate)
+  prefix.map =paste0("004",prefixDate)
+  prefix.tim =paste0("005",prefixDate)
+  prefix.oth =paste0("006",prefixDate)
+  prefix.log =paste0("000",prefixDate)
+  prefix.wl.txt = paste0("004",prefixDate)
+  prefix.wl.png = paste0("001",prefixDate)
   
   ## get hype2csv file from its URL
   if(file.exists(paste(appSetup$hype2csvPath,appSetup$hype2csvFile,sep="/"))){
@@ -2778,17 +2779,19 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
       }else{
         prodTag="forecast"
       }
-        
-      # copy log-files from rundir to outdirs (only when k==1)
-      if (k==2) {
-        hyssLogFile = dir(path = appSetup$runDir, pattern ="hyss")
+      
+      # copy log-files from rundir to outdirs
+      # since this function is only called once in the end on run.R, log files for hindcast and forecast
+      # will end up in both out dirs but can be identified via the timestamp
+      #if (k==2) {
+        hyssLogFiles = dir(path = appSetup$runDir, pattern =".log") # hyss_x.log and tests_x.log
         if(app.sys=="tep"){
-          if(length(hyssLogFile)>=0){
-               file.copy(from = paste(appSetup$runDir,tail(hyssLogFile, 1),sep="/"),
-                         to = paste(outDir[k],paste(prefix.log,prodTag,tail(hyssLogFile, 1),sep="_"),sep="/"))
+          if(length(hyssLogFiles) > 0){
+              file.copy(from = paste(appSetup$runDir,hyssLogFiles,sep="/"),
+                        to = outDir[k])
           }
         }
-      }
+      #}
       
       # list files in result folder
       timeFiles   = dir(path = appSetup$resDir[k] , pattern ="time")
@@ -2964,7 +2967,7 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
 
 # functions for application logfile that will be published as part of application results
 appLogOpen<-function(appName, tmpDir,appDate,prefix=NULL){
-  fileName=paste(appDate,"_","hypeapps-",appName,".log",sep="")
+  fileName=paste("r",appDate,"_","hypeapps-",appName,".log",sep="")
   if(!is.null(prefix)){
     fileName = paste(prefix,"_",fileName,sep="")
   }

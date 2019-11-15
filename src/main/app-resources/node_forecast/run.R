@@ -327,12 +327,11 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         print("hindcast.input (output from updateModelInput):")
         print(hindcast.input)
     }
-    if (debugPublish == TRUE) {
-        fromFile <- paste(app.setup$runDir,"info.txt",sep="/")
-        toFile <- paste(app.setup$runDir,"info-for-hindcast.txt",sep="/")
-        file.copy(from=fromFile,to=toFile)
-        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
-    }
+
+    # Publish updated info.txt
+    toFile <- paste(app.setup$runDir,"info-for-hindcast.txt",sep="/")
+    file.copy(from=paste(app.setup$runDir,"info.txt",sep="/"),to=toFile,overwrite=T)
+    rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste("hindcast inputs modified"), nameOfSrcFile_Run)}
     log.res=appLogWrite(logText = "hindcast model inputs modified",fileConn = logFile$fileConn)
@@ -347,13 +346,12 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
         hindcast.run = system(command = app.setup$runCommand,intern = T)
 
-        hyssLogFile = dir(path = app.setup$runDir, pattern =".log")
-        if(length(hyssLogFile)>=0){
-            for(j in 1:length(hyssLogFile)){
-                toFile <- paste0(app.setup$runDir, "/", "000_", app.date, "_", gsub("hyss", "hindcast_hyss",hyssLogFile[j]))
-                file.copy(from = paste(app.setup$runDir,hyssLogFile[j],sep="/"),to = toFile)
-                rciop.publish(path=toFile, recursive=FALSE, metalink=TRUE)
-             }
+        # Publish hindcast log file(s) in case prepareHypeAppsOutput() is not called
+        hyssLogFiles = dir(path=app.setup$runDir,pattern=".log")
+        if (length(hyssLogFiles) > 0){
+            for (i in 1:length(hyssLogFiles)) {
+                rciop.publish(path=paste(app.setup$runDir,hyssLogFiles[i],sep="/"),recursive=FALSE,metalink=TRUE)
+            }
         }
 
         if (verboseVerbose == TRUE) {
@@ -467,12 +465,11 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         print("forecast.input (output from updateModelInput):")
         print(forecast.input)
     }
-    if (debugPublish == TRUE) {
-        fromFile <- paste(app.setup$runDir,"info.txt",sep="/")
-        toFile <- paste(app.setup$runDir,"info-for-forecast.txt",sep="/")
-        file.copy(from=fromFile,to=toFile)
-        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
-    }
+
+    # Publish updated info.txt
+    toFile <- paste(app.setup$runDir,"info-for-forecast.txt",sep="/")
+    file.copy(from=paste(app.setup$runDir,"info.txt",sep="/"),to=toFile,overwrite=T)
+    rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste("...forecast inputs modified"), nameOfSrcFile_Run)}
     log.res=appLogWrite(logText = "forecast model input files modified",fileConn = logFile$fileConn)
