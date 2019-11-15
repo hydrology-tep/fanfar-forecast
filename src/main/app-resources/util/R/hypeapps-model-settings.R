@@ -29,9 +29,9 @@ forcing.archive.start = NULL
 forcing.archive.end = NULL
 #state.files.url = NULL
 state.files = NULL
-hype2csv.url = NULL
+#hype2csv.url = NULL
 hype2csv.file = NULL
-shapefile.url   = NULL
+#shapefile.url   = NULL
 shapefile.layer = NULL
 shapefile.ext   = c(".shp",".prj",".dbf",".shx")
 
@@ -59,13 +59,14 @@ for(i in 1980:2019){
 }
 
 # [EDIT HERE] hype2csv URL
-#hype2csv.url = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23/hype2csv/niger-hype2csv.txt"
-#hype2csv.file = "niger-hype2csv.txt"
+#hype2csv.url = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23/hype2csv/niger-hype2csv.txt" # Needed for outbasins, but 1.3.6 has only geodata-file, not this variant
+hype2csv.file = "niger-hype2csv.txt"                                                                             # Needed for outbasins, but 1.3.6 has only geodata-file, not this variant
 
 # [EDIT HERE] sub-basin shapefile URL (shapefile.url should point to shapefile [model.name].shp, and in the same folder should be .dbf, .prj and .shx)
 #shapefile.url   = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23/shapefiles"
-shapefile.layer = "niger-hype"
-shapefile.ext   = c(".shp",".prj",".dbf",".shx") 
+#shapefile.layer = "niger-hype"
+shapefile.layer = "SUBID_shapefile"
+#shapefile.ext   = c(".shp",".prj",".dbf",".shx") 
 
 # log message
 if(app.sys=="tep"){rciop.log ("DEBUG", paste("model and data access settings set"), "/util/R/hypeapps-model-settings.R")}

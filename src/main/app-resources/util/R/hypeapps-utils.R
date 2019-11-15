@@ -323,12 +323,11 @@ getHypeAppInput<-function(appName){
       }
 
       # parse the basinselect and basinset inputs
-      if(length(basinselect) <= 0){
-        basins      <- NULL
-        basins.name <- ""
-        basins.id   <- ""
-        basins.num  <- 0
-      }else{
+      basins      <- NULL
+      basins.name <- ""
+      basins.id   <- ""
+      basins.num  <- 0
+      if(length(basinselect) > 0){
         basinSplit = trimws(strsplit(basinselect,split = ",")[[1]])
         nBasin=length(basinSplit)
         for(i in 1:nBasin){
@@ -350,13 +349,8 @@ getHypeAppInput<-function(appName){
             basins=paste(basins,basins.id[i+1],sep=",")   
           }
         }
-      } # if(nchar(basinselect <= 0
-      if(length(basinset) <= 0){
-        basins      <- NULL
-        basins.name <- ""
-        basins.id   <- ""
-        basins.num  <- 0
-      }else{
+      }
+      if(length(basinset) > 0){
         if(basinset!="-9999" & nchar(basinset)>0){
           basinSplit=trimws(strsplit(basinset,split = ",")[[1]])
           # check if any of the basins in basinset was already selected by the basinselect
@@ -365,14 +359,20 @@ getHypeAppInput<-function(appName){
           if(length(iAdd)>0){
             basinAdd=basinSplit[iAdd]
             for(i in 1:length(iAdd)){
-              basins=paste(basins,basinAdd[i],sep=",")
-              basins.name=c(basins.name,"NN")
+              if(i==1 && basins.num == 0){
+                basins=basinAdd[i]
+                basins.name="NN"
+                basins.id=basinAdd[i]
+              }else{
+                basins=paste(basins,basinAdd[i],sep=",")
+                basins.name=c(basins.name,"NN")
+                basins.id=c(basins.id,basinAdd[i])
+              }
               basins.num=basins.num+1
-              basins.id=c(basins.id,basinAdd[i])
             }      
           }
         }
-      } # if(length(basinset) <= 0
+      }
       
       # If xobs !=-9999, parse the input to URLs
       if(length(xobs)>0){
@@ -694,7 +694,19 @@ getHypeAppInput<-function(appName){
 ## -------------------------------------------------------------------------------
 ## prepare work directories and copy basic model files
 #getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,modelFilesURL,forcingArchiveURL=NULL,stateFilesURL=NULL,stateFilesIN=NULL){
-getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,modelFilesPath,forcingArchivePath=NULL,stateFilesPath=NULL,stateFilesIN=NULL, modelDataPaths=NULL){
+getHypeAppSetup<-function(modelName,
+                          modelBin,
+                          tmpDir,
+                          appDir,
+                          appName,
+                          appInput,
+                          modelFilesPath,
+                          forcingArchivePath=NULL,
+                          shapeFilesPath=NULL,
+                          hype2csvPath=NULL,
+                          stateFilesPath=NULL,
+                          stateFilesIN=NULL,
+                          modelDataPaths=NULL){
 
 # 
 # forcingArchiveURL and stateFilesURL are only assigned to output
@@ -857,7 +869,7 @@ getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,mode
   }
   
   ## Sub-basin shapefiles (potentially for all applications for map plots)
-  if(!is.null(shapefile.url)){
+  if(dir.exists(shapeFilesPath)){
     # libraries needed to read the shapefile
     library(sp)
     library(rgdal)
@@ -869,7 +881,9 @@ getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,mode
     
     #download shapefile from storage
     for(i in 1:length(shapefile.ext)){
-      rciop.copy(paste(paste(shapefile.url,shapefile.layer,sep="/"),shapefile.ext[i],sep=""), shapefileDir) # Downloading shape files
+      #rciop.copy(paste(paste(shapefile.url,shapefile.layer,sep="/"),shapefile.ext[i],sep=""), shapefileDir) # Downloading shape files
+      file.copy(from=paste(paste(shapeFilesPath,shapefile.layer,sep="/"),shapefile.ext[i],sep=""),
+                to=shapefileDir,overwrite=T)
     }
 
     # Disable version tag for now 20190312
@@ -965,14 +979,12 @@ getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,mode
                   "appName"=appName,
                   "modelName"=modelName,
                   "modelBin"=modelBin,
-                  #"stateFilesURL"=stateFilesURL,
                   "stateFilesPath"=stateFilesPath,
                   "stateFiles"=stateFiles,
                   "stateDates"=stateDates,
-                  #"forcingArchiveURL"=forcingArchiveURL,
                   "forcingArchivePath"=forcingArchivePath,
                   "forcingArchiveExist"=forcingArchiveExist,
-                  "hype2csvURL"=hype2csv.url,
+                  "hype2csvPath"=hype2csvPath,
                   "hype2csvFile"=hype2csv.file,
                   "shapefileDir"=shapefileDir,
                   "shapefileLayer"=shapefile.layer,
@@ -2452,18 +2464,12 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
   prefix.wl.png = paste("001","_",appDate,sep="")
   
   ## get hype2csv file from its URL
-  if(!is.null(appSetup$hype2csvURL)){
-    rciop.copy(url = appSetup$hype2csvURL, target = appSetup$tmpDir) # Downloading hype csv files
-    if(file.exists(paste(appSetup$tmpDir,appSetup$hype2csvFile,sep="/"))){
-      hype2csvFile = paste(appSetup$tmpDir,appSetup$hype2csvFile,sep="/")
-      hype2csvExists=T
-    }else{
-      hype2csvFile = "9999"
-      hype2csvExists=F
-    }
+  if(file.exists(paste(appSetup$hype2csvPath,appSetup$hype2csvFile,sep="/"))){
+    hype2csvFile = paste(appSetup$hype2csvPath,appSetup$hype2csvFile,sep="/")
+    hype2csvExists=T
   }else{
     hype2csvFile = "9999"
-    hype2csvExists=F    
+    hype2csvExists=F
   }
   
   ## Post-process requested outputs (copy some files...)

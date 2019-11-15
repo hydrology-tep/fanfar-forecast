@@ -176,7 +176,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         model.files.path     <- modelDataPaths$dirModelFiles     # Instead of model.files.url
         forcing.archive.path <- modelDataPaths$dirForcingArchive # Instead of forcing.archive.url
         state.files.path     <- modelDataPaths$dirStateFiles     # Instead of state.files.url
-        #shapefiles          <- modelDataPaths$dirShapeFiles
+        shape.files.path     <- modelDataPaths$dirShapeFiles     # Instead of shapefile.url
+        hype2csv.path        <- modelDataPaths$dirHYPE2CSVFiles  # Instead of hype2csv.url
         #rciop.log("INFO path", model.files.path)
         #rciop.log("INFO path", forcing.archive.path)
         #rciop.log("INFO path", state.files.path)
@@ -209,6 +210,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                  appInput  = app.input,
                                  modelFilesPath = model.files.path,
                                  forcingArchivePath = forcing.archive.path,
+                                 shapeFilesPath = shape.files.path,
+                                 hype2csvPath = hype2csv.path,
                                  stateFilesPath = state.files.path,
                                  stateFilesIN = state.files,
                                  modelDataPaths = modelDataPaths)

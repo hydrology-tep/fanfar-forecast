@@ -180,7 +180,6 @@ process_input_model_configuration <- function(applConfig=NULL, # Application con
   
   # Filenames
   model_config_file <- "dependencies.txt"
-  #hype_config_file <- "info-forecast.txt"
   
   path_to_file <- paste(local.model_config_dir, model_config_file, sep="/")
   
@@ -305,6 +304,7 @@ process_input_hype_model_data <- function(applConfig,  # Application configurati
   dirReturnLevels   <- NULL
   dirShapeFiles     <- NULL
   dirStateFiles     <- NULL
+  dirHYPE2CSVFiles  <- NULL
 
   fileInfoTxtColdStart <- NULL
   fileInfoTxtHindcast  <- NULL
@@ -356,6 +356,7 @@ process_input_hype_model_data <- function(applConfig,  # Application configurati
       dirShapeFiles     <- paste(dirModelFiles,"subidshapefiles",sep="/") # ToDo: Temporary disabled during tests with shapefiles for niger-hype
       #dirShapeFiles     <- paste(dirModelFiles,"shapefiles",sep="/")
       dirStateFiles     <- paste(dirModelFiles,"statefiles",sep="/")
+      dirHYPE2CSVFiles  <- paste(dirModelFiles,"hype2csv",sep="/")
       
       # Individual files - these info files should maybe be fetched from the model/application config object? (parallel files to dependencies.txt in zip-file)
       #fileInfoTxtColdStart <- paste(dirModelFiles,"info-coldstart-19791994.txt",sep="/")
@@ -376,6 +377,7 @@ process_input_hype_model_data <- function(applConfig,  # Application configurati
   check_dir_exist(dirReturnLevels)
   check_dir_exist(dirShapeFiles)
   check_dir_exist(dirStateFiles)
+  check_dir_exist(dirHYPE2CSVFiles)
 
   check_file_exist(fileInfoTxtColdStart)
   check_file_exist(fileInfoTxtHindcast)
@@ -388,6 +390,7 @@ process_input_hype_model_data <- function(applConfig,  # Application configurati
                           "dirReturnLevels"=dirReturnLevels,
                           "dirShapeFiles"=dirShapeFiles,
                           "dirStateFiles"=dirStateFiles,
+                          "dirHYPE2CSVFiles"=dirHYPE2CSVFiles,
                           "fileInfoTxtColdStart"=fileInfoTxtColdStart,
                           "fileInfoTxtHindcast"=fileInfoTxtHindcast,
                           "fileInfoTxtForecast"=fileInfoTxtForecast

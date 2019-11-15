@@ -40,6 +40,8 @@
           </options>
         </parameter>
 
+        <parameter id="basinset" title="Optional output sub-basins (SUBID)" abstract="Comma delimited, HYPE sub-basin identifiers" minOccurs="0" maxOccurs="850" scope="runtime" type="LiteralData"></parameter>
+
         <parameter id="xobs" title="Xobs file(s) with EO and/or In-situ data" abstract="Xobs file(s) with pre-processed EO or In-situ data" minOccurs="0" maxOccurs="10" scope="runtime" type="LiteralData"></parameter>
 
         <parameter id="assimOn" title="Assimilation on/off" abstract="Data assimilation on/off" minOccurs="1" maxOccurs="1" scope="runtime" type="LiteralData">
