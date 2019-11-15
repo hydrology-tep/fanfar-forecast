@@ -14,13 +14,13 @@
 
         <parameter id="idate" title="Forecast issue date (yyyy-mm-dd)" abstract="Data available since 2016-06-01" minOccurs="1" maxOccurs="1" scope="runtime" type="LiteralData">2019-10-03</parameter>
 
-        <parameter id="hcperiodlen" title="Hindcast period length (days)" abstract="Default 10 year" minOccurs="1" maxOccurs="1" scope="runtime" type="LiteralData">3650</parameter>
+        <parameter id="hcperiodlen" title="Hindcast period length (days)" abstract="Define the number of days to intialize the model (before the issue date)" minOccurs="1" maxOccurs="1" scope="runtime" type="LiteralData">3650</parameter>
 
-        <parameter id="runtype" title="Run type (Operational/Reforecast)" abstract="Operational - scheduled run for automatic operational production. Reforecast - re-run forecast or with other options" minOccurs="1" maxOccurs="1" scope="runtime" type="LiteralData">
+        <parameter id="runtype" title="Run type" abstract="Operational - scheduled run for automatic operational production. Reforecast - re-run for a historic date." minOccurs="1" maxOccurs="1" scope="runtime" type="LiteralData">
           <options>
             <option>Operational</option>
             <option>Reforecast</option>
-            <default>Operational</default>
+            <default>Reforecast</default>
           </options>
         </parameter>
 
@@ -42,9 +42,9 @@
 
         <parameter id="basinset" title="Optional output sub-basins (SUBID)" abstract="Comma delimited, HYPE sub-basin identifiers" minOccurs="0" maxOccurs="850" scope="runtime" type="LiteralData"></parameter>
 
-        <parameter id="xobs" title="Xobs file(s) with EO and/or In-situ data" abstract="Xobs file(s) with pre-processed EO or In-situ data" minOccurs="0" maxOccurs="10" scope="runtime" type="LiteralData"></parameter>
+        <parameter id="xobs" title="Optional Xobs file(s) with EO and/or In-situ data" abstract="Xobs file(s) with pre-processed EO or In-situ data" minOccurs="0" maxOccurs="10" scope="runtime" type="LiteralData"></parameter>
 
-        <parameter id="assimOn" title="Assimilation on/off" abstract="Data assimilation on/off" minOccurs="1" maxOccurs="1" scope="runtime" type="LiteralData">
+        <parameter id="assimOn" title="Optional assimilation on/off" abstract="Data assimilation on/off" minOccurs="1" maxOccurs="1" scope="runtime" type="LiteralData">
           <options>
             <option>on</option>
             <option>off</option>
@@ -52,7 +52,7 @@
           </options>
         </parameter>
 
-        <parameter id="assimVars" title="Assimilated observations" abstract="Observations to be assimilated" minOccurs="1" maxOccurs="1" scope="runtime" type="LiteralData">
+        <parameter id="assimVars" title="Optional assimilated observations" abstract="Observations to be assimilated" minOccurs="1" maxOccurs="1" scope="runtime" type="LiteralData">
           <options>
             <option>Lake Water Level - altimetry AOWL WCOM</option>
             <option>Openloop - ensembles without assimilation OPEN LOOP</option>
@@ -64,8 +64,7 @@
           </options>
         </parameter>
 
-        <!-- ToDo: Rename id to model_config_file or similar -->
-        <parameter id="model" title="Model configuration file" abstract="File containing users own model configuration" minOccurs="0" maxOccurs="1" scope="runtime" type="LiteralData">-</parameter>
+        <parameter id="model" title="Optional model configuration file" abstract="File containing user's own model configuration" minOccurs="0" maxOccurs="1" scope="runtime" type="LiteralData">-</parameter>
 
       </defaultParameters>
       
@@ -76,7 +75,7 @@
   </jobTemplates>
   
   
-  <workflow id="workflow" title="WestAfrica-HYPE Forecast" abstract="Make 1-10 days hydrometeorological forecasts for the Niger river basin with the HYPE model. More info at http://hypeweb.smhi.se/niger-hype/forecast and http://www.smhi.net/hype/wiki.">
+  <workflow id="workflow" title="FANFAR Forecast" abstract="Make 1-10 days hydrometeorological forecasts in West Africa with the HYPE model. More info at http://www.fanfar.eu.">
     <workflowVersion>1.0</workflowVersion>
     <node id="node_forecast">
       <job id="template_hypeapps"/>
