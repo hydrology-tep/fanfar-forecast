@@ -52,8 +52,8 @@ verbose <- TRUE
 #verbose <- FALSE
 #verboseVerbose <- TRUE
 verboseVerbose <- FALSE
-
-debugPublish <- TRUE
+#debugPublish <- TRUE
+debugPublish <- FALSE
 
 # Config parameter for process_hindcast_netcdf2obs and process_forcast_netcdf2obs functions
 # TRUE  - copy obs files directly to model run dir.
@@ -345,15 +345,11 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         }
 
         if (verboseVerbose == TRUE) {
-            # List files in run dir
             print("List files after hindcast, dir run dir")
             tmpPath=app.setup$runDir
             print(list.files(tmpPath))
             print("List files after hindcast, dir hindcast")
             tmpPath=paste0(app.setup$runDir,"/hindcast")
-            print(list.files(tmpPath)) # state_save20191003.txt ... $issueDate: [1] "2019-10-03"
-            print("List files after hindcast, dir forecast")
-            tmpPath=paste0(app.setup$runDir,"/forecast")
             print(list.files(tmpPath))
         }
 
@@ -422,19 +418,6 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             print("forecast.forcing (output from process_forecast_netcdf2obs):")
             print(forecast.forcing)
         }
-
-        if (verboseVerbose == TRUE) {
-            # List files in run dir
-            print("List files after forecast, dir run dir")
-            tmpPath=app.setup$runDir
-            print(list.files(tmpPath))
-            print("List files after forecast, dir hindcast")
-            tmpPath=paste0(app.setup$runDir,"/hindcast")
-            print(list.files(tmpPath))
-            print("List files after forecast, dir forecast")
-            tmpPath=paste0(app.setup$runDir,"/forecast")
-            print(list.files(tmpPath))
-        }
     }
 
     if(app.sys=="tep"){rciop.log ("DEBUG", "forecast model forcing data downloaded and prepared", nameOfSrcFile_Run)}
@@ -468,14 +451,14 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
         forecast.run = system(command = app.setup$runCommand,intern = T)
 
-        # hyssLogFile = dir(path = app.setup$runDir, pattern =".log")
-        # if(length(hyssLogFile)>=0){
-        #     for(j in 1:length(hyssLogFile)){
-        #         toFile <- paste0(app.setup$runDir, "/", "007_", app.date, "_", gsub("hyss", "forecast_hyss",hyssLogFile[j]))
-        #         file.copy(from = paste(app.setup$runDir,hyssLogFile[j],sep="/"),to = toFile)
-        #         rciop.publish(path=toFile, recursive=FALSE, metalink=TRUE)
-        #      }
-        # }
+        if (verboseVerbose == TRUE) {
+            print("List files after forecast, dir run dir")
+            tmpPath=app.setup$runDir
+            print(list.files(tmpPath))
+            print("List files after forecast, dir forecast")
+            tmpPath=paste0(app.setup$runDir,"/forecast")
+            print(list.files(tmpPath))
+        }
 
         log.res=appLogWrite(logText = "... forecast model run ready",fileConn = logFile$fileConn)
         if(app.sys=="tep"){rciop.log ("DEBUG", " ...forecast model run ready", nameOfSrcFile_Run)}
@@ -537,6 +520,18 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     }
 
     #}
+
+    if (verboseVerbose == TRUE) {
+        print("List files after end, dir output")
+        tmpPath=paste0(app.setup$tmpDir,"/output")
+        print(list.files(tmpPath))
+        print("List files after end, dir output/hindcast")
+        tmpPath=paste0(app.setup$tmpDir,"/output/hindcast")
+        print(list.files(tmpPath))
+        print("List files after end, dir output/forecast")
+        tmpPath=paste0(app.setup$tmpDir,"/output/forecast")
+        print(list.files(tmpPath))
+    }
 
     #################################################################################
     ## 9 - End of workflow
