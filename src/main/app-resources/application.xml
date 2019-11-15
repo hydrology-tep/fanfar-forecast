@@ -64,7 +64,7 @@
           </options>
         </parameter>
 
-        <parameter id="model" title="Optional model configuration file" abstract="File containing user's own model configuration" minOccurs="0" maxOccurs="1" scope="runtime" type="LiteralData">-</parameter>
+        <parameter id="model_config_file" title="Optional model configuration file" abstract="File containing user's own model configuration" minOccurs="0" maxOccurs="1" scope="runtime" type="LiteralData">-</parameter>
 
       </defaultParameters>
       
@@ -80,7 +80,7 @@
     <node id="node_forecast">
       <job id="template_hypeapps"/>
       <sources>
-        <source id="model" scope="runtime" refid="string:list"></source>
+        <source id="model_config_file" scope="runtime" refid="string:list"></source>
       </sources>
     </node>
   </workflow>
