@@ -178,9 +178,6 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         state.files.path     <- modelDataPaths$dirStateFiles     # Instead of state.files.url
         shape.files.path     <- modelDataPaths$dirShapeFiles     # Instead of shapefile.url
         hype2csv.path        <- modelDataPaths$dirHYPE2CSVFiles  # Instead of hype2csv.url
-        #rciop.log("INFO path", model.files.path)
-        #rciop.log("INFO path", forcing.archive.path)
-        #rciop.log("INFO path", state.files.path)
         #ToDo: When switching between different HYPE model datasets, we may need to output a list of filenames (currently hardcoded filenames)
     }
 
@@ -255,40 +252,33 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         dirNCFiles  <- paste(TMPDIR,"netcdf-files",sep="/")
         dirObsFiles <- paste(TMPDIR,"obs-files",sep="/") # Output dir of produced files
         #dirGridMeta <- paste(TMPDIR,"grid-meta",sep="/")
-        hindcast.forcingandxobs <- process_hindcast_netcdf2obs(modelConfigData,
-                                                               modelDataPaths,
-                                                               app.input$idate,
-                                                               app.input$hcperiodlen,
-                                                               applRuntimeOptions$runType == cRunTypeVariant2, # Re-forecast
-                                                               dirNCFiles,
-                                                               ncSubDir=TRUE,
-                                                               modelDataPaths$dirGridMetaData,
-                                                               #cEnableCopyObsFilesToRunDir,
-                                                               app.setup$runDir,
-                                                               dirObsFiles,
-                                                               debugPublish)
+        hindcastForcing <- process_hindcast_netcdf2obs(modelConfigData,
+                                                       modelDataPaths,
+                                                       app.input$idate,
+                                                       app.input$hcperiodlen,
+                                                       applRuntimeOptions$runType == cRunTypeVariant2, # Re-forecast
+                                                       dirNCFiles,
+                                                       ncSubDir=TRUE,
+                                                       modelDataPaths$dirGridMetaData,
+                                                       #cEnableCopyObsFilesToRunDir,
+                                                       app.setup$runDir,
+                                                       dirObsFiles,
+                                                       debugPublish)
 
         # Minimal variants of original list types returned by getModelForcing()
-        #hindcast.forcing <- hindcast.forcingandxobs$hindcast.forcing
-        #xobs.input       <- hindcast.forcingandxobs$xobs.input
-        #xobs.data        <- hindcast.forcingandxobs$xobs.data
         hindcast.forcing <- list("status"=T,
                                  "localFile"=NULL,
                                  "issueDate"=app.input$idate,
                                  "archive"=F,
-                                 "bdate"=hindcast.forcingandxobs$bdate,
-                                 "cdate"=hindcast.forcingandxobs$cdate,
-                                 "edate"=hindcast.forcingandxobs$edate,
+                                 "bdate"=hindcastForcing$bdate,
+                                 "cdate"=hindcastForcing$cdate,
+                                 "edate"=hindcastForcing$edate,
                                  "outstateDate"=NULL, # or NA
                                  "stateFile"=NULL)
 
         if (verboseVerbose == TRUE) {
             print("hindcast.forcing (output from process_hindcast_netcdf2obs):")
             print(hindcast.forcing)
-            ## print("xobs.input (output from process_hindcast_netcdf2obs):")
-            ## print(xobs.input)
-            #print("xobs.data (output from process_hindcast_netcdf2obs):")
-            #print(xobs.data)
         }
     }
 
@@ -396,22 +386,18 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     #     (applRuntimeOptions$metFC == cMetFCVariant1)) {
     if (applRuntimeOptions$modelConfig == cModelConfigVariant1) {
         ## Download and process ecoper netcdf files
-
-        # ToDo: Dir name based on config dataset
-        #dirNCFiles  <- paste(TMPDIR,"netcdf-files",sep="/") already set before hindcast
-        #dirObsFiles <- paste(TMPDIR,"obs-files",sep="/")    already set before hindcast
-        forecast.forcingandxobs <- process_forecast_netcdf2obs(modelConfigData,
-                                                               modelDataPaths,
-                                                               app.input$idate,
-                                                               dirNCFiles,
-                                                               ncSubDir=TRUE,
-                                                               modelDataPaths$dirGridMetaData,
-                                                               #cEnableCopyObsFilesToRunDir,
-                                                               app.setup$runDir,
-                                                               dirObsFiles,
-                                                               debugPublish)
+        forecastForcing <- process_forecast_netcdf2obs(modelConfigData,
+                                                       modelDataPaths,
+                                                       app.input$idate,
+                                                       dirNCFiles,
+                                                       ncSubDir=TRUE,
+                                                       modelDataPaths$dirGridMetaData,
+                                                       #cEnableCopyObsFilesToRunDir,
+                                                       app.setup$runDir,
+                                                       dirObsFiles,
+                                                       debugPublish)
         # Copy produced state file from the hindcast run to run dir
-        outStateDate <- forecast.forcingandxobs$cdate
+        outStateDate <- forecastForcing$cdate
         outStateDate <- gsub("-", "", as.character(outStateDate))
         stateFile <- paste0(app.setup$runDir,"/hindcast","/state_save",outStateDate,".txt")
         if(file.exists(stateFile)) {
@@ -426,12 +412,12 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                  "localFile"=NULL,
                                  "issueDate"=app.input$idate,
                                  "archive"=F,
-                                 "bdate"=forecast.forcingandxobs$bdate,
-                                 "cdate"=forecast.forcingandxobs$cdate,
-                                 "edate"=forecast.forcingandxobs$edate,
+                                 "bdate"=forecastForcing$bdate,
+                                 "cdate"=forecastForcing$cdate,
+                                 "edate"=forecastForcing$edate,
                                  "outstateDate"=outStateDate,
                                  "stateFile"=stateFile)
-        # ToDo: Check forecast.forcing content due to error when prepareHypeAppsOutput() runs, some loop index if: Error in if (nj >= ni) { : missing value where TRUE/FALSE needed
+
         if (verboseVerbose == TRUE) {
             print("forecast.forcing (output from process_forecast_netcdf2obs):")
             print(forecast.forcing)
@@ -450,8 +436,6 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             print(list.files(tmpPath))
         }
     }
-
-    #q(save="no", status = 0)
 
     if(app.sys=="tep"){rciop.log ("DEBUG", "forecast model forcing data downloaded and prepared", nameOfSrcFile_Run)}
     log.res=appLogWrite(logText = "forecast model forcing data downloaded and prepared",fileConn = logFile$fileConn)
