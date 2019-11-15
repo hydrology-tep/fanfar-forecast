@@ -755,7 +755,7 @@ getHypeAppSetup<-function(modelName,modelBin,tmpDir,appDir,appName,appInput,mode
     if(appName=="historical"|appName=="eodata"){
       fileNames=c(fileNames,"info-historical.txt")
     }else if(appName=="forecast"){
-      fileNames=c(fileNames,"info-hindcast.txt","info-forecast.txt")
+      fileNames=c(fileNames,"info-hindcast-template.txt","info-forecast-template.txt")
     }
     
     if(appName=="historical"|appName=="forecast"){
@@ -2290,10 +2290,10 @@ updateModelInput<-function(appSetup=NULL,appInput=NULL,hindcast=NULL,modelForcin
     
     # read template info for hindcast or forecast simulation
     if(hindcast){
-      info=readInfo(paste(appSetup$runDir,"info-hindcast.txt",sep="/"))
+      info=readInfo(paste(appSetup$runDir,"info-hindcast-template.txt",sep="/"))
       dirNum=1
     }else{
-      info=readInfo(paste(appSetup$runDir,"info-forecast.txt",sep="/"))
+      info=readInfo(paste(appSetup$runDir,"info-forecast-template.txt",sep="/"))
       dirNum=2
     }
     

@@ -218,9 +218,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         print(app.setup)
     }
     if (debugPublish == TRUE) {
-        toFile = paste(app.setup$runDir,"info-hindcast.txt",sep="/")
+        toFile = paste(app.setup$runDir,"info-hindcast-template.txt",sep="/")
         rciop.publish(path=toFile, recursive=FALSE, metalink=TRUE)
-        toFile = paste(app.setup$runDir,"info-forecast.txt",sep="/")
+        toFile = paste(app.setup$runDir,"info-forecast-template.txt",sep="/")
         rciop.publish(path=toFile, recursive=FALSE, metalink=TRUE)
     }
 
@@ -326,7 +326,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     }
     if (debugPublish == TRUE) {
         fromFile <- paste(app.setup$runDir,"info.txt",sep="/")
-        toFile <- paste(app.setup$runDir,"info-before-hindcast.txt",sep="/")
+        toFile <- paste(app.setup$runDir,"info-for-hindcast.txt",sep="/")
         file.copy(from=fromFile,to=toFile)
         rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
     }
@@ -466,7 +466,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     }
     if (debugPublish == TRUE) {
         fromFile <- paste(app.setup$runDir,"info.txt",sep="/")
-        toFile <- paste(app.setup$runDir,"info-before-forecast.txt",sep="/")
+        toFile <- paste(app.setup$runDir,"info-for-forecast.txt",sep="/")
         file.copy(from=fromFile,to=toFile)
         rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
     }
