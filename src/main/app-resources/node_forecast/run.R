@@ -55,11 +55,6 @@ verboseVerbose <- FALSE
 #debugPublish <- TRUE
 debugPublish <- FALSE
 
-# Config parameter for process_hindcast_netcdf2obs and process_forcast_netcdf2obs functions
-# TRUE  - copy obs files directly to model run dir.
-# FALSE - standard hypeapps functions (reads and) copies obs files to model run dir
-#cEnableCopyObsFilesToRunDir <- TRUE
-
 # Handle HTEP fake input to only run the code in one run slot
 stdin_f <- file("stdin")
 open(stdin_f)
@@ -102,7 +97,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## ------------------------------------------------------------------------------
     ## Load hypeapps environment and additional R utility functions
     if(app.sys=="tep"){
-        source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-netcdf.R",sep="/"))
+        source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-forcing.R",sep="/"))
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/hypeapps-environment.R",sep="/"))
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/hypeapps-utils.R", sep="/"))
 
@@ -132,10 +127,10 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     # Process user options/selections to later select between different variants
     # of models, datasets etc.
     rciop.log("INFO", "Processing user selection:")
-    applRuntimeOptions <- process_application_runtime_options()
+    applRuntimeOptions <- process_configuration_application_runtime_options()
 
     if (verboseVerbose == TRUE) {
-        print("applRuntimeOptions (output from process_application_runtime_options):")
+        print("applRuntimeOptions (output from process_configuration_application_runtime_options):")
         print(applRuntimeOptions)
     }
 
@@ -143,11 +138,11 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## Read the main input (from stdin). This is the reference link to the application configuration object
     ## Extract information from file dependencies.txt, part of the application configuration object
     rciop.log("INFO", paste("Processing input from stdin:", input, sep=" "))
-    modelConfigData <- process_input_model_configuration(applRuntimeOptions,
-                                                         input)
+    modelConfigData <- process_configuration_application_inputs(applRuntimeOptions,
+                                                                input)
 
     if (verboseVerbose == TRUE) {
-        print("modelConfigData (output from process_input_model_configuration):")
+        print("modelConfigData (output from process_configuration_application_input):")
         print(modelConfigData)
     }
 
@@ -169,7 +164,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         ## ------------------------------------------------------------------------------
         ## Get HYPE model dataset
         rciop.log("INFO", "Processing config for model data", nameOfSrcFile_Run)
-        modelDataPaths <- process_input_hype_model_data(applRuntimeOptions,modelConfigData) # ,paste0(TMPDIR,"/hype-model-data"))
+        modelDataPaths <- process_configuration_hype_data(applRuntimeOptions,modelConfigData) # ,paste0(TMPDIR,"/hype-model-data"))
 
         ## ------------------------------------------------------------------------------
         # Overwrite variables normally set in hypeapps-model-settings.R
@@ -252,18 +247,17 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         dirNCFiles  <- paste(TMPDIR,"netcdf-files",sep="/")
         dirObsFiles <- paste(TMPDIR,"obs-files",sep="/") # Output dir of produced files
         #dirGridMeta <- paste(TMPDIR,"grid-meta",sep="/")
-        hindcastForcing <- process_hindcast_netcdf2obs(modelConfigData,
-                                                       modelDataPaths,
-                                                       app.input$idate,
-                                                       app.input$hcperiodlen,
-                                                       applRuntimeOptions$runType == cRunTypeVariant2, # Re-forecast
-                                                       dirNCFiles,
-                                                       ncSubDir=TRUE,
-                                                       modelDataPaths$dirGridMetaData,
-                                                       #cEnableCopyObsFilesToRunDir,
-                                                       app.setup$runDir,
-                                                       dirObsFiles,
-                                                       debugPublish)
+        hindcastForcing <- process_forcing_hydrogfd2_hindcast(modelConfigData,
+                                                              modelDataPaths,
+                                                              app.input$idate,
+                                                              app.input$hcperiodlen,
+                                                              applRuntimeOptions$runType == cRunTypeVariant2, # Re-forecast
+                                                              dirNCFiles,
+                                                              ncSubDir=TRUE,
+                                                              modelDataPaths$dirGridMetaData,
+                                                              app.setup$runDir,
+                                                              dirObsFiles,
+                                                              debugPublish)
 
         # Minimal variants of original list types returned by getModelForcing()
         hindcast.forcing <- list("status"=T,
@@ -382,16 +376,15 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     #     (applRuntimeOptions$metFC == cMetFCVariant1)) {
     if (applRuntimeOptions$modelConfig == cModelConfigVariant1) {
         ## Download and process ecoper netcdf files
-        forecastForcing <- process_forecast_netcdf2obs(modelConfigData,
-                                                       modelDataPaths,
-                                                       app.input$idate,
-                                                       dirNCFiles,
-                                                       ncSubDir=TRUE,
-                                                       modelDataPaths$dirGridMetaData,
-                                                       #cEnableCopyObsFilesToRunDir,
-                                                       app.setup$runDir,
-                                                       dirObsFiles,
-                                                       debugPublish)
+        forecastForcing <- process_forcing_hydrogfd2_forecast(modelConfigData,
+                                                              modelDataPaths,
+                                                              app.input$idate,
+                                                              dirNCFiles,
+                                                              ncSubDir=TRUE,
+                                                              modelDataPaths$dirGridMetaData,
+                                                              app.setup$runDir,
+                                                              dirObsFiles,
+                                                              debugPublish)
         # Copy produced state file from the hindcast run to run dir
         outStateDate <- forecastForcing$cdate
         outStateDate <- gsub("-", "", as.character(outStateDate))

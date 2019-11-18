@@ -30,7 +30,7 @@ cRunTypeVariants <- c(cRunTypeVariant1,cRunTypeVariant2)
 
 # Process user options/selections to later select between different variants
 # of models, datasets etc.
-process_application_runtime_options <- function()
+process_configuration_application_runtime_options <- function()
 {
     # Outputs
     modelConfig <- NULL
@@ -85,15 +85,15 @@ process_application_runtime_options <- function()
                                      #"hypeStateDate"=hypeStateDate
                                     )
 
-} # process_application_runtime_options
+} # process_configuration_application_runtime_options
 
 
 # Extract information from file dependencies.txt, part of the application configuration object
 # Output is now urls to configuration items to later be downloaded, e.g.:
 # modelData   - locating HYPE model dataset. Data files etc.
 # gfdHydrogfd - locating netcdf files for HydroGFD2
-process_input_model_configuration <- function(applConfig=NULL, # Application configuration from user, ToDo
-                                              applInput=NULL)  # Input to application from stdin
+process_configuration_application_inputs <- function(applConfig=NULL, # Application configuration from user, ToDo
+                                                     applInput=NULL)  # Input to application from stdin
 {
   # Download the configuration object from the applications input reference url
   # For non-valid reference urls, use the defined urls in this function
@@ -273,7 +273,7 @@ process_input_model_configuration <- function(applConfig=NULL, # Application con
   )
   
   return (outputModelConfig)
-}
+} # process_configuration_application_inputs
 
 
 check_dir_exist <- function(absPath)
@@ -294,8 +294,8 @@ check_file_exist <- function(absPath)
 
 # Download HYPE dataset from the url - part of the model configuration object
 # Output is paths to downloaded data
-process_input_hype_model_data <- function(applConfig,  # Application configuration from user, ToDo
-                                          modelConfig) # Application model config object (urls)
+process_configuration_hype_data <- function(applConfig,  # Application configuration from user, ToDo
+                                            modelConfig) # Application model config object (urls)
 {
   # Outputs
   dirGridMetaData   <- NULL
@@ -399,4 +399,4 @@ process_input_hype_model_data <- function(applConfig,  # Application configurati
   #print(outputModelData)
   #rciop.log("INFO", outputModelData)
   return (outputModelData)
-} # process_input_hype_model_data
+} # process_configuration_hype_data

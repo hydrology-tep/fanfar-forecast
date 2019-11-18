@@ -1112,18 +1112,17 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
 
 # External function
 # Wrapper for netcdf2obs sequence
-process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
-                                        modelDataConfig, # Misc model config data, paths to state files, forcing, shape files
-                                        forecastIssueDate, # yyyy-mm-dd
-                                        hindcastPeriodLength, # Days
-                                        reforecast, # True - reforecast, False - operational
-                                        netcdfDir, # Input dir with hydrogfd netcdf files
-                                        ncSubDir, # False-one dir, True-separate dir for each variable
-                                        gridMetaDir, # Input dir with grid weight files
-                                        #enableCopyObsFilesToRunDir, # Copy produced obs files to run dir
-                                        modelFilesRunDir, # HYPE model data files dir
-                                        obsDir, # Output dir for obs files
-                                        debugPublishFiles=FALSE) # Condition to publish files during development
+process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, now
+                                               modelDataConfig, # Misc model config data, paths to state files, forcing, shape files
+                                               forecastIssueDate, # yyyy-mm-dd
+                                               hindcastPeriodLength, # Days
+                                               reforecast, # True - reforecast, False - operational
+                                               netcdfDir, # Input dir with hydrogfd netcdf files
+                                               ncSubDir, # False-one dir, True-separate dir for each variable
+                                               gridMetaDir, # Input dir with grid weight files
+                                               modelFilesRunDir, # HYPE model data files dir
+                                               obsDir, # Output dir for obs files
+                                               debugPublishFiles=FALSE) # Condition to publish files during development
 {
   # Prepare hindcast and forecast intervals, start and end dates
   prepHindcastInterval <- prepare_hindcast_intervals(hindcastPeriodLength,
@@ -1275,21 +1274,20 @@ process_hindcast_netcdf2obs <- function(modelConfig, # Misc config data, now
                            "edate"=edate)
   return (hindcast.forcing)
 
-} # process_hindcast_netcdf2obs
+} # process_forcing_hydrogfd2_hindcast
 
 
 # External function
 # Wrapper for netcdf2obs sequence
-process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
-                                        modelDataConfig, # Misc model config data, paths to state files, forcing, shape files
-                                        forecastIssueDate, # yyyy-mm-dd
-                                        netcdfDir, # Input dir with hydrogfd netcdf files
-                                        ncSubDir, # False-one dir, True-separate dir for each variable
-                                        gridMetaDir, # Input dir with grid weight files
-                                        #enableCopyObsFilesToRunDir, # Copy produced obs files to run dir
-                                        modelFilesRunDir = NULL, # HYPE model data files
-                                        obsDir, # Output dir for obs files
-                                        debugPublishFiles=FALSE) # Condition to publish files during development
+process_forcing_hydrogfd2_forecast <- function(modelConfig, # Misc config data, now
+                                               modelDataConfig, # Misc model config data, paths to state files, forcing, shape files
+                                               forecastIssueDate, # yyyy-mm-dd
+                                               netcdfDir, # Input dir with hydrogfd netcdf files
+                                               ncSubDir, # False-one dir, True-separate dir for each variable
+                                               gridMetaDir, # Input dir with grid weight files
+                                               modelFilesRunDir = NULL, # HYPE model data files
+                                               obsDir, # Output dir for obs files
+                                               debugPublishFiles=FALSE) # Condition to publish files during development
 {
   # Prepare hindcast and forecast intervals, start and end dates
   prepForecastInterval <- prepare_forecast_intervals(forecastIssueDate)
@@ -1404,4 +1402,4 @@ process_forecast_netcdf2obs <- function(modelConfig, # Misc config data, now
                            "edate"=edate)
   return (forecast.forcing)
 
-} # process_forecast_netcdf2obs
+} # process_forcing_hydrogfd2_forecast
