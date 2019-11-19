@@ -48,12 +48,15 @@
 ## ------------------------------------------------------------------------------
 # Constants
 nameOfSrcFile_Run <- "/node_forecast/run.R"
-verbose <- TRUE
-#verbose <- FALSE
+#verbose <- TRUE
+verbose <- FALSE
 #verboseVerbose <- TRUE
 verboseVerbose <- FALSE
 #debugPublish <- TRUE
 debugPublish <- FALSE
+
+# Enable filename prefix with e.g. 001
+enableNumbersAsFilenamePrefix = FALSE
 
 # Handle HTEP fake input to only run the code in one run slot
 stdin_f <- file("stdin")
@@ -110,7 +113,12 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## ------------------------------------------------------------------------------
     ## Open application logfile
     ## create a date tag to include in output filenames
-    logFile=appLogOpen(appName = app.name, tmpDir = getwd(),appDate = app.date,prefix="000")
+    if (enableNumbersAsFilenamePrefix == TRUE) {
+        prefixLogFile="000"
+    }else{
+        prefixLogFile=NULL
+    }
+    logFile=appLogOpen(appName = app.name, tmpDir = getwd(),appDate = app.date,prefix=prefixLogFile)
 
     ## ------------------------------------------------------------------------------
     # Get git commit
@@ -473,7 +481,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     app.outfiles <- prepareHypeAppsOutput(appSetup  = app.setup, appInput = app.input,
                                           modelInput = forecast.input, modelForcing = forecast.forcing,
                                           runRes = attr(forecast.run,"status"),
-                                          appDate = app.date)
+                                          appDate = app.date,
+                                          numbersAsFilenamePrefix = enableNumbersAsFilenamePrefix)
     if(length(app.outfiles)>1){
         app.outfiles=sort(app.outfiles,decreasing = F)
     }

@@ -3,8 +3,8 @@
 # Constants
 nameOfSrcFile_PC <- "/util/R/process-configuration.R"
 
-verbose <- TRUE
-#verbose <- FALSE
+#verbose <- TRUE
+verbose <- FALSE
 
 # Constants application.xml (tag option)
 cModelConfigVariant1 <- "WestAfrica-HYPE + HydroGFD 2.0 + ECOPER"

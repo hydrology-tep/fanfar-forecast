@@ -2442,7 +2442,7 @@ updateModelInput<-function(appSetup=NULL,appInput=NULL,hindcast=NULL,modelForcin
 
 ## -------------------------------------------------------------------------------
 ## prepare application outputs
-prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,modelForcing = NULL,runRes=NULL,appDate=NULL){
+prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,modelForcing = NULL,runRes=NULL,appDate=NULL,numbersAsFilenamePrefix=TRUE){
   
   # Disable post-processing for H-TEP
   enablePostProcessing <- (app.sys!="tep")
@@ -2453,16 +2453,28 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
   dir.create(outDir,recursive = T,showWarnings = F)
 
   ## output file prefixes, to order the results better
-  prefixDate =paste0("_r",appDate,"_i",gsub(pattern="-",replacement="",appInput$idate))
-  prefix.img =paste0("001",prefixDate)
-  prefix.csv =paste0("002",prefixDate)
-  prefix.bas =paste0("003",prefixDate)
-  prefix.map =paste0("004",prefixDate)
-  prefix.tim =paste0("005",prefixDate)
-  prefix.oth =paste0("006",prefixDate)
-  prefix.log =paste0("000",prefixDate)
-  prefix.wl.txt = paste0("004",prefixDate)
-  prefix.wl.png = paste0("001",prefixDate)
+  prefixDate =paste0("r",appDate,"_i",gsub(pattern="-",replacement="",appInput$idate))
+  if (numbersAsFilenamePrefix == TRUE) {
+    prefix.img =paste0("001_",prefixDate)
+    prefix.csv =paste0("002_",prefixDate)
+    prefix.bas =paste0("003_",prefixDate)
+    prefix.map =paste0("004_",prefixDate)
+    prefix.tim =paste0("005_",prefixDate)
+    prefix.oth =paste0("006_",prefixDate)
+    prefix.log =paste0("000_",prefixDate)
+    prefix.wl.txt = paste0("004_",prefixDate)
+    prefix.wl.png = paste0("001_",prefixDate)
+  }else{
+    prefix.img =prefixDate
+    prefix.csv =prefixDate
+    prefix.bas =prefixDate
+    prefix.map =prefixDate
+    prefix.tim =prefixDate
+    prefix.oth =prefixDate
+    prefix.log =prefixDate
+    prefix.wl.txt = prefixDate
+    prefix.wl.png = prefixDate
+  }
   
   ## get hype2csv file from its URL
   if(file.exists(paste(appSetup$hype2csvPath,appSetup$hype2csvFile,sep="/"))){

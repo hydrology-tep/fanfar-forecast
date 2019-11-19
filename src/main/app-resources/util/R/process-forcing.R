@@ -1,10 +1,10 @@
 #! /usr/bin/Rscript
 
 # Constants
-nameOfSrcFile_PN <- "/util/R/process-netcdf.R"
+nameOfSrcFile_PN <- "/util/R/process-forcing.R"
 
-verbose <- TRUE
-#verbose <- FALSE
+#verbose <- TRUE
+verbose <- FALSE
 #verboseVerbose <- TRUE
 verboseVerbose <- FALSE
 
@@ -438,12 +438,12 @@ determine_interval_hindcast <- function(forecastIssueDate,
     hindcast.endDate      <- forecastIssueDate
     hindcast.endDate$mday <- hindcast.endDate$mday - 1
 
-    if (verbose == TRUE) {
+    #if (verbose == TRUE) {
       print('Hindcast:')
       print(hindcast.startDate)
       print(hindcast.endDate)
       print('')
-    }
+    #}
 
     output <- list("hindcast.startDate"=hindcast.startDate,
                    "hindcast.endDate"=hindcast.endDate)
@@ -505,12 +505,12 @@ determine_interval_hydrogfdei <- function(hindcastStartDate,
       hydrogfdei.endDate$mday <- hydrogfdei.endDate$mday + (mday_last - hydrogfdei.endDate$mday)
     }
 
-    if (verbose == TRUE) {
+    #if (verbose == TRUE) {
       print('HydroGFDEI:')
       print(hydrogfdei.startDate)
       print(hydrogfdei.endDate)
       print('')
-    }
+    #}
 
     output <- list("hydrogfdei.startDate"=hydrogfdei.startDate,
                    "hydrogfdei.endDate"=hydrogfdei.endDate)
@@ -567,12 +567,12 @@ determine_interval_hydrogfdod <- function(hydrogfdeiEndDate,
       hydrogfdod.endDate$mday <- hydrogfdod.endDate$mday + (mday_last - hydrogfdod.endDate$mday)
     }
 
-    if (verbose == TRUE) {
+    #if (verbose == TRUE) {
       print('HydroGFDOD:')
       print(hydrogfdod.startDate)
       print(hydrogfdod.endDate)
       print('')
-    }
+    #}
 
     output <- list("hydrogfdod.startDate"=hydrogfdod.startDate,
                    "hydrogfdod.endDate"=hydrogfdod.endDate)
@@ -590,12 +590,12 @@ determine_interval_od_daily <- function(hydrogfdodEndDate,
 
     od.endDate        <- hindcastEndDate
 
-    if (verbose == TRUE) {
+    #if (verbose == TRUE) {
       print('OD:')
       print(od.startDate)
       print(od.endDate)
       print('')
-    }
+    #}
 
     output <- list("od.startDate"=od.startDate,
                    "od.endDate"=od.endDate)
@@ -612,12 +612,12 @@ determine_interval_ecoper <- function(forecastIssueDate)
     ecoper.endDate      <- forecastIssueDate
     ecoper.endDate$mday <- ecoper.endDate$mday + 9
 
-    if (verbose == TRUE) {
+    #if (verbose == TRUE) {
       print('ECOPER:')
       print(ecoper.startDate)
       print(ecoper.endDate)
       print('')
-    }
+    #}
 
     output <- list("ecoper.startDate"=ecoper.startDate,
                    "ecoper.endDate"=ecoper.endDate)
