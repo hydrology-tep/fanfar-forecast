@@ -399,6 +399,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         stateFile <- paste0(app.setup$runDir,"/hindcast","/state_save",outStateDate,".txt")
         if(file.exists(stateFile)) {
             file.copy(from=stateFile,to=app.setup$runDir,overwrite=TRUE)
+            if (debugPublish == TRUE) {
+                rciop.publish(path=stateFile,recursive=FALSE,metalink=TRUE)
+            }
         }else {
             rciop.log("INFO",paste0("File missing: ",stateFile,nameOfSrcFile_Run))
             #q()
