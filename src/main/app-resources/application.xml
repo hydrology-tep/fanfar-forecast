@@ -7,8 +7,8 @@
 
         <parameter id="model_config" title="Model configuration" abstract="Hydrological model, meterological hindcast and forecast dataset" minOccurs="1" maxOccurs="1" scope="runtime" type="LiteralData">
           <options>
-            <option>WestAfrica-HYPE + HydroGFD 2.0 + ECOPER</option>
-            <default>WestAfrica-HYPE + HydroGFD 2.0 + ECOPER</default> 
+            <option>World Wide-HYPE + HydroGFD 2.0 + ECOPER</option>
+            <default>World Wide-HYPE + HydroGFD 2.0 + ECOPER</default> 
           </options>
         </parameter>
 
@@ -40,11 +40,11 @@
           </options>
         </parameter>
 
-        <parameter id="basinset" title="Optional output sub-basins (SUBID)" abstract="Comma delimited, HYPE sub-basin identifiers" minOccurs="0" maxOccurs="850" scope="runtime" type="LiteralData"></parameter>
+        <parameter id="basinset" title="Optional: Output sub-basins (SUBID)" abstract="Comma delimited, HYPE sub-basin identifiers" minOccurs="0" maxOccurs="850" scope="runtime" type="LiteralData"></parameter>
 
-        <parameter id="xobs" title="Optional Xobs file(s) with EO and/or In-situ data" abstract="Xobs file(s) with pre-processed EO or In-situ data" minOccurs="0" maxOccurs="10" scope="runtime" type="LiteralData"></parameter>
+        <parameter id="xobs" title="Optional: Xobs file(s) with EO and/or In-situ data" abstract="Xobs file(s) with pre-processed EO or In-situ data" minOccurs="0" maxOccurs="10" scope="runtime" type="LiteralData"></parameter>
 
-        <parameter id="assimOn" title="Optional assimilation on/off" abstract="Data assimilation on/off" minOccurs="1" maxOccurs="1" scope="runtime" type="LiteralData">
+        <parameter id="assimOn" title="Optional: Assimilation on/off" abstract="Data assimilation on/off" minOccurs="1" maxOccurs="1" scope="runtime" type="LiteralData">
           <options>
             <option>on</option>
             <option>off</option>
@@ -52,7 +52,7 @@
           </options>
         </parameter>
 
-        <parameter id="assimVars" title="Optional assimilated observations" abstract="Observations to be assimilated" minOccurs="1" maxOccurs="1" scope="runtime" type="LiteralData">
+        <parameter id="assimVars" title="Optional: Assimilated observations" abstract="Observations to be assimilated" minOccurs="1" maxOccurs="1" scope="runtime" type="LiteralData">
           <options>
             <option>Lake Water Level - altimetry AOWL WCOM</option>
             <option>Openloop - ensembles without assimilation OPEN LOOP</option>
@@ -64,7 +64,7 @@
           </options>
         </parameter>
 
-        <parameter id="model_config_file" title="Optional model configuration file" abstract="File containing user's own model configuration" minOccurs="0" maxOccurs="1" scope="runtime" type="LiteralData">-</parameter>
+        <parameter id="model_config_file" title="Optional: Model configuration file" abstract="File containing user's own model configuration" minOccurs="0" maxOccurs="1" scope="runtime" type="LiteralData">-</parameter>
 
       </defaultParameters>
       

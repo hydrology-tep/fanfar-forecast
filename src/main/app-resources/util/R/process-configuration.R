@@ -7,7 +7,7 @@ nameOfSrcFile_PC <- "/util/R/process-configuration.R"
 verbose <- FALSE
 
 # Constants application.xml (tag option)
-cModelConfigVariant1 <- "WestAfrica-HYPE + HydroGFD 2.0 + ECOPER"
+cModelConfigVariant1 <- "World Wide-HYPE + HydroGFD 2.0 + ECOPER"
 cModelConfigVariants <- c(cModelConfigVariant1)
 
 # Global constants not part of application.xml that
