@@ -2351,28 +2351,34 @@ updateModelInput<-function(appSetup=NULL,appInput=NULL,hindcast=NULL,modelForcin
     # Append data for variables read from info file
     outputVariablesFromInfoFile <- NULL
     if(cAppendVariableValues == TRUE){
-      OutVarData = info$basinoutput_variable
-      if(nchar(OutVarData) > 0){
-        if(is.null(outputVariablesFromInfoFile)){
-          outputVariablesFromInfoFile = strsplit(OutVarData,split = " ")[[1]]
-        }else{
-          outputVariablesFromInfoFile = c(outputVariablesFromInfoFile,strsplit(OutVarData,split = " ")[[1]])
+      if(info$isBasinoutput_variable){
+        OutVarData = info$basinoutput_variable
+        if(nchar(OutVarData) > 0){
+          if(is.null(outputVariablesFromInfoFile)){
+            outputVariablesFromInfoFile = strsplit(OutVarData,split = " ")[[1]]
+          }else{
+            outputVariablesFromInfoFile = c(outputVariablesFromInfoFile,strsplit(OutVarData,split = " ")[[1]])
+          }
         }
       }
-      OutVarData = info$timeoutput_variable
-      if(nchar(OutVarData) > 0){
-        if(is.null(outputVariablesFromInfoFile)){
-          outputVariablesFromInfoFile = strsplit(OutVarData,split = " ")[[1]]
-        }else{
-          outputVariablesFromInfoFile = c(outputVariablesFromInfoFile,strsplit(OutVarData,split = " ")[[1]])
+      if(info$isTimeoutput_variable){
+        OutVarData = info$timeoutput_variable
+        if(nchar(OutVarData) > 0){
+          if(is.null(outputVariablesFromInfoFile)){
+            outputVariablesFromInfoFile = strsplit(OutVarData,split = " ")[[1]]
+          }else{
+            outputVariablesFromInfoFile = c(outputVariablesFromInfoFile,strsplit(OutVarData,split = " ")[[1]])
+          }
         }
       }
-      OutVarData = info$mapoutput_variable
-      if(nchar(OutVarData) > 0){
-        if(is.null(outputVariablesFromInfoFile)){
-          outputVariablesFromInfoFile = strsplit(OutVarData,split = " ")[[1]]
-        }else{
-          outputVariablesFromInfoFile = c(outputVariablesFromInfoFile,strsplit(OutVarData,split = " ")[[1]])
+      if(info$isMapoutput_variable){
+        OutVarData = info$mapoutput_variable
+        if(nchar(OutVarData) > 0){
+          if(is.null(outputVariablesFromInfoFile)){
+            outputVariablesFromInfoFile = strsplit(OutVarData,split = " ")[[1]]
+          }else{
+            outputVariablesFromInfoFile = c(outputVariablesFromInfoFile,strsplit(OutVarData,split = " ")[[1]])
+          }
         }
       }
     } # cAppendVariableValues
@@ -2415,14 +2421,20 @@ updateModelInput<-function(appSetup=NULL,appInput=NULL,hindcast=NULL,modelForcin
     } # if(length(appInput$outbasins) <= 0
     
     # basinoutput
-    info$info.lines[info$basinoutput_variable.lineNr]=paste('basinoutput variable',gsub(pattern=",",replacement = " ",outVariables),sep=" ")
+    if(info$isBasinoutput_variable){
+      info$info.lines[info$basinoutput_variable.lineNr]=paste('basinoutput variable',gsub(pattern=",",replacement = " ",outVariables),sep=" ")
+    }
     info$info.lines[info$basinoutput_subbasin.lineNr]=paste('basinoutput subbasin',gsub(pattern=",",replacement = " ",outBasins),sep=" ")
     
     # timeoutput
-    info$info.lines[info$timeoutput_variable.lineNr]=paste('timeoutput variable',gsub(pattern=",",replacement = " ",outVariables),sep=" ")
+    if(info$isTimeoutput_variable){
+      info$info.lines[info$timeoutput_variable.lineNr]=paste('timeoutput variable',gsub(pattern=",",replacement = " ",outVariables),sep=" ")
+    }
     
     # mapoutput
-    info$info.lines[info$mapoutput_variable.lineNr]=paste('mapoutput variable',gsub(pattern=",",replacement = " ",outVariables),sep=" ")
+    if(info$isMapoutput_variable){
+      info$info.lines[info$mapoutput_variable.lineNr]=paste('mapoutput variable',gsub(pattern=",",replacement = " ",outVariables),sep=" ")
+    }
     
     # outstatedate
     if(hindcast){

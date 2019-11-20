@@ -151,11 +151,11 @@ process_configuration_application_inputs <- function(applConfig=NULL, # Applicat
       # }
       #else if(applConfig$hydModel == cHydModelVariant2){
       if (applRuntimeOptions$modelConfig == cModelConfigVariant1) {
-          print("Using default URL for WestAfrica-HYPE model configuration object")
+          print("Using default URL for World Wide-HYPE model configuration object")
           urlAndQuery <- 'https://recast.terradue.com/t2api/search/hydro-smhi/models?uid=40A27455C9498A70A4C12E458E527499331B96AE'
           opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
       }else{
-          print("UNSUPPORTED URL for HYPE model configuration object")
+          print("UNSUPPORTED URL for the HYPE model configuration object")
           # Exit the application
           rciop.log("ERROR", "Unsupported configuration",nameOfSrcFile_PC)
           q(save="no",status=99)
@@ -188,7 +188,7 @@ process_configuration_application_inputs <- function(applConfig=NULL, # Applicat
   names(model_config_data) <- c('subdir','url','querypattern','info')
   for (r in 1:nrow(model_config_data)) {
     subdir <- model_config_data[r,'subdir']
-    if (subdir == 'model-data') {
+    if (subdir == 'hype-model') {
       modelDataSubDir  <- model_config_data[r,'subdir'] # Intended to be used as dir name for rciop.copy TMPDIR/subdir/
       modelDataUrl     <- model_config_data[r,'url']
       modelDataQuery   <- model_config_data[r,'querypattern']
@@ -353,7 +353,7 @@ process_configuration_hype_data <- function(applConfig,  # Application configura
       dirGridMetaData   <- paste(dirModelFiles,"grid.meta",sep="/")
       dirForcingArchive <- paste(dirModelFiles,"forcingarchive",sep="/")
       dirReturnLevels   <- paste(dirModelFiles,"returnlevels",sep="/")
-      dirShapeFiles     <- paste(dirModelFiles,"subidshapefiles",sep="/") # ToDo: Temporary disabled during tests with shapefiles for niger-hype
+      dirShapeFiles     <- paste(dirModelFiles,"subidshapefile",sep="/") # ToDo: Temporary disabled during tests with shapefiles for niger-hype
       #dirShapeFiles     <- paste(dirModelFiles,"shapefiles",sep="/")
       dirStateFiles     <- paste(dirModelFiles,"statefiles",sep="/")
       dirHYPE2CSVFiles  <- paste(dirModelFiles,"hype2csv",sep="/")
