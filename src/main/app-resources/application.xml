@@ -7,7 +7,7 @@
 
         <parameter id="model_config" title="Model configuration" abstract="Hydrological model, meterological hindcast and forecast dataset" minOccurs="1" maxOccurs="1" scope="runtime" type="LiteralData">
           <options>
-            <option>World Wide-HYPE + HydroGFD 2.0 + ECOPER</option>
+            <option>World Wide-HYPE 1.3.6 + HydroGFD 2.0 + ECOPER</option>
             <default>World Wide-HYPE + HydroGFD 2.0 + ECOPER</default> 
           </options>
         </parameter>
@@ -20,6 +20,7 @@
           <options>
             <option>Operational</option>
             <option>Reforecast</option>
+            <option>Statefile creation</option>
             <default>Reforecast</default>
           </options>
         </parameter>

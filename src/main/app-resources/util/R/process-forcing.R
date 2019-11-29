@@ -174,9 +174,9 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
 prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
                                           ncRootDir, # Path to netcdf files
                                           ncSubDir, # False-one dir, True-separate dir for each variable
-                                          resourceDir, # Path to resources (shapefiles with (gfd) grid points and polygons)
-                                          gridElevPath, # Path to netcdf file with elevation
-                                          shapeFilePath, # Path to model shapefile
+                                          #resourceDir, # Path to resources (shapefiles with (gfd) grid points and polygons)
+                                          #gridElevPath, # Path to netcdf file with elevation
+                                          #shapeFilePath, # Path to model shapefile
                                           outPath, # Path for output files, calling function to handle publish?
                                           startDate, # yyyy-mm-dd
                                           endDate)# yyyy-mm-dd
@@ -186,9 +186,9 @@ prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
         print(paste0("workDir: ",workDir))
         print(paste0("ncRootDir: ",ncRootDir))
         print(paste0("ncSubDir: ",ncSubDir))
-        print(paste0("resourceDir: ",resourceDir))
-        print(paste0("gridElevPath: ",gridElevPath))
-        print(paste0("shapeFilePath: ",shapeFilePath))
+        #print(paste0("resourceDir: ",resourceDir))
+        #print(paste0("gridElevPath: ",gridElevPath))
+        #print(paste0("shapeFilePath: ",shapeFilePath))
         print(paste0("outPath: ",outPath))
         print(paste0("startDate: ",startDate))
         print(paste0("endDate: ",endDate))
@@ -222,17 +222,17 @@ prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
         grid_dir_path <- ncRootDir
     }
 
-    resource_dir_path <- resourceDir
-    if (! file.exists(resource_dir_path)){
-        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",resource_dir_path),nameOfSrcFile_PN)
-        #q(save="no", status = 77)
-    }
+    # resource_dir_path <- resourceDir
+    # if (! file.exists(resource_dir_path)){
+    #     rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",resource_dir_path),nameOfSrcFile_PN)
+    #     #q(save="no", status = 77)
+    # }
 
-    grid_elev_path <- gridElevPath
-    if (! file.exists(grid_elev_path)){
-        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",grid_elev_path),nameOfSrcFile_PN)
-        #q(save="no", status = 77)
-    }
+    # grid_elev_path <- gridElevPath
+    # if (! file.exists(grid_elev_path)){
+    #     rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",grid_elev_path),nameOfSrcFile_PN)
+    #     #q(save="no", status = 77)
+    # }
 
     nc_var_name     <- c("pr","tas","tasmin","tasmax")
     hype_obs_type   <- c("Pobs","Tobs","TMINobs","TMAXobs")
@@ -243,11 +243,11 @@ prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
     obsDigits <- c(3,1,1,1)
 
     # Model input
-    shape_file_path <- shapeFilePath
-    if (! file.exists(shape_file_path)){
-        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",shape_file_path),nameOfSrcFile_PN)
-        #q(save="no", status = 77)
-    }
+    # shape_file_path <- shapeFilePath
+    # if (! file.exists(shape_file_path)){
+    #     rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",shape_file_path),nameOfSrcFile_PN)
+    #     #q(save="no", status = 77)
+    # }
 
     # Output options
     out_path <- outPath
@@ -393,10 +393,62 @@ search_and_locate_latest_date <- function(url,
 } # search_and_locate_latest_date
 
 
+
+# Input  - local directory to check for state files
+# Output - status=0 and date (posix date class), filename incl. path.
+#        - status=1 when file not found or other error, return date 1901-01-01, filename NULL
+check_latest_statefiles <- function(filePath)
+{
+  status   <- 1 # NOK
+  fileDate <- "19010101"
+  fileName <- NULL
+
+  # ToDo: Add additional categories in filename? At least if files are stored elsewhere.
+  # At least HydroGFD version and hindcast start date?
+  if (dir.exists(filePath)){
+    listFilenames <- list.files(path=filePath,pattern="state_save")
+    if (length(listFilenames) > 0){
+      # Locate and extract date from filename
+      # .*  - match any character
+      # ()  - capturing group with expected match for 8 single digits
+      # \\1 - reference to first captured pattern
+      listDates <- gsub(pattern=".*([0-9]{8}).*",replace="\\1",listFilenames)
+      if (length(listDates) > 0){
+        # Locate the latest date, comparing dates as integers
+        latestDate <- 0
+        indexDate  <- -1
+        for (i in 1:length(listDates)){
+          if (nchar(listDates[i]) == 8){ # Added due to bad regular expression above - the complete filename can be returned as it is now
+              if (as.numeric(listDates[i]) > latestDate){
+                latestDate <- as.numeric(listDates[i])
+                indexDate  <- i
+              }
+          }
+        }
+    
+        if (indexDate > 0) {
+          fileDate <- listDates[indexDate]
+          fileName <- paste(filePath,listFilenames[indexDate],sep="/")
+          status   <- 0
+        }
+      }
+    }
+  }
+  
+  fileDate <- as.Date(fileDate,format="%Y%m%d")
+  fileDate <- as.POSIXlt(fileDate)
+  
+  return (list("status"=status,
+               "fileDate"=fileDate,
+               "fileName"=fileName))
+}
+
+
 # In/Out - objects of posix date classes
 determine_interval_hindcast <- function(forecastIssueDate,
                                         hindcastDays, # Integer/Numeric
-                                        hypeStateDate)
+                                        stateFileCreation,
+                                        pathStateFiles)
 {
     # Constants
     # HydroGFD 2 files on the store are available from 1979
@@ -407,25 +459,30 @@ determine_interval_hindcast <- function(forecastIssueDate,
     hindcast.startDate      <- forecastIssueDate
     hindcast.startDate$mday <- hindcast.startDate$mday - hindcastDays
 
+    # Check if state file exists (independent of run type mode)
+    resStateFile <- check_latest_statefiles(pathStateFiles)
+
+    doUseStateFile <- (! stateFileCreation)
+
     # Base hindcast start date depeding on HYPE state file
-    if (hindcast.startDate <= hypeStateDate) {
-      # Earlier than HYPE state date
-      hindcast.startDate      <- hypeStateDate
+    if ((hindcast.startDate <= resStateFile$fileDate) && doUseStateFile) {
+      # Start date earlier
+      hindcast.startDate      <- resStateFile$fileDate
       hindcast.startDate$mday <- hindcast.startDate$mday + 0 # + 1
     }else {
-      # Later than HYPE state date
+      # Start date later
 
       # Limit hindcast start date to the first day of the month
       mday_as_char <- strftime(hindcast.startDate,format="%d")
       mday_as_num  <- as.numeric(mday_as_char)
       if (mday_as_num > 1) {
-        #hindcast.startDate$mday <- 1 # This seems to reset subtraction of hindcast.Days above...
-        #hindcast.startDate$mday <- hindcast.startDate$mday - hindcast.startDate$mday + 1 # The same...
-        hindcast.startDate$mday <- hindcast.startDate$mday - (mday_as_num - 1) # Ok, this worked...
+        hindcast.startDate$mday <- hindcast.startDate$mday - (mday_as_num - 1)
       }
 
       # or: Limit hindcast start date to the first day of the calendar (jan 1)
       # or: Limit hindcast start date to the first day of the hydrological year (sep 1 ->aug 31)
+
+      doUseStateFile <- FALSE
     }
 
     # Limited in this function instead of in determine_interval_hydrogfdei() since output parameter
@@ -435,8 +492,17 @@ determine_interval_hindcast <- function(forecastIssueDate,
       hindcast.startDate <- cFilesHydroGFD2EIStartDate
     }
 
-    hindcast.endDate      <- forecastIssueDate
-    hindcast.endDate$mday <- hindcast.endDate$mday - 1
+    # HYPE adaption - one day longer for run type 'state file creation'
+    hindcast.endDate <- forecastIssueDate
+    if (! stateFileCreation) {
+        hindcast.endDate$mday <- hindcast.endDate$mday - 1
+    }
+
+    if (! doUseStateFile) {
+      # FileDate only used locally
+      # Clear output FileName to not trigger later functionality
+      resStateFile$fileName <- NULL
+    }
 
     #if (verbose == TRUE) {
       print('Hindcast:')
@@ -446,7 +512,8 @@ determine_interval_hindcast <- function(forecastIssueDate,
     #}
 
     output <- list("hindcast.startDate"=hindcast.startDate,
-                   "hindcast.endDate"=hindcast.endDate)
+                   "hindcast.endDate"=hindcast.endDate,
+                   "pathStateFile"=resStateFile$fileName)
 
     return (output)
 } # determine_interval_hindcast
@@ -456,6 +523,7 @@ determine_interval_hindcast <- function(forecastIssueDate,
 determine_interval_hydrogfdei <- function(hindcastStartDate,
                                           forecastIssueDate,
                                           in_reforecast,
+                                          stateFileCreation,
                                           in_url,
                                           in_query)
 {
@@ -505,6 +573,11 @@ determine_interval_hydrogfdei <- function(hindcastStartDate,
       hydrogfdei.endDate$mday <- hydrogfdei.endDate$mday + (mday_last - hydrogfdei.endDate$mday)
     }
 
+    if (stateFileCreation) {
+      # Same date as hindcast.endDate
+      hydrogfdei.endDate <- forecastIssueDate
+    }
+
     #if (verbose == TRUE) {
       print('HydroGFDEI:')
       print(hydrogfdei.startDate)
@@ -542,6 +615,12 @@ determine_interval_hydrogfdod <- function(hydrogfdeiEndDate,
           }
       }else{
           rciop.log("ERROR","Aborting, not able to locate the latest hydrogfdod netcdf file",nameOfSrcFile_PN)
+          q(save="no", status = 3)
+      }
+
+      diffDays <- forecastIssueDate - hydrogfdod.endDate
+      if (diffDays < 2){
+          rciop.log("ERROR","Aborting, the od daily hindcast period will be to short when using a historical forecast issue date",nameOfSrcFile_PN)
           q(save="no", status = 3)
       }
 
@@ -629,8 +708,9 @@ determine_interval_ecoper <- function(forecastIssueDate)
 prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
                                        in_forecastIssueDate, # character string with dashes
                                        in_reforecast = TRUE,
-                                       in_hypeStateFileDate, # character string without dashes
-                                       in_modelConfig) # for mode Operational, url and query to locate netcdf files
+                                       in_stateFileCreation = FALSE,
+                                       in_modelConfig, # url and query to locate netcdf files
+                                       in_modelDataConfig) # paths to local dirs with state files etc.
 {
     # Dates internally in function uses class posixlt (list)
 
@@ -646,21 +726,6 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
     forecast.IssueDate <- as.Date(in_forecastIssueDate)
     forecast.IssueDate <- as.POSIXlt(forecast.IssueDate)
 
-    # ToDo: Handle no file, NULL or incorrect date
-    dateLen <- nchar(as.character(in_hypeStateFileDate))
-    if (dateLen > 6) {
-      yyyy <- substr(in_hypeStateFileDate,1,4)
-      mm   <- substr(in_hypeStateFileDate,5,6)
-      dd   <- substr(in_hypeStateFileDate,7,8)
-    }else {
-      yyyy <- substr(in_hypeStateFileDate,1,4)
-      mm   <- substr(in_hypeStateFileDate,5,6)
-      dd   <- "01"
-    }
-    hypeState.Date <- paste(yyyy,mm,dd,sep="-")
-    hypeState.Date <- as.Date(hypeState.Date) # No time
-    hypeState.Date <- as.POSIXlt(hypeState.Date) # Still no time
-
     if (verbose == TRUE) {
       print('Handle inputs:')
       print('hindcast.Days:')
@@ -669,22 +734,34 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
       print(forecast.IssueDate)
       print('in_reforecast:')
       print(in_reforecast)
-      print('hypeState.Date:')
-      print(hypeState.Date)
+      print('in_stateFileCreation:')
+      print(in_stateFileCreation)
       print('')
+    }
+
+    if (in_stateFileCreation) {
+      print("------------------------------------------------")
+      print("Run type mode is 'state file creation'.")
+      print("Only using HydroGFDEI as meteo forcing data")
+      print("for the hindcast run.")
+      print("Ignore time intervals for HydroGFDOD and OD.")
+      print("Forecast run will not be performed.")
+      print("------------------------------------------------")
     }
 
     ## ------------------------------------------------------------------------------
     # Hindcast general
     intervalHindcast <- determine_interval_hindcast(forecast.IssueDate,
                                                     hindcast.Days,
-                                                    hypeState.Date)
+                                                    in_stateFileCreation,
+                                                    pathStateFiles=paste0(in_modelDataConfig,"/statefiles"))
 
     ## ------------------------------------------------------------------------------
     # HydroGFDEI (monthly)
     intervalHydrogfdei <- determine_interval_hydrogfdei(intervalHindcast$hindcast.startDate,
                                                         forecast.IssueDate,
                                                         in_reforecast,
+                                                        in_stateFileCreation,
                                                         in_modelConfig$gfdHydrogfdeiUrl,   # Operational
                                                         in_modelConfig$gfdHydrogfdeiQuery) # Operational
 
@@ -759,7 +836,9 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
                           "odStartDateSearch"=odStartDateSearch,
                           "odEndDateSearch"=odEndDateSearch,
                           "odStartDateFilename"=odStartDateFilename,
-                          "odEndDateFilename"=odEndDateFilename
+                          "odEndDateFilename"=odEndDateFilename,
+
+                          "pathStateFile"=intervalHindcast$pathStateFile
                           )
     return(castIntervals)
 
@@ -810,24 +889,24 @@ prepare_forecast_intervals <- function(in_forecastIssueDate) # character string 
 
 
 # Common
-search_and_download <- function(urlNC,
+search_and_download <- function(url,
                                 query,
-                                ncRootDir,
-                                ncSubDir)
+                                rootDir,
+                                subDir)
 {
   # Constants
   osClientApp <- "opensearch-client"
 
-  local.netcdfDir <- paste(ncRootDir,ncSubDir,sep="/")
-  if (! dir.exists(local.netcdfDir)){
-      dir.create(local.netcdfDir)
+  local.dir <- paste(rootDir,subDir,sep="/")
+  if (! dir.exists(local.dir)){
+      dir.create(local.dir)
   }
-  opensearchCmd=paste0(osClientApp," '",urlNC,query,"'"," enclosure")
+  opensearchCmd=paste0(osClientApp," '",url,query,"'"," enclosure")
   message(opensearchCmd)
   res_enclosure <- system(command = opensearchCmd,intern = T)
   if (length(res_enclosure >= 1)) {
-      for (url in 1:length(res_enclosure)) {
-          res_file <- rciop.copy(res_enclosure[url],local.netcdfDir)
+      for (xUrl in 1:length(res_enclosure)) {
+          res_file <- rciop.copy(res_enclosure[xUrl],local.dir)
           if (res_file$exit.code == 0) {
               path_plus_filename <- res_file$output
               # Not used, future?
@@ -875,9 +954,8 @@ search_and_download_netcdf <- function(urlNC,
       message(opensearchCmd)
       res_enclosure <- system(command = opensearchCmd,intern = T)
       if (length(res_enclosure >= 1)) {
-          #if (! dir.exists(local.netcdfDir)) { dir.create(local.netcdfDir) }
-          for (url in 1:length(res_enclosure)) {
-              res_file <- rciop.copy(res_enclosure[url],local.netcdfDir)
+          for (xUrl in 1:length(res_enclosure)) {
+              res_file <- rciop.copy(res_enclosure[xUrl],local.netcdfDir)
               if (res_file$exit.code == 0) {
                   path_plus_filename <- res_file$output
                   # Not used, future?
@@ -993,7 +1071,8 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
                             xCastsInterval, # dates for search start/stop, expected date in filename to check against
                             netcdfDir,      # base dir to download files too
                             ncSubDir,       # False-one dir, True-separate dir for each variable
-                            xCast=NULL)     # hindcast, forecast, elevation
+                            xCast=NULL,     # hindcast, forecast, elevation
+                            stateFileCreation=FALSE) # for hindcast
 {
   # Other inputs are:
   # path_to_store_netcdf_files - temporary dir
@@ -1005,6 +1084,7 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
     print(modelConfig)
     print(xCastsInterval)
     print(xCast)
+    print(stateFileCreation)
   }
 
   # Constants
@@ -1036,38 +1116,40 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
       }
       nMissingFiles <- nMissingFiles + nMissing
 
-      ## ------------------------------------------------------------------------------
-      # Handle hydrogfdod
-      urlNC     <- modelConfig$gfdHydrogfdodUrl
-      query     <- modelConfig$gfdHydrogfdodQuery
-      startDate <- xCastsInterval$hydrogfdodStartDateSearch
-      stopDate  <- xCastsInterval$hydrogfdodEndDateSearch
+      if (! stateFileCreation){
+            ## ------------------------------------------------------------------------------
+            # Handle hydrogfdod
+            urlNC     <- modelConfig$gfdHydrogfdodUrl
+            query     <- modelConfig$gfdHydrogfdodQuery
+            startDate <- xCastsInterval$hydrogfdodStartDateSearch
+            stopDate  <- xCastsInterval$hydrogfdodEndDateSearch
 
-      search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-      # Check retrieved filenames
-      nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
-                                            "_hydrogfdod_",fileSuffix)
-      if (nMissing > 0){
-          print(paste0(nMissing," file(s) missing for hydrogfdod"))
-          rciop.log("INFO",paste0(nMissing," file(s) missing for hydrogfdod"),nameOfSrcFile_PN)
-      }
-      nMissingFiles <- nMissingFiles + nMissing
+            search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
+            # Check retrieved filenames
+            nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
+                                                   "_hydrogfdod_",fileSuffix)
+            if (nMissing > 0){
+                print(paste0(nMissing," file(s) missing for hydrogfdod"))
+                rciop.log("INFO",paste0(nMissing," file(s) missing for hydrogfdod"),nameOfSrcFile_PN)
+            }
+            nMissingFiles <- nMissingFiles + nMissing
 
-      ## ------------------------------------------------------------------------------
-      # Handle od (od-daily)
-      urlNC     <- modelConfig$gfdOdDailyUrl
-      query     <- modelConfig$gfdOdDailyQuery
-      startDate <- xCastsInterval$odStartDateSearch
-      stopDate  <- xCastsInterval$odEndDateSearch
+            ## ------------------------------------------------------------------------------
+            # Handle od (od-daily)
+            urlNC     <- modelConfig$gfdOdDailyUrl
+            query     <- modelConfig$gfdOdDailyQuery
+            startDate <- xCastsInterval$odStartDateSearch
+            stopDate  <- xCastsInterval$odEndDateSearch
 
-      search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-      nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
-                                            "_od-daily_",fileSuffix)
-      if (nMissing > 0){
-          print(paste0(nMissing," file(s) missing for od-daily"))
-          rciop.log("INFO",paste0(nMissing," file(s) missing for od-daily"),nameOfSrcFile_PN)
-      }
-      nMissingFiles <- nMissingFiles + nMissing
+            search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
+            nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
+                                                   "_od-daily_",fileSuffix)
+            if (nMissing > 0){
+                print(paste0(nMissing," file(s) missing for od-daily"))
+                rciop.log("INFO",paste0(nMissing," file(s) missing for od-daily"),nameOfSrcFile_PN)
+            }
+            nMissingFiles <- nMissingFiles + nMissing
+      } # stateFileCreation
   } # hindcast
   if (xCast == "forecast"){
       ## ------------------------------------------------------------------------------
@@ -1089,19 +1171,36 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
   if (xCast == "elevation"){
       ## ------------------------------------------------------------------------------
       # Handle elevation
-      urlNC     <- modelConfig$gfdElevationUrl
+      url       <- modelConfig$gfdElevationUrl
       query     <- modelConfig$gfdElevationQuery
       subDir    <- modelConfig$gfdElevationSubDir
       #startDate <- xCastsInterval$ecoperStartDateSearch
       #stopDate  <- xCastsInterval$ecoperEndDateSearch
 
-      search_and_download(urlNC,query,ncRootDir=netcdfDir,ncSubDir=subDir)
+      search_and_download(url,query,netcdfDir,subDir)
       expFilename <- paste(netcdfDir,subDir,"HydroGFD2elevation.nc",sep="/")
       if (! file.exists(expFilename)){
           nMissing <- 1
           rciop.log("INFO",paste0("Missing file: ",expFilename),nameOfSrcFile_PN)
       }
       nMissingFiles <- nMissingFiles + nMissing
+  } # elevation
+  if (xCast == "grid.meta"){
+      ## ------------------------------------------------------------------------------
+      # Handle grid meta shape files for point and polygon
+      url       <- modelConfig$gfdGridUrl
+      query     <- modelConfig$gfdGridQuery
+      subDir    <- modelConfig$gfdGridSubDir
+      #startDate <- xCastsInterval$ecoperStartDateSearch
+      #stopDate  <- xCastsInterval$ecoperEndDateSearch
+
+      search_and_download(url,query,netcdfDir,subDir) # In dir for netcdf?
+      #expFilename <- paste(netcdfDir,subDir,"HydroGFD2elevation.nc",sep="/")
+      #if (! file.exists(expFilename)){
+      #    nMissing <- 1
+      #    rciop.log("INFO",paste0("Missing file: ",expFilename),nameOfSrcFile_PN)
+      #}
+      #nMissingFiles <- nMissingFiles + nMissing
   } # elevation
   ## ------------------------------------------------------------------------------
   # All meterological gfd parts downloaded to local tmp dir
@@ -1112,14 +1211,14 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
 
 # External function
 # Wrapper for netcdf2obs sequence
-process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, now
+process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, urls to search for hydrogfd data etc.
                                                modelDataConfig, # Misc model config data, paths to state files, forcing, shape files
                                                forecastIssueDate, # yyyy-mm-dd
                                                hindcastPeriodLength, # Days
-                                               reforecast, # True - reforecast, False - operational
+                                               reforecast, # True - run mode reforecast, False - run mode operational
+                                               stateFileCreation, # True - run mode 'Statefile creation'
                                                netcdfDir, # Input dir with hydrogfd netcdf files
                                                ncSubDir, # False-one dir, True-separate dir for each variable
-                                               gridMetaDir, # Input dir with grid weight files
                                                modelFilesRunDir, # HYPE model data files dir
                                                obsDir, # Output dir for obs files
                                                debugPublishFiles=FALSE) # Condition to publish files during development
@@ -1127,15 +1226,36 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
   # Prepare hindcast and forecast intervals, start and end dates
   prepHindcastInterval <- prepare_hindcast_intervals(hindcastPeriodLength,
                                                      forecastIssueDate,
-                                                     reforecast, # TRUE, # ToDo: reforecast or operational from config as input
-                                                     "19700101", # ToDo: Get date from latest Hype state filename
-                                                     modelConfig)
+                                                     reforecast,
+                                                     stateFileCreation,
+                                                     modelConfig,
+                                                     modelDataConfig)
+
+  # From prepare_hindcast_intervals return found path + state file name
+  locatedStateFile <- NULL
+  if (! is.null(prepHindcastInterval$pathStateFile)){ #ToDo: Remove, called function(s) returns null or path+filename
+      locatedStateFile <- prepHindcastInterval$pathStateFile
+  }
+
+  # Download grid meta shape files for point and polygon
+  nMissingFiles <- download_netcdf(modelConfig,
+                                   xCastsInterval = prepHindcastInterval,
+                                   netcdfDir,
+                                   ncSubDir,
+                                   xCast="grid.meta",
+                                   stateFileCreation=FALSE)
+  if (nMissingFiles > 0) {
+      rciop.log("ERROR","Aborting due to missing HydroGFD 2 netcdf file(s)",nameOfSrcFile_PN)
+      q(save="no", status = 2)
+  }
+
   # Download hydrogfd elevation netcdf file
   nMissingFiles <- download_netcdf(modelConfig,
                                    xCastsInterval = prepHindcastInterval,
                                    netcdfDir,
                                    ncSubDir,
-                                   xCast="elevation")
+                                   xCast="elevation",
+                                   stateFileCreation=FALSE)
   if (nMissingFiles > 0) {
       rciop.log("ERROR","Aborting due to missing HydroGFD 2 netcdf file(s)",nameOfSrcFile_PN)
       q(save="no", status = 2)
@@ -1146,7 +1266,8 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
                                    xCastsInterval = prepHindcastInterval,
                                    netcdfDir,
                                    ncSubDir,
-                                   xCast="hindcast")
+                                   xCast="hindcast",
+                                   stateFileCreation)
   if (nMissingFiles > 0) {
       rciop.log("ERROR","Aborting due to missing HydroGFD 2 netcdf file(s)",nameOfSrcFile_PN)
       q(save="no", status = 2)
@@ -1162,10 +1283,9 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
       res <- run_netcdf_to_obs_gridLinkPreparation(workDir=netcdf_to_obs_wd,
                                                    ncRootDir=netcdfDir,
                                                    ncSubDir=ncSubDir,
-                                                   resourceDir=gridMetaDir,
+                                                   resourceDir=paste(netcdfDir,modelConfig$gfdGridSubDir,"grid.meta","grid.meta",sep="/"),
                                                    gridElevPath=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD2elevation.nc",sep="/"),
-                                                   shapeFilePath=paste(modelDataConfig$dirShapeFiles,"SUBID_shapefile.shp", sep="/"),
-                                                   #shapeFilePath=paste(modelDataConfig$dirShapeFiles,"niger-hype.shp", sep="/"),
+                                                   shapeFilePath=paste(modelDataConfig,"subidshapefile","SUBID_shapefile.shp", sep="/"),
                                                    outPath=obsDir, # Should maybe be a temporary dir for next step, but need to be available for the corresponding functional call during forecast
                                                    startDate,
                                                    endDate)
@@ -1177,10 +1297,9 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
   res <- prepare_and_run_netcdf_to_obs(workDir=netcdf_to_obs_wd,
                                        ncRootDir=netcdfDir,
                                        ncSubDir=ncSubDir,
-                                       resourceDir=gridMetaDir,
-                                       gridElevPath=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD2elevation.nc",sep="/"),
-                                       shapeFilePath=paste(modelDataConfig$dirShapeFiles,"SUBID_shapefile.shp", sep="/"),
-                                       #shapeFilePath=paste(modelDataConfig$dirShapeFiles,"niger-hype.shp", sep="/"),
+                                       #resourceDir=paste(netcdfDir,modelConfig$gfdGridSubDir,"grid.meta","grid.meta",sep="/"),
+                                       #gridElevPath=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD2elevation.nc",sep="/"),
+                                       #shapeFilePath=paste(modelDataConfig,"subidshapefile","SUBID_shapefile.shp", sep="/"),
                                        outPath=obsDir,
                                        startDate,
                                        endDate)
@@ -1210,11 +1329,12 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
   forckey <- paste(obsDir,"ForcKey.txt",sep="/")
   nFiles  <- 0
 
+  publishFiles <- (debugPublishFiles || stateFileCreation)
   if (file.exists(pobs)) {
       nFiles <- nFiles + 1
       file.copy(from=pobs,to=modelFilesRunDir,overwrite=TRUE)
       print(paste0("copy ",pobs, " to ",modelFilesRunDir))
-      if (debugPublishFiles == TRUE) {
+      if (publishFiles) {
         toFile = paste(obsDir,"Pobs-netcdf-to-obs-hindcast.txt",sep="/")
         file.copy(from=pobs,to=toFile)
         rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
@@ -1225,7 +1345,7 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
       nFiles <- nFiles + 1
       file.copy(from=tobs,to=modelFilesRunDir,overwrite=TRUE)
       print(paste0("copy ",tobs, " to ",modelFilesRunDir))
-      if (debugPublishFiles == TRUE) {
+      if (publishFiles) {
         toFile = paste(obsDir,"Tobs-netcdf-to-obs-hindcast.txt",sep="/")
         file.copy(from=tobs,to=toFile)
         rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
@@ -1236,7 +1356,7 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
       nFiles <- nFiles + 1
       file.copy(from=tminobs,to=modelFilesRunDir,overwrite=TRUE)
       print(paste0("copy ",tminobs, " to ",modelFilesRunDir))
-      if (debugPublishFiles == TRUE) {
+      if (publishFiles) {
         toFile = paste(obsDir,"TMINobs-netcdf-to-obs-hindcast.txt",sep="/")
         file.copy(from=tminobs,to=toFile)
         rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
@@ -1247,7 +1367,7 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
       nFiles <- nFiles + 1
       file.copy(from=tmaxobs,to=modelFilesRunDir,overwrite=TRUE)
       print(paste0("copy ",tmaxobs, " to ",modelFilesRunDir))
-      if (debugPublishFiles == TRUE) {
+      if (publishFiles) {
         toFile = paste(obsDir,"TMAXobs-netcdf-to-obs-hindcast.txt",sep="/")
         file.copy(from=tmaxobs,to=toFile)
         rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
@@ -1258,7 +1378,7 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
       nFiles <- nFiles + 1
       file.copy(from=forckey,to=modelFilesRunDir,overwrite=TRUE)
       print(paste0("copy ",forckey, " to ",modelFilesRunDir))
-      if (debugPublishFiles == TRUE) {
+      if (publishFiles) {
         toFile = paste(obsDir,"ForcKey-netcdf-to-obs-hindcast.txt",sep="/")
         file.copy(from=forckey,to=toFile)
         rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
@@ -1271,7 +1391,8 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
 
   hindcast.forcing <- list("bdate"=bdate,
                            "cdate"=cdate,
-                           "edate"=edate)
+                           "edate"=edate,
+                           "stateFile"=locatedStateFile)
   return (hindcast.forcing)
 
 } # process_forcing_hydrogfd2_hindcast
@@ -1280,11 +1401,10 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
 # External function
 # Wrapper for netcdf2obs sequence
 process_forcing_hydrogfd2_forecast <- function(modelConfig, # Misc config data, now
-                                               modelDataConfig, # Misc model config data, paths to state files, forcing, shape files
+                                               #modelDataConfig, # Misc model config data, paths to state files, forcing, shape files
                                                forecastIssueDate, # yyyy-mm-dd
                                                netcdfDir, # Input dir with hydrogfd netcdf files
                                                ncSubDir, # False-one dir, True-separate dir for each variable
-                                               gridMetaDir, # Input dir with grid weight files
                                                modelFilesRunDir = NULL, # HYPE model data files
                                                obsDir, # Output dir for obs files
                                                debugPublishFiles=FALSE) # Condition to publish files during development
@@ -1297,7 +1417,8 @@ process_forcing_hydrogfd2_forecast <- function(modelConfig, # Misc config data, 
                                    xCastsInterval = prepForecastInterval, # Now different types... either have one type only...
                                    netcdfDir,
                                    ncSubDir,
-                                   xCast="forecast")
+                                   xCast="forecast",
+                                   stateFileCreation=FALSE)
   if (nMissingFiles > 0) {
       rciop.log("ERROR","Aborting due to missing HydroGFD 2 netcdf file(s)",nameOfSrcFile_PN)
       q(save="no", status = 2)
@@ -1311,10 +1432,9 @@ process_forcing_hydrogfd2_forecast <- function(modelConfig, # Misc config data, 
   res <- prepare_and_run_netcdf_to_obs(workDir=netcdf_to_obs_wd,
                                        ncRootDir=netcdfDir,
                                        ncSubDir=ncSubDir,
-                                       resourceDir=gridMetaDir,
-                                       gridElevPath=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD2elevation.nc",sep="/"),
-                                       shapeFilePath=paste(modelDataConfig$dirShapeFiles,"SUBID_shapefile.shp", sep="/"),
-                                       #shapeFilePath=paste(modelDataConfig$dirShapeFiles,"niger-hype.shp", sep="/"),
+                                       #resourceDir=paste(netcdfDir,modelConfig$gfdGridSubDir,"grid.meta","grid.meta",sep="/"),
+                                       #gridElevPath=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD2elevation.nc",sep="/"),
+                                       #shapeFilePath=paste(modelDataConfig,"subidshapefile","SUBID_shapefile.shp", sep="/"),
                                        outPath=obsDir,
                                        startDate,
                                        endDate)
@@ -1339,11 +1459,12 @@ process_forcing_hydrogfd2_forecast <- function(modelConfig, # Misc config data, 
   forckey <- paste(obsDir,"ForcKey.txt",sep="/")
   nFiles  <- 0
 
+  publishFiles <- debugPublishFiles
   if (file.exists(pobs)) {
       nFiles <- nFiles + 1
       file.copy(from=pobs,to=modelFilesRunDir,overwrite=TRUE)
       print(paste0("copy ",pobs, " to ",modelFilesRunDir))
-      if (debugPublishFiles == TRUE) {
+      if (publishFiles) {
         toFile = paste(obsDir,"Pobs-netcdf-to-obs-forecast.txt",sep="/")
         file.copy(from=pobs,to=toFile)
         rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
@@ -1354,7 +1475,7 @@ process_forcing_hydrogfd2_forecast <- function(modelConfig, # Misc config data, 
       nFiles <- nFiles + 1
       file.copy(from=tobs,to=modelFilesRunDir,overwrite=TRUE)
       print(paste0("copy ",tobs, " to ",modelFilesRunDir))
-      if (debugPublishFiles == TRUE) {
+      if (publishFiles) {
         toFile = paste(obsDir,"Tobs-netcdf-to-obs-forecast.txt",sep="/")
         file.copy(from=tobs,to=toFile)
         rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
@@ -1365,7 +1486,7 @@ process_forcing_hydrogfd2_forecast <- function(modelConfig, # Misc config data, 
       nFiles <- nFiles + 1
       file.copy(from=tminobs,to=modelFilesRunDir,overwrite=TRUE)
       print(paste0("copy ",tminobs, " to ",modelFilesRunDir))
-      if (debugPublishFiles == TRUE) {
+      if (publishFiles) {
         toFile = paste(obsDir,"TMINobs-netcdf-to-obs-forecast.txt",sep="/")
         file.copy(from=tminobs,to=toFile)
         rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
@@ -1376,7 +1497,7 @@ process_forcing_hydrogfd2_forecast <- function(modelConfig, # Misc config data, 
       nFiles <- nFiles + 1
       file.copy(from=tmaxobs,to=modelFilesRunDir,overwrite=TRUE)
       print(paste0("copy ",tmaxobs, " to ",modelFilesRunDir))
-      if (debugPublishFiles == TRUE) {
+      if (publishFiles) {
         toFile = paste(obsDir,"TMAXobs-netcdf-to-obs-forecast.txt",sep="/")
         file.copy(from=tmaxobs,to=toFile)
         rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
@@ -1387,7 +1508,7 @@ process_forcing_hydrogfd2_forecast <- function(modelConfig, # Misc config data, 
       nFiles <- nFiles + 1
       file.copy(from=forckey,to=modelFilesRunDir,overwrite=TRUE)
       print(paste0("copy ",forckey, " to ",modelFilesRunDir))
-      if (debugPublishFiles == TRUE) {
+      if (publishFiles) {
         toFile = paste(obsDir,"ForcKey-netcdf-to-obs-forecast.txt",sep="/")
         file.copy(from=forckey,to=toFile)
         rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
