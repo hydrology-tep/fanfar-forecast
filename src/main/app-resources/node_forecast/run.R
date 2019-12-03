@@ -94,6 +94,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
         ## ------------------------------------------------------------------------------
         ## Source non-hypeapps functions
+        source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/constants.R",sep="/"))
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-configuration.R",sep="/"))
     }
 
@@ -279,6 +280,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                                               app.input$hcperiodlen,
                                                               reforecast=(applRuntimeOptions$runType == cRunTypeVariant2),
                                                               stateFileCreation=(applRuntimeOptions$runTypeStateFileCreation == cRunTypeVariant3),
+                                                              metHCType=applRuntimeOptions$metHC,
+                                                              modelConfigData$statefileHindcastDate,
                                                               dirNCFiles,
                                                               ncSubDir=TRUE,
                                                               app.setup$runDir,
@@ -288,22 +291,39 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         # For all run modes except state file creation, state file is non-null if found
 
         # Update value to non-null to let updateModelInput() update info.txt::instate
-        stateFile <- NULL
-        if (! is.null(hindcastForcing$stateFile)) { #ToDo: Remove, called function(s) returns null or path+filename
-            stateFile <- hindcastForcing$stateFile
-        }
+        #stateFile <- NULL
+        #if (! is.null(hindcastForcing$stateFile)) { #ToDo: Remove, called function(s) returns null or path+filename
+        #    stateFile <- hindcastForcing$stateFile
+        #}
 
         # outstateDate - no, idate used
         
         # Possibly rename found state file before copying to run dir
         # ToDo: As output from function process_forcing_hydrogfd2_hindcast()
-        if(! is.null(stateFile)) {
-            if(file.exists(stateFile)) {
-                print("Copying state file to run dir")
-                file.copy(from=stateFile,to=app.setup$runDir,overwrite=TRUE)
-                print(list.files(app.setup$runDir))
-            }
-        }
+        # if(! is.null(hindcastForcing$stateFile)) {
+        #     #fromFile <- paste(modelConfigData$modelConfig,"statefiles",hindcastForcing$stateFile,sep="/"
+        #     #if(file.exists(fromFile)) {
+        #     print("Copying state file to run dir")
+        #     #print(fromFile)
+        #     requestedFileNamePrefix <- process_forcing_get_requested_statefile_prefix(applRuntimeOptions$metHC,
+        #                                                                               NULL,
+        #                                                                               modelConfigData$statefileHindcastDate)
+        #     print(requestedFileNamePrefix)
+        #     stateFileWithoutPrefix <- gsub(pattern=requestedFileNamePrefix,replacement="",hindcastForcing$stateFile)
+
+        #     #print(stateFileWithoutPrefix) # Path + reduced filename
+        #     print(stateFileWithoutPrefix) # Reduced filename
+
+        #     srcFile <- paste(modelConfigData$modelConfig,"statefiles",hindcastForcing$stateFile,sep="/")
+        #     dstFile <- paste(app.setup$runDir,stateFileWithoutPrefix,sep="/")
+
+        #     if(file.exists(srcFile)) {
+        #         file.copy(from=srcFile,to=dstFile,overwrite=TRUE)
+        #         print(list.files(app.setup$runDir))
+        #     }else{
+        #         print("ERROR, problem copying state file for upcoming hindcast run")
+        #     }
+        # }
 
         # Minimal variants of original list types returned by getModelForcing()
         hindcast.forcing <- list("status"=T,
@@ -314,7 +334,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                  "cdate"=hindcastForcing$cdate,
                                  "edate"=hindcastForcing$edate,
                                  "outstateDate"=NULL, # or NA
-                                 "stateFile"=stateFile)
+                                 #"stateFile"=stateFile) # ToDo: Add path to output
+                                 "stateFile"=hindcastForcing$stateFile)
 
         if (verboseVerbose == TRUE) {
             print("hindcast.forcing (output from process_hindcast_netcdf2obs):")
@@ -385,8 +406,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         }
 
         # Maybe move this section...
-        # For forecast, copy produced state file from the hindcast run to run dir
-        # For run mode "create statefile", publish produced state file
+        # ####For forecast, copy produced state file from the hindcast run to run dir, ToDo: edate + 1 day...
+        # For run mode "create statefile", publish produced state file, ToDo: add output to hindcast.forcing$
         outStateDate <- hindcast.forcing$edate
         outStateDate <- gsub("-", "", as.character(outStateDate))
         stateFile <- paste0(app.setup$runDir,"/hindcast","/state_save",outStateDate,".txt")
@@ -396,10 +417,10 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             if (doPublishFile) {
                 rciop.publish(path=stateFile,recursive=FALSE,metalink=TRUE)
             }
-        }else {
-            rciop.log("INFO",paste0("File missing: ",stateFile),nameOfSrcFile_Run)
-            #q()
-        }
+        } #else {
+        #    rciop.log("INFO",paste0("File missing: ",stateFile),nameOfSrcFile_Run)
+        #    #q()
+        #}
 
         if (verboseVerbose == TRUE) {
             print("List files after hindcast, dir run dir")

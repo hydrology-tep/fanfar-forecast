@@ -3,31 +3,32 @@
 # Constants
 nameOfSrcFile_PC <- "/util/R/process-configuration.R"
 
-verbose <- TRUE
-#verbose <- FALSE
+#verbose <- TRUE
+verbose <- FALSE
 
-# Constants application.xml (tag option)
-cModelConfigVariant1 <- "World Wide-HYPE 1.3.6 + HydroGFD 2.0 + ECOPER"
-cModelConfigVariants <- c(cModelConfigVariant1)
+# # Constants application.xml (tag option)
+# cModelConfigVariant1 <- "World Wide-HYPE 1.3.6 + HydroGFD 2.0 + ECOPER"
+# cModelConfigVariants <- c(cModelConfigVariant1)
 
-# Global constants not part of application.xml that
-# may be used for comparsion in if-statements etc.
-cHydModelVariant1 <- "Niger-HYPE"
-cHydModelVariant2 <- "WestAfrica-HYPE"
-cHydModelVariants <- c(cHydModelVariant1,cHydModelVariant2)
+# # Global constants not part of application.xml that
+# # may be used for comparsion in if-statements etc.
+# cHydModelVariant1 <- "Niger-HYPE"
+# cHydModelVariant2 <- "WestAfrica-HYPE"
+# cHydModelVariants <- c(cHydModelVariant1,cHydModelVariant2)
 
-cMetHCVariant1 <- "GFD 1.3"
-cMetHCVariant2 <- "HydroGFD 2.0"
-cMetHCVariants <- c(cMetHCVariant1,cMetHCVariant2)
+# cMetHCVariant1 <- "GFD 1.3"
+# cMetHCVariant2 <- "HydroGFD 2.0"
+# cMetHCVariants <- c(cMetHCVariant1,cMetHCVariant2)
 
-cMetFCVariant1 <- "ECOPER"
-cMetFCVariants <- c(cMetFCVariant1)
+# cMetFCVariant1 <- "ECOPER"
+# cMetFCVariants <- c(cMetFCVariant1)
 
-cRunTypeVariant1 <- "Operational" # Rename constants, instead of 1 2 3 use some of the value for easier understanding in if-statements etc.
-cRunTypeVariant2 <- "Reforecast"
-cRunTypeVariant3 <- "Statefile creation" # or Cold start
-cRunTypeVariants <- c(cRunTypeVariant1,cRunTypeVariant2,cRunTypeVariant3)
+# cRunTypeVariant1 <- "Operational" # Rename constants, instead of 1 2 3 use some of the value for easier understanding in if-statements etc.
+# cRunTypeVariant2 <- "Reforecast"
+# cRunTypeVariant3 <- "Statefile creation" # or Cold start
+# cRunTypeVariants <- c(cRunTypeVariant1,cRunTypeVariant2,cRunTypeVariant3)
 
+source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/constants.R",sep="/"))
 
 # Process user options/selections to later select between different variants
 # of models, datasets etc.
@@ -37,7 +38,7 @@ process_configuration_application_runtime_options <- function()
     modelConfig <- NULL
 
     # hydModel <- NULL
-    # metHC    <- NULL
+    metHC    <- NULL
     # metFC    <- NULL
     runType  <- NULL
     runTypeStateFileCreation <- NULL
@@ -59,8 +60,10 @@ process_configuration_application_runtime_options <- function()
         
         # ToDo: Necessary any longer
         # hydModel <- cHydModelVariant2
-        # metHC    <- cMetHCVariant2
+        metHC    <- cMetHCVariant2
         # metFC    <- cMetFCVariant1
+    }else{
+        metHC    <- cMetHCVariant1
     }
 
     runTypeIn <- rciop.getparam("runtype")
@@ -92,7 +95,7 @@ process_configuration_application_runtime_options <- function()
 
     outputApplRuntimeOptions <- list("modelConfig"=modelConfig,
                                     #  "hydModel"=hydModel,
-                                    #  "metHC"=metHC,
+                                    "metHC"=metHC,
                                     #  "metFC"=metFC,
                                      "runType"=runType,
                                      "runTypeStateFileCreation"=runTypeStateFileCreation
@@ -673,7 +676,7 @@ process_configuration_application_inputs <- function(applInput=NULL,          # 
   if (is.null(applInput) || nchar(applInput) < urlLen){
       # User
       if (applRuntimeOptions$modelConfig == cModelConfigVariant1) {
-          print(paste0("Using default URL for the main configuration object: ",cModelConfigVariant1))
+          rciop.log("INFO",paste0("Using default URL for the main configuration object: ",cModelConfigVariant1),nameOfSrcFile_PC)
           urlAndQuery <- urlDefault
           opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
       }else{
@@ -722,6 +725,7 @@ process_configuration_application_inputs <- function(applInput=NULL,          # 
   local.hydroGFDConfigUrl <- NULL
   local.hydroGFDConfigQuery <- NULL
   #local.hydroGFDConfigComment <- NULL
+  statefileHindcastDate <- "1800-01-01"
   for (r in 1:nrow(main_config_data)) {
       subdir <- main_config_data[r,'localdirectory']
       if (subdir == 'hype-model') {
@@ -736,6 +740,11 @@ process_configuration_application_inputs <- function(applInput=NULL,          # 
           local.hydroGFDConfigQuery   <- main_config_data[r,'searchquery']
           #local.hydroGFDConfigComment <- main_config_data[r,'comment']
       }
+      if (subdir == 'statefile-hindcast-date') {
+          # Supposed date for hindcast period used when state file was created, e.g. "2019-01-01" or "20190101"
+          # Later used when searching for available state files.
+          statefileHindcastDate <- as.character(main_config_data[r,'searchquery'])
+      }
   }
 
   modelConfigPath <- search_download_model_configuration(local.modelConfigUrl,
@@ -746,7 +755,8 @@ process_configuration_application_inputs <- function(applInput=NULL,          # 
                                                            local.hydroGFDConfigQuery)
     
   output <- list("modelConfig"=modelConfigPath,
-                 "meteoConfig"=meteoConfigSearch)
+                 "meteoConfig"=meteoConfigSearch,
+                 "statefileHindcastDate"=statefileHindcastDate)
 
   return (output)
 } # process_configuration_application_inputs

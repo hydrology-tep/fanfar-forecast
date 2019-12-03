@@ -130,12 +130,12 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
     timeStart.1=as.POSIXct(startDate,tz = "GMT")
     timeEnd.1=as.POSIXct(endDate,tz = "GMT")
 
-    print("PATHS:")
-    print(paste0("grid.path: ",grid_dir_path[1]))
-    print(paste0("grid.elev: ",grid_elev_path))
-    print(paste0("grid.meta: ",resource_dir_path))
-    print(paste0("output.path: ",out_path))
-    print(paste0("model.shape: ",shape_file_path))
+    #print("PATHS:")
+    #print(paste0("grid.path: ",grid_dir_path[1]))
+    # print(paste0("grid.elev: ",grid_elev_path))
+    # print(paste0("grid.meta: ",resource_dir_path))
+    # print(paste0("output.path: ",out_path))
+    # print(paste0("model.shape: ",shape_file_path))
     #print(paste0(": ",))
 
 # [1] "PATHS:"
@@ -277,15 +277,15 @@ prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
     timeStart.1=as.POSIXct(startDate,tz = "GMT")
     timeEnd.1=as.POSIXct(endDate,tz = "GMT")
 
-    print("PATHS:")
-    print(paste0("grid.path: ",grid_dir_path))
-    print(paste0("gridLink.path: ",paste(out_path,"/gridLink.Rdata",sep="")))
-    #print(paste0("grid.meta: ",resource_dir_path))
-    print(paste0("output.path: ",out_path))
-    #print(paste0("model.shape: ",shape_file_path))
-    print(paste0("time.start: ",timeStart.1))
-    print(paste0("time.end: ",timeEnd.1))
-    #print(paste0(": ",))
+    # print("PATHS:")
+    # print(paste0("grid.path: ",grid_dir_path))
+    # print(paste0("gridLink.path: ",paste(out_path,"/gridLink.Rdata",sep="")))
+    # #print(paste0("grid.meta: ",resource_dir_path))
+    # print(paste0("output.path: ",out_path))
+    # #print(paste0("model.shape: ",shape_file_path))
+    # print(paste0("time.start: ",timeStart.1))
+    # print(paste0("time.end: ",timeEnd.1))
+    # #print(paste0(": ",))
 
     # Read netcdf data from the grid.data folder and generate (new) PT-obs files and ForcKey.txt using a gridLink.Rdata
     # Also possible to read a new time period and merge with existing data (see file mentioned above)
@@ -397,57 +397,194 @@ search_and_locate_latest_date <- function(url,
 # Input  - local directory to check for state files
 # Output - status=0 and date (posix date class), filename incl. path.
 #        - status=1 when file not found or other error, return date 1901-01-01, filename NULL
-check_latest_statefiles <- function(filePath)
-{
-  status   <- 1 # NOK
-  fileDate <- "19010101"
-  fileName <- NULL
+# check_latest_statefiles <- function(filePath)
+# {
+#   status   <- 1 # NOK
+#   fileDate <- "19010101"
+#   fileName <- NULL
 
-  # ToDo: Add additional categories in filename? At least if files are stored elsewhere.
-  # At least HydroGFD version and hindcast start date?
-  if (dir.exists(filePath)){
-    listFilenames <- list.files(path=filePath,pattern="state_save")
-    if (length(listFilenames) > 0){
-      # Locate and extract date from filename
-      # .*  - match any character
-      # ()  - capturing group with expected match for 8 single digits
-      # \\1 - reference to first captured pattern
-      listDates <- gsub(pattern=".*([0-9]{8}).*",replace="\\1",listFilenames)
-      if (length(listDates) > 0){
-        # Locate the latest date, comparing dates as integers
-        latestDate <- 0
-        indexDate  <- -1
-        for (i in 1:length(listDates)){
-          if (nchar(listDates[i]) == 8){ # Added due to bad regular expression above - the complete filename can be returned as it is now
-              if (as.numeric(listDates[i]) > latestDate){
-                latestDate <- as.numeric(listDates[i])
-                indexDate  <- i
-              }
-          }
-        }
+#   # ToDo: Add additional categories in filename? At least if files are stored elsewhere.
+#   # At least HydroGFD version and hindcast start date?
+#   if (dir.exists(filePath)){
+#     listFilenames <- list.files(path=filePath,pattern="state_save")
+#     if (length(listFilenames) > 0){
+#       # Locate and extract date from filename
+#       # .*  - match any character
+#       # ()  - capturing group with expected match for 8 single digits
+#       # \\1 - reference to first captured pattern
+#       listDates <- gsub(pattern=".*([0-9]{8}).*",replace="\\1",listFilenames)
+#       if (length(listDates) > 0){
+#         # Locate the latest date, comparing dates as integers
+#         latestDate <- 0
+#         indexDate  <- -1
+#         for (i in 1:length(listDates)){
+#           if (nchar(listDates[i]) == 8){ # Added due to bad regular expression above - the complete filename can be returned as it is now
+#               if (as.numeric(listDates[i]) > latestDate){
+#                 latestDate <- as.numeric(listDates[i])
+#                 indexDate  <- i
+#               }
+#           }
+#         }
     
-        if (indexDate > 0) {
-          fileDate <- listDates[indexDate]
-          fileName <- paste(filePath,listFilenames[indexDate],sep="/")
-          status   <- 0
+#         if (indexDate > 0) {
+#           fileDate <- listDates[indexDate]
+#           fileName <- paste(filePath,listFilenames[indexDate],sep="/")
+#           status   <- 0
+#         }
+#       }
+#     }
+#   }
+  
+#   fileDate <- as.Date(fileDate,format="%Y%m%d")
+#   fileDate <- as.POSIXlt(fileDate)
+  
+#   return (list("status"=status,
+#                "fileDate"=fileDate,
+#                "fileName"=fileName))
+# }
+
+
+# External function
+# Input  - meteo type (e.g. GFD, HydroGFD, HydroGFD 2.0), meteo version (e.g. 1.3, 2.0) optional, hindcast start date.
+# Output - formatted string to use as prefix for comparing filenames of state files.
+#          Uses naming from the constant cMetHCVariants.
+process_forcing_get_requested_statefile_prefix <- function(meteo,meteoVersion=NULL,hindcastStartDate)
+{
+  defMet    <- "unknown"
+  defMetVer <- "0.0"
+
+  met    <- defMet
+  metVer <- defMetVer
+
+  print("process_forcing_get_requested_statefile_prefix:")
+
+  if (is.null(meteoVersion)) {
+    # Assume meteo is one of the defined constants (cMetHCVariantx) with both name and version
+    for (v in 1:length(cMetHCVariants)) {
+      m1 <- tolower(cMetHCVariants[v])
+      m2 <- tolower(meteo)
+      # Compare with input data
+      if (m1 == m2) {
+        print("loop m1 == m2")
+        met    <- gsub(pattern=" ",replacement="",m1)
+        metVer <- ""
+      }else {
+        print("loop not m1 == m2")
+      }
+    }
+  }else {
+    # Check both name and version against the defined constants (cMetHCVariantx)
+    for (v in 1:length(cMetHCVariants)) {
+      variantList <- as.list(strsplit(cMetHCVariants[v],'\\s+')[[1]]) # Split constant string on space
+      if (length(variantList) > 1) {
+        m1    <- tolower(variantList[1])
+        m1ver <- variantList[2]
+        # Compare with input data
+        if ((tolower(meteo) == m1) && (meteoVersion == m1ver)) {
+          print("loop meteo == met")
+          met    <- m1
+          metVer <- m1ver
+        }else {
+          print("loop not meteo == met")
         }
       }
     }
   }
   
+  print(met)
+  print(metVer)
+
+  if (met != defMet) {
+    print("met diff")
+  }else{
+    print("met no diff")
+  }
+  if (metVer != defMetVer) {
+    print("metVer diff")
+  }else{
+    print("metVer no diff")
+  }
+
+  hcdate <- gsub(pattern="-",replacement="",hindcastStartDate)
+
+  # Example: meteo_hydrogfd2.0_hindcast_20100101_state_save
+  requestedFileNamePrefix <- paste0("meteo_",met,meteoVersion,"_hindcast_",hcdate,"_state_save")
+
+  return (requestedFileNamePrefix)
+} # process_forcing_get_requested_statefile_prefix
+
+
+# Get forecast issue date from filename(s) matching the requested categories
+# Return the filename with the latest forecast issue date
+# Input  - local directory to check for state files
+# Output - status=0 and date (posix date class), filename incl. path.
+#        - status=1 when file not found or other error, return date 1901-01-01, filename NULL
+check_latest_statefiles_category <- function(filePath,meteo,meteoVersion,hindcastStartDate) #,forecastIssueDate)
+{
+  status   <- 1 # NOK
+  fileDate <- "19010101"
+  fileName <- NULL
+
+  requestedFileNamePrefix <- process_forcing_get_requested_statefile_prefix(meteo,meteoVersion,hindcastStartDate)
+  print("check_latest_statefiles_category:")
+  print(requestedFileNamePrefix)
+  requestedFileNameSuffix <- ".txt"
+
+  print("Check of filenames start")
+  
+  latestDate <- 0
+  if (dir.exists(filePath)){
+    listFilenames <- list.files(path=filePath,pattern="state_save")
+    if (length(listFilenames) > 0){
+      for (fileIndex in 1:length(listFilenames)) {
+        print(paste0("Current filename: ", listFilenames[fileIndex]))
+        res <- grep(pattern=requestedFileNamePrefix,listFilenames[fileIndex],fixed=TRUE)
+        if (length(res) > 0) {
+          endOfString <- gsub(pattern=requestedFileNamePrefix,replacement="",listFilenames[fileIndex])
+          res <- grep(pattern=requestedFileNameSuffix,endOfString,fixed=TRUE)
+          if (length(res) > 0) {
+            dateString <- gsub(pattern=requestedFileNameSuffix,replacement="",endOfString)
+            print(dateString)
+
+            # Check that the remaining string is only numbers, should only be one date
+            listDates <- gsub(pattern=".*([0-9]{8}).*",replace="\\1",dateString)
+            if (length(listDates) > 0){
+              for (d in 1:length(listDates)){
+                  if (as.numeric(listDates[d]) > latestDate){
+                    latestDate <- as.numeric(listDates[d])
+                    print(latestDate)
+
+                    fileDate <- listDates[d]
+                    #fileName <- paste(filePath,listFilenames[fileIndex],sep="/")
+                    fileName <- listFilenames[fileIndex] # Without path
+                    status   <- 0
+                  }
+              }
+            }
+          
+          }
+        }
+      }
+    }
+  }
+  print("Check of filenames end")
+  
+  # ToDo: Check if found date is later than forecast issue date, return status 1 (NOK)?
   fileDate <- as.Date(fileDate,format="%Y%m%d")
   fileDate <- as.POSIXlt(fileDate)
   
   return (list("status"=status,
                "fileDate"=fileDate,
                "fileName"=fileName))
-}
+} # check_latest_statefiles_category
 
 
 # In/Out - objects of posix date classes
 determine_interval_hindcast <- function(forecastIssueDate,
                                         hindcastDays, # Integer/Numeric
                                         stateFileCreation,
+                                        metHCType,
+                                        statefileHindcastDate,
                                         pathStateFiles)
 {
     # Constants
@@ -460,7 +597,12 @@ determine_interval_hindcast <- function(forecastIssueDate,
     hindcast.startDate$mday <- hindcast.startDate$mday - hindcastDays
 
     # Check if state file exists (independent of run type mode)
-    resStateFile <- check_latest_statefiles(pathStateFiles)
+    #resStateFile <- check_latest_statefiles(pathStateFiles) # hydrogfd version, hindcast.startDate, forecastIssueDate
+    resStateFile <- check_latest_statefiles_category(pathStateFiles,
+                                                     meteo=metHCType,
+                                                     meteoVersion=NULL,
+                                                     #hindcast.startDate)
+                                                     hindcastStartDate=statefileHindcastDate) #"2010-01-01") # ToDo: Need to be read from configuration...
 
     doUseStateFile <- (! stateFileCreation)
 
@@ -505,15 +647,14 @@ determine_interval_hindcast <- function(forecastIssueDate,
     }
 
     #if (verbose == TRUE) {
-      print('Hindcast:')
-      print(hindcast.startDate)
-      print(hindcast.endDate)
-      print('')
+      rciop.log("INFO","Hindcast:",nameOfSrcFile_PN)
+      rciop.log("INFO",hindcast.startDate,nameOfSrcFile_PN)
+      rciop.log("INFO",hindcast.endDate,nameOfSrcFile_PN)
     #}
 
     output <- list("hindcast.startDate"=hindcast.startDate,
                    "hindcast.endDate"=hindcast.endDate,
-                   "pathStateFile"=resStateFile$fileName)
+                   "stateFile"=resStateFile$fileName)
 
     return (output)
 } # determine_interval_hindcast
@@ -579,10 +720,9 @@ determine_interval_hydrogfdei <- function(hindcastStartDate,
     }
 
     #if (verbose == TRUE) {
-      print('HydroGFDEI:')
-      print(hydrogfdei.startDate)
-      print(hydrogfdei.endDate)
-      print('')
+      rciop.log("INFO","HydroGFDEI:",nameOfSrcFile_PN)
+      rciop.log("INFO",hydrogfdei.startDate,nameOfSrcFile_PN)
+      rciop.log("INFO",hydrogfdei.endDate,nameOfSrcFile_PN)
     #}
 
     output <- list("hydrogfdei.startDate"=hydrogfdei.startDate,
@@ -647,10 +787,9 @@ determine_interval_hydrogfdod <- function(hydrogfdeiEndDate,
     }
 
     #if (verbose == TRUE) {
-      print('HydroGFDOD:')
-      print(hydrogfdod.startDate)
-      print(hydrogfdod.endDate)
-      print('')
+      rciop.log("INFO","HydroGFDOD:",nameOfSrcFile_PN)
+      rciop.log("INFO",hydrogfdod.startDate,nameOfSrcFile_PN)
+      rciop.log("INFO",hydrogfdod.endDate,nameOfSrcFile_PN)
     #}
 
     output <- list("hydrogfdod.startDate"=hydrogfdod.startDate,
@@ -670,10 +809,9 @@ determine_interval_od_daily <- function(hydrogfdodEndDate,
     od.endDate        <- hindcastEndDate
 
     #if (verbose == TRUE) {
-      print('OD:')
-      print(od.startDate)
-      print(od.endDate)
-      print('')
+      rciop.log("INFO","OD:",nameOfSrcFile_PN)
+      rciop.log("INFO",od.startDate,nameOfSrcFile_PN)
+      rciop.log("INFO",od.endDate,nameOfSrcFile_PN)
     #}
 
     output <- list("od.startDate"=od.startDate,
@@ -692,10 +830,9 @@ determine_interval_ecoper <- function(forecastIssueDate)
     ecoper.endDate$mday <- ecoper.endDate$mday + 9
 
     #if (verbose == TRUE) {
-      print('ECOPER:')
-      print(ecoper.startDate)
-      print(ecoper.endDate)
-      print('')
+      rciop.log("INFO","ECOPER:",nameOfSrcFile_PN)
+      rciop.log("INFO",ecoper.startDate,nameOfSrcFile_PN)
+      rciop.log("INFO",ecoper.endDate,nameOfSrcFile_PN)
     #}
 
     output <- list("ecoper.startDate"=ecoper.startDate,
@@ -709,6 +846,8 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
                                        in_forecastIssueDate, # character string with dashes
                                        in_reforecast = TRUE,
                                        in_stateFileCreation = FALSE,
+                                       in_metHCType, # Selected meteo hindcast type at run time, for locating state file
+                                       in_statefileHindcastDate, # Hindcast date in state file, for locating state file
                                        in_modelConfig, # url and query to locate netcdf files
                                        in_modelDataConfig) # paths to local dirs with state files etc.
 {
@@ -740,13 +879,13 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
     }
 
     if (in_stateFileCreation) {
-      print("------------------------------------------------")
-      print("Run type mode is 'state file creation'.")
-      print("Only using HydroGFDEI as meteo forcing data")
-      print("for the hindcast run.")
-      print("Ignore time intervals for HydroGFDOD and OD.")
-      print("Forecast run will not be performed.")
-      print("------------------------------------------------")
+      rciop.log("INFO","------------------------------------------------",nameOfSrcFile_PN)
+      rciop.log("INFO","Run type mode is 'state file creation'.",nameOfSrcFile_PN)
+      rciop.log("INFO","Only using HydroGFDEI as meteo forcing data",nameOfSrcFile_PN)
+      rciop.log("INFO","for the hindcast run.",nameOfSrcFile_PN)
+      rciop.log("INFO","Ignore time intervals for HydroGFDOD and OD.",nameOfSrcFile_PN)
+      rciop.log("INFO","Forecast run will not be performed.",nameOfSrcFile_PN)
+      rciop.log("INFO","------------------------------------------------",nameOfSrcFile_PN)
     }
 
     ## ------------------------------------------------------------------------------
@@ -754,6 +893,8 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
     intervalHindcast <- determine_interval_hindcast(forecast.IssueDate,
                                                     hindcast.Days,
                                                     in_stateFileCreation,
+                                                    in_metHCType,
+                                                    in_statefileHindcastDate,
                                                     pathStateFiles=paste0(in_modelDataConfig,"/statefiles"))
 
     ## ------------------------------------------------------------------------------
@@ -838,7 +979,7 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
                           "odStartDateFilename"=odStartDateFilename,
                           "odEndDateFilename"=odEndDateFilename,
 
-                          "pathStateFile"=intervalHindcast$pathStateFile
+                          "stateFile"=intervalHindcast$stateFile
                           )
     return(castIntervals)
 
@@ -1217,25 +1358,34 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
                                                hindcastPeriodLength, # Days
                                                reforecast, # True - run mode reforecast, False - run mode operational
                                                stateFileCreation, # True - run mode 'Statefile creation'
+                                               metHCType, # Selected meteo hindcast type at run time, for locating state file
+                                               statefileHindcastDate, # Hindcast date in state file, for locating state file
                                                netcdfDir, # Input dir with hydrogfd netcdf files
                                                ncSubDir, # False-one dir, True-separate dir for each variable
                                                modelFilesRunDir, # HYPE model data files dir
                                                obsDir, # Output dir for obs files
                                                debugPublishFiles=FALSE) # Condition to publish files during development
 {
+  print("process_forcing_hydrogfd2_hindcast:")
+  print("input:")
+  print(metHCType)
+  print(statefileHindcastDate)
+
   # Prepare hindcast and forecast intervals, start and end dates
   prepHindcastInterval <- prepare_hindcast_intervals(hindcastPeriodLength,
                                                      forecastIssueDate,
                                                      reforecast,
                                                      stateFileCreation,
+                                                     metHCType,
+                                                     statefileHindcastDate,
                                                      modelConfig,
                                                      modelDataConfig)
 
   # From prepare_hindcast_intervals return found path + state file name
-  locatedStateFile <- NULL
-  if (! is.null(prepHindcastInterval$pathStateFile)){ #ToDo: Remove, called function(s) returns null or path+filename
-      locatedStateFile <- prepHindcastInterval$pathStateFile
-  }
+  #locatedStateFile <- NULL
+  #if (! is.null(prepHindcastInterval$pathStateFile)){ #ToDo: Remove, called function(s) returns null or path+filename
+  #    locatedStateFile <- prepHindcastInterval$pathStateFile # No path
+  #}
 
   # Download grid meta shape files for point and polygon
   nMissingFiles <- download_netcdf(modelConfig,
@@ -1389,10 +1539,34 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
     rciop.log ("ERROR","process_hindcast_netcdf2obs(): too few files produced",nameOfSrcFile_PN)
   }
 
+  # Copy state file to run dir
+  dstFile <- NULL
+  if(! is.null(prepHindcastInterval$stateFile)) {
+      print("Copying state file to run dir")
+      requestedFileNamePrefix <- process_forcing_get_requested_statefile_prefix(metHCType,
+                                                                                NULL,
+                                                                                statefileHindcastDate)
+      print(requestedFileNamePrefix)
+      stateFileWithoutPrefix <- gsub(pattern=requestedFileNamePrefix,replacement="",prepHindcastInterval$stateFile)
+      print(stateFileWithoutPrefix) # Reduced filename
+
+      srcFile <- paste0(modelDataConfig,"/statefiles/",prepHindcastInterval$stateFile)
+      dstFile <- paste0(modelFilesRunDir,"/state_save",stateFileWithoutPrefix)
+
+      if(file.exists(srcFile)) {
+          file.copy(from=srcFile,to=dstFile,overwrite=TRUE)
+          print(list.files(modelFilesRunDir))
+      }else{
+          dstFile <- NULL
+          print("ERROR, problem copying state file for upcoming hindcast run")
+      }
+  }
+
   hindcast.forcing <- list("bdate"=bdate,
                            "cdate"=cdate,
                            "edate"=edate,
-                           "stateFile"=locatedStateFile)
+                           #"stateFile"=locatedStateFile) prepHindcastInterval$pathStateFile # No path
+                           "stateFile"=dstFile)
   return (hindcast.forcing)
 
 } # process_forcing_hydrogfd2_hindcast
