@@ -32,20 +32,32 @@ Requirements of the application in terms of software packages:
 * gfortran compiler
 * R and the rciop package, and the following R packages (conda and terradue compilations)
 
-r-essentials
+r-rciop
+r-data.table
 r-sp
 r-rgdal
 r-rgeos
+r-ncdf4
 r-raster
-r-data.table
+r-maptools
+r-foreign
 r-lmomco
+geos=3.5.0
+gcc=4.8.5
+
+geos version due to gdal.
+
+gcc version due to HYPE 5.8.0, to build executable in sandbox and newer version of libgfortran3.so during run-time.
 
 To install these packages, run the simple steps below on the Developer Cloud Sandbox shell:
 
 To install anaconda:
 
 ```bash
-sudo yum install -y miniconda
+sudo yum install -y miniconda proj libgfortran hdf5 netcdf
+
+#Downgrade proj from version 4.8 to 4.7
+sudo yum downgrade proj
 ```
 
 Add anaconda binaries to PATH:
@@ -206,9 +218,10 @@ Install the pre-requisites as instructed above.
 Log on the Developer Cloud Sandbox and run these commands in a shell:
 
 ```bash
-git clone https://github.com/hydrology-tep/hypeapps-forecast
-cd hypeapps-forecast
-mvn install
+git clone https://github.com/hydrology-tep/fanfar-forecast
+sudo conda install -y --file fanfar-forecast/src/main/app-resources/dependencies/R/packages.list
+cd fanfar-forecast
+mvn clean install
 ```
 
 Please note the information above regarding the HYPE model applicaton and how to build and install the HYPE model executable files.

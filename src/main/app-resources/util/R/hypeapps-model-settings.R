@@ -21,17 +21,17 @@
 ## [DO NOT EDIT] set all required variables to NULL
 model.name      = NULL
 model.bin       = NULL
-model.files.url = NULL
+#model.files.url = NULL
 forcing.files   = NULL
 forcing.data.source = NULL
-forcing.archive.url = NULL
+#forcing.archive.url = NULL
 forcing.archive.start = NULL
 forcing.archive.end = NULL
-state.files.url = NULL
+#state.files.url = NULL
 state.files = NULL
-hype2csv.url = NULL
+#hype2csv.url = NULL
 hype2csv.file = NULL
-shapefile.url   = NULL
+#shapefile.url   = NULL
 shapefile.layer = NULL
 shapefile.ext   = c(".shp",".prj",".dbf",".shx")
 
@@ -40,32 +40,33 @@ model.name = "niger-hype"                                            # model nam
 model.bin  = "hype_assimilation-5.x.0.exe"                           # name of model binary executable
 
 ## [EDIT HERE] Data store settings (model files, forcing archive)
-model.files.url = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23" # model files root index
+#model.files.url = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23" # model files root index
 
 ## [EDIT HERE] Forcing data settings
 forcing.files = c("Pobs.txt","Tobs.txt","TMINobs.txt","TMAXobs.txt") # list of necessary forcing data files
 
 forcing.data.source =  "hydro-smhi"  # could be "local" or "hydro-smhi"
 
-forcing.archive.url  = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23/forcingarchive"
+#forcing.archive.url  = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23/forcingarchive"
 forcing.archive.start   = as.POSIXct("1979-01-01",tz="GMT")                    # first date in the forcing arhive data
 forcing.archive.end     = as.POSIXct("2018-12-31",tz="GMT")                    # last date in the forcing arhive data
 
 # [EDIT HERE] Statefiles settings
-state.files.url = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23/statefiles"
+#state.files.url = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23/statefiles"
 state.files="state_save19790101.txt"
 for(i in 1980:2019){
   state.files=c(state.files,paste("state_save",as.character(i),"0101.txt",sep=""))
 }
 
 # [EDIT HERE] hype2csv URL
-hype2csv.url = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23/hype2csv/niger-hype2csv.txt"
-hype2csv.file = "niger-hype2csv.txt"
+#hype2csv.url = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23/hype2csv/niger-hype2csv.txt" # Needed for outbasins, but 1.3.6 has only geodata-file, not this variant
+hype2csv.file = "niger-hype2csv.txt"                                                                             # Needed for outbasins, but 1.3.6 has only geodata-file, not this variant
 
 # [EDIT HERE] sub-basin shapefile URL (shapefile.url should point to shapefile [model.name].shp, and in the same folder should be .dbf, .prj and .shx)
-shapefile.url   = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23/shapefiles"
-shapefile.layer = "niger-hype"
-shapefile.ext   = c(".shp",".prj",".dbf",".shx") 
+#shapefile.url   = "https://store.terradue.com/hydro-smhi/fanfar/model/niger-hype/v2.23/shapefiles"
+#shapefile.layer = "niger-hype"
+shapefile.layer = "SUBID_shapefile"
+#shapefile.ext   = c(".shp",".prj",".dbf",".shx") 
 
 # log message
 if(app.sys=="tep"){rciop.log ("DEBUG", paste("model and data access settings set"), "/util/R/hypeapps-model-settings.R")}
