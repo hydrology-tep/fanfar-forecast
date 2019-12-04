@@ -76,7 +76,7 @@
   </jobTemplates>
   
   
-  <workflow id="workflow" title="FANFAR Forecast" abstract="Make 1-10 days hydrometeorological forecasts in West Africa with the HYPE model. More info at http://www.fanfar.eu.">
+  <workflow id="workflow" title="FANFAR Forecast" abstract="Make 1-10 days hydrological forecasts in West Africa with the HYPE model. More info at http://www.fanfar.eu and http://hypeweb.smhi.se.">
     <workflowVersion>1.0</workflowVersion>
     <node id="node_forecast">
       <job id="template_hypeapps"/>
