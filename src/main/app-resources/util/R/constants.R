@@ -21,7 +21,7 @@ cMetHCVariants <- c(cMetHCVariant1,cMetHCVariant2)
 cMetFCVariant1 <- "ECOPER"
 cMetFCVariants <- c(cMetFCVariant1)
 
-cRunTypeVariant1 <- "Operational" # Rename constants, instead of 1 2 3 use some of the value for easier understanding in if-statements etc.
-cRunTypeVariant2 <- "Reforecast"
-cRunTypeVariant3 <- "Statefile creation" # or Cold start
-cRunTypeVariants <- c(cRunTypeVariant1,cRunTypeVariant2,cRunTypeVariant3)
+cRunTypeVariantOperational <- "Operational"
+cRunTypeVariantReforecast <- "Reforecast"
+cRunTypeVariantStatefile <- "Statefile creation"
+cRunTypeVariants <- c(cRunTypeVariantOperational,cRunTypeVariantReforecast,cRunTypeVariantStatefile)

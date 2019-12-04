@@ -189,17 +189,6 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         hype2csv.path        <- NULL                                       # Instead of hype2csv.url
         # Mainly set due to getHypeAppSetup(). These variables are otherwise not part of the HydroGFD 2 files downloaded
         # later on by the netcdf2obs sequence.
-
-        # print("model.files.path:")
-        # print(model.files.path)
-        # print("forcing.archive.path:")
-        # print(forcing.archive.path)
-        # print("state.files.path:")
-        # print(state.files.path)
-        # print("shape.files.path:")
-        # print(shape.files.path)
-        # print("hype2csv.path:")
-        # print(hype2csv.path)
     }
 
     ## ------------------------------------------------------------------------------
@@ -278,8 +267,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                                               modelConfigData$modelConfig,
                                                               app.input$idate,
                                                               app.input$hcperiodlen,
-                                                              reforecast=(applRuntimeOptions$runType == cRunTypeVariant2),
-                                                              stateFileCreation=(applRuntimeOptions$runTypeStateFileCreation == cRunTypeVariant3),
+                                                              reforecast=(applRuntimeOptions$runType == cRunTypeVariantReforecast),
+                                                              stateFileCreation=(applRuntimeOptions$runTypeStateFileCreation == cRunTypeVariantStatefile),
                                                               metHCType=applRuntimeOptions$metHC,
                                                               modelConfigData$statefileHindcastDate,
                                                               dirNCFiles,
@@ -287,43 +276,6 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                                               app.setup$runDir,
                                                               dirObsFiles,
                                                               debugPublish)
-
-        # For all run modes except state file creation, state file is non-null if found
-
-        # Update value to non-null to let updateModelInput() update info.txt::instate
-        #stateFile <- NULL
-        #if (! is.null(hindcastForcing$stateFile)) { #ToDo: Remove, called function(s) returns null or path+filename
-        #    stateFile <- hindcastForcing$stateFile
-        #}
-
-        # outstateDate - no, idate used
-        
-        # Possibly rename found state file before copying to run dir
-        # ToDo: As output from function process_forcing_hydrogfd2_hindcast()
-        # if(! is.null(hindcastForcing$stateFile)) {
-        #     #fromFile <- paste(modelConfigData$modelConfig,"statefiles",hindcastForcing$stateFile,sep="/"
-        #     #if(file.exists(fromFile)) {
-        #     print("Copying state file to run dir")
-        #     #print(fromFile)
-        #     requestedFileNamePrefix <- process_forcing_get_requested_statefile_prefix(applRuntimeOptions$metHC,
-        #                                                                               NULL,
-        #                                                                               modelConfigData$statefileHindcastDate)
-        #     print(requestedFileNamePrefix)
-        #     stateFileWithoutPrefix <- gsub(pattern=requestedFileNamePrefix,replacement="",hindcastForcing$stateFile)
-
-        #     #print(stateFileWithoutPrefix) # Path + reduced filename
-        #     print(stateFileWithoutPrefix) # Reduced filename
-
-        #     srcFile <- paste(modelConfigData$modelConfig,"statefiles",hindcastForcing$stateFile,sep="/")
-        #     dstFile <- paste(app.setup$runDir,stateFileWithoutPrefix,sep="/")
-
-        #     if(file.exists(srcFile)) {
-        #         file.copy(from=srcFile,to=dstFile,overwrite=TRUE)
-        #         print(list.files(app.setup$runDir))
-        #     }else{
-        #         print("ERROR, problem copying state file for upcoming hindcast run")
-        #     }
-        # }
 
         # Minimal variants of original list types returned by getModelForcing()
         hindcast.forcing <- list("status"=T,
@@ -380,9 +332,16 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     }
 
     # Publish updated info.txt
-    toFile <- paste(app.setup$runDir,"info-for-hindcast.txt",sep="/")
-    file.copy(from=paste(app.setup$runDir,"info.txt",sep="/"),to=toFile,overwrite=T)
-    rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+    fromFile <- paste(app.setup$runDir,"info.txt",sep="/")
+    toFile   <- paste(app.setup$runDir,"info-for-hindcast.txt",sep="/")
+    if(file.exists(fromFile)) {
+        file.copy(from=fromFile,to=toFile,overwrite=T) # Rename file
+        rciop.log ("INFO", paste0("cp ",fromFile," to ",toFile),nameOfSrcFile_Run)
+        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+    }else {
+        rciop.log("INFO",paste0("File missing: ",fromFile),nameOfSrcFile_Run)
+        #q()
+    }
 
     if(app.sys=="tep"){rciop.log ("DEBUG", paste("hindcast inputs modified"), nameOfSrcFile_Run)}
     log.res=appLogWrite(logText = "hindcast model inputs modified",fileConn = logFile$fileConn)
@@ -405,22 +364,19 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             }
         }
 
-        # Maybe move this section...
-        # ####For forecast, copy produced state file from the hindcast run to run dir, ToDo: edate + 1 day...
         # For run mode "create statefile", publish produced state file, ToDo: add output to hindcast.forcing$
         outStateDate <- hindcast.forcing$edate
         outStateDate <- gsub("-", "", as.character(outStateDate))
         stateFile <- paste0(app.setup$runDir,"/hindcast","/state_save",outStateDate,".txt")
-        if(file.exists(stateFile)) {
-            file.copy(from=stateFile,to=app.setup$runDir,overwrite=TRUE)
-            doPublishFile <- ((applRuntimeOptions$runTypeStateFileCreation == cRunTypeVariant3) || (debugPublish == TRUE))
-            if (doPublishFile) {
+        doPublishFile <- ((applRuntimeOptions$runTypeStateFileCreation == cRunTypeVariantStatefile) || (debugPublish == TRUE))
+        if (doPublishFile) {
+            if(file.exists(stateFile)) {
                 rciop.publish(path=stateFile,recursive=FALSE,metalink=TRUE)
+            }else {
+                rciop.log("INFO",paste0("File missing: ",stateFile),nameOfSrcFile_Run)
+                #q()
             }
-        } #else {
-        #    rciop.log("INFO",paste0("File missing: ",stateFile),nameOfSrcFile_Run)
-        #    #q()
-        #}
+        }
 
         if (verboseVerbose == TRUE) {
             print("List files after hindcast, dir run dir")
@@ -440,7 +396,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
     ## ------------------------------------------------------------------------------
     # Check if forecast sequence shall be run
-    doForecastSequence <- (applRuntimeOptions$runTypeStateFileCreation != cRunTypeVariant3)
+    doForecastSequence <- (applRuntimeOptions$runTypeStateFileCreation != cRunTypeVariantStatefile)
     if (doForecastSequence) {
 
         #################################################################################
@@ -464,27 +420,25 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         if (applRuntimeOptions$modelConfig == cModelConfigVariant1) {
             ## Download and process ecoper netcdf files
             forecastForcing <- process_forcing_hydrogfd2_forecast(modelConfigData$meteoConfig,
-                                                                  #modelDataPaths,
                                                                   app.input$idate,
                                                                   dirNCFiles,
                                                                   ncSubDir=TRUE,
-                                                                  #modelDataPaths$dirGridMetaData,
                                                                   app.setup$runDir,
                                                                   dirObsFiles,
                                                                   debugPublish)
 
-            # Check if this can be removed since also added after hindcast above - date probably need to be adjusted if copied before this
             # Copy produced state file from the hindcast run to run dir
             outStateDate <- forecastForcing$cdate
             outStateDate <- gsub("-", "", as.character(outStateDate))
             stateFile <- paste0(app.setup$runDir,"/hindcast","/state_save",outStateDate,".txt")
             if(file.exists(stateFile)) {
                 file.copy(from=stateFile,to=app.setup$runDir,overwrite=TRUE)
+                rciop.log ("INFO", paste0("cp ",stateFile," to ",app.setup$runDir,"/"),nameOfSrcFile_Run)
                 if (debugPublish == TRUE) {
                     rciop.publish(path=stateFile,recursive=FALSE,metalink=TRUE)
                 }
             }else {
-                rciop.log("INFO",paste0("File missing: ",stateFile,nameOfSrcFile_Run))
+                rciop.log("INFO",paste0("File missing: ",stateFile),nameOfSrcFile_Run)
                 #q()
             }
 
@@ -519,9 +473,16 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         }
 
         # Publish updated info.txt
+        fromFile <- paste(app.setup$runDir,"info.txt",sep="/")
         toFile <- paste(app.setup$runDir,"info-for-forecast.txt",sep="/")
-        file.copy(from=paste(app.setup$runDir,"info.txt",sep="/"),to=toFile,overwrite=T)
-        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+        if(file.exists(fromFile)) {
+            file.copy(from=fromFile,to=toFile,overwrite=T) # Rename file
+            rciop.log ("INFO", paste0("cp ",fromFile," to ",toFile),nameOfSrcFile_Run)
+            rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+        }else {
+            rciop.log("INFO",paste0("File missing: ",fromFile),nameOfSrcFile_Run)
+            #q()
+        }
 
         if(app.sys=="tep"){rciop.log ("DEBUG", paste("...forecast inputs modified"), nameOfSrcFile_Run)}
         log.res=appLogWrite(logText = "forecast model input files modified",fileConn = logFile$fileConn)
