@@ -740,7 +740,7 @@ process_configuration_application_inputs <- function(applInput=NULL,          # 
           local.hydroGFDConfigQuery   <- main_config_data[r,'searchquery']
           #local.hydroGFDConfigComment <- main_config_data[r,'comment']
       }
-      if (subdir == 'statefile-hindcast-date') {
+      if (subdir == 'statefile-bdate') {
           # Supposed date for hindcast period used when state file was created, e.g. "2019-01-01" or "20190101"
           # Later used when searching for available state files.
           statefileHindcastDate <- as.character(main_config_data[r,'searchquery'])

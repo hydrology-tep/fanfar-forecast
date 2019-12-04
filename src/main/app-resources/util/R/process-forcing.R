@@ -445,10 +445,10 @@ search_and_locate_latest_date <- function(url,
 
 
 # External function
-# Input  - meteo type (e.g. GFD, HydroGFD, HydroGFD 2.0), meteo version (e.g. 1.3, 2.0) optional, hindcast start date.
+# Input  - meteo type (e.g. GFD, HydroGFD, HydroGFD 2.0), meteo version (e.g. 1.3, 2.0) optional, hindcast start date (bdate).
 # Output - formatted string to use as prefix for comparing filenames of state files.
 #          Uses naming from the constant cMetHCVariants.
-process_forcing_get_requested_statefile_prefix <- function(meteo,meteoVersion=NULL,hindcastStartDate)
+process_forcing_get_requested_statefile_suffix <- function(meteo,meteoVersion=NULL,hindcastStartDate)
 {
   defMet    <- "unknown"
   defMetVer <- "0.0"
@@ -456,7 +456,7 @@ process_forcing_get_requested_statefile_prefix <- function(meteo,meteoVersion=NU
   met    <- defMet
   metVer <- defMetVer
 
-  print("process_forcing_get_requested_statefile_prefix:")
+  print("process_forcing_get_requested_statefile_suffix:")
 
   if (is.null(meteoVersion)) {
     # Assume meteo is one of the defined constants (cMetHCVariantx) with both name and version
@@ -507,11 +507,11 @@ process_forcing_get_requested_statefile_prefix <- function(meteo,meteoVersion=NU
 
   hcdate <- gsub(pattern="-",replacement="",hindcastStartDate)
 
-  # Example: meteo_hydrogfd2.0_hindcast_20100101_state_save
-  requestedFileNamePrefix <- paste0("meteo_",met,meteoVersion,"_hindcast_",hcdate,"_state_save")
+  # Example: -hydrogfd2.0-bdate20100101
+  requestedFileNameSuffix <- paste0("-",met,meteoVersion,"-bdate",hcdate)
 
-  return (requestedFileNamePrefix)
-} # process_forcing_get_requested_statefile_prefix
+  return (requestedFileNameSuffix)
+} # process_forcing_get_requested_statefile_suffix
 
 
 # Get forecast issue date from filename(s) matching the requested categories
@@ -524,26 +524,28 @@ check_latest_statefiles_category <- function(filePath,meteo,meteoVersion,hindcas
   status   <- 1 # NOK
   fileDate <- "19010101"
   fileName <- NULL
-
-  requestedFileNamePrefix <- process_forcing_get_requested_statefile_prefix(meteo,meteoVersion,hindcastStartDate)
-  print("check_latest_statefiles_category:")
-  print(requestedFileNamePrefix)
-  requestedFileNameSuffix <- ".txt"
-
+  
+  #state_save20180101.txt-hydrogfd2.0-bdate20100101
+  
+  requestedFileNamePrefix <- "state_save"
+  requestedFileNameSuffix <- process_forcing_get_requested_statefile_suffix(meteo,meteoVersion,hindcastStartDate)
+  requestedFileNameSuffix <- paste0(".txt",requestedFileNameSuffix)
+  print(requestedFileNameSuffix)
+  
   print("Check of filenames start")
   
   latestDate <- 0
   if (dir.exists(filePath)){
-    listFilenames <- list.files(path=filePath,pattern="state_save")
+    listFilenames <- list.files(path=filePath,pattern=requestedFileNamePrefix)
     if (length(listFilenames) > 0){
       for (fileIndex in 1:length(listFilenames)) {
         print(paste0("Current filename: ", listFilenames[fileIndex]))
-        res <- grep(pattern=requestedFileNamePrefix,listFilenames[fileIndex],fixed=TRUE)
+        res <- grep(pattern=requestedFileNameSuffix,listFilenames[fileIndex],fixed=TRUE)
         if (length(res) > 0) {
-          endOfString <- gsub(pattern=requestedFileNamePrefix,replacement="",listFilenames[fileIndex])
-          res <- grep(pattern=requestedFileNameSuffix,endOfString,fixed=TRUE)
+          startOfString <- gsub(pattern=requestedFileNameSuffix,replacement="",listFilenames[fileIndex])
+          res <- grep(pattern=requestedFileNamePrefix,startOfString,fixed=TRUE)
           if (length(res) > 0) {
-            dateString <- gsub(pattern=requestedFileNameSuffix,replacement="",endOfString)
+            dateString <- gsub(pattern=requestedFileNamePrefix,replacement="",startOfString)
             print(dateString)
 
             # Check that the remaining string is only numbers, should only be one date
@@ -1543,17 +1545,26 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
   dstFile <- NULL
   if(! is.null(prepHindcastInterval$stateFile)) {
       print("Copying state file to run dir")
-      requestedFileNamePrefix <- process_forcing_get_requested_statefile_prefix(metHCType,
+      print(prepHindcastInterval$stateFile)
+      print("a:")
+      requestedFileNameSuffix <- process_forcing_get_requested_statefile_suffix(metHCType,
                                                                                 NULL,
                                                                                 statefileHindcastDate)
-      print(requestedFileNamePrefix)
-      stateFileWithoutPrefix <- gsub(pattern=requestedFileNamePrefix,replacement="",prepHindcastInterval$stateFile)
-      print(stateFileWithoutPrefix) # Reduced filename
+      print("b:")
+      print(requestedFileNameSuffix)
+      stateFileWithoutSuffix <- gsub(pattern=requestedFileNameSuffix,replacement="",prepHindcastInterval$stateFile)
+      print("c:")
+      print(stateFileWithoutSuffix) # Reduced filename
 
       srcFile <- paste0(modelDataConfig,"/statefiles/",prepHindcastInterval$stateFile)
-      dstFile <- paste0(modelFilesRunDir,"/state_save",stateFileWithoutPrefix)
+      dstFile <- paste0(modelFilesRunDir,"/",stateFileWithoutSuffix)
+      print("src:")
+      print(srcFile)
+      print("dst:")
+      print(dstFile)
 
       if(file.exists(srcFile)) {
+          print("src exists:")
           file.copy(from=srcFile,to=dstFile,overwrite=TRUE)
           print(list.files(modelFilesRunDir))
       }else{
