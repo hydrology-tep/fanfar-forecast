@@ -84,6 +84,9 @@ readInfo<-function(filenm = "Info.txt"){
   #some default flags
   info$isResDir=F
   info$isModDir=F
+  info$isBasinoutput_variable=F
+  info$isTimeoutput_variable=F
+  info$isMapoutput_variable=F
   
   #loop over lines and identify some relevant data
   noutstate = 0
@@ -144,6 +147,7 @@ readInfo<-function(filenm = "Info.txt"){
     if(substr(thisline,1,20)=="basinoutput variable"){
       info$basinoutput_variable=readInfoLine(thisline,20)
       info$basinoutput_variable.lineNr=i
+      info$isBasinoutput_variable=T
     }
     # basinoutput subbasin
     if(substr(thisline,1,20)=="basinoutput subbasin"){
@@ -154,12 +158,14 @@ readInfo<-function(filenm = "Info.txt"){
     if(substr(thisline,1,19)=="timeoutput variable"){
       info$timeoutput_variable=readInfoLine(thisline,19)
       info$timeoutput_variable.lineNr=i
+      info$isTimeoutput_variable=T
     }
     
     # mapoutput variables
     if(substr(thisline,1,18)=="mapoutput variable"){
       info$mapoutput_variable=readInfoLine(thisline,18)
       info$mapoutput_variable.lineNr=i
+      info$isMapoutput_variable=T
     }
     
   }

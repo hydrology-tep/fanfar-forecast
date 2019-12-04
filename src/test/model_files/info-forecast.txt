@@ -1,0 +1,67 @@
+!! Template info.txt for Niger-HYPE:
+!!
+!!    - 10 day determniistic forecast issue date 2017-01-01
+!!    - model version 2.23, hype version 5.x.0 (assimiltion)
+!!
+!! This file is part of Hydrology TEP "hypeapps" applications. 
+!!
+!! ----------------------------------------------------------------
+!! bdate=cdate= first date of the forecast (forecast issue date)
+!! -------------------------------------------------------------
+bdate 2017-01-01
+cdate 2017-01-01
+!! -------------------------------------------
+!! edate = end of the forecast (10 days ahead)
+!! -------------------------------------------
+edate 2017-01-10
+!! --------------------------------
+!! initial and final state settings
+!! --------------------------------
+instate Y
+!! ------------------------
+!! model and result folders
+!! ------------------------
+resultdir /model/niger-hype/forecast/
+modeldir /model/niger-hype/
+!! ---------------------
+!! forcing data settings
+!! ---------------------
+submodel N
+readdaily Y
+readobsid N
+readsfobs N
+readswobs N
+readtminobs Y
+readtmaxobs Y
+!! ---------------------------------
+!! calibration/assimilation settings
+!! ---------------------------------
+calibration N
+assimilation N
+!! ----------------
+!! submodel options
+!! ----------------
+modeloption petmodel 3
+modeloption floodmodel 2
+!! ---------------
+!! output settings
+!! ---------------
+basinoutput variable cout crun evap epot cprc ctmp srff mrfp olfp mrfg olfg
+basinoutput meanperiod 1
+basinoutput decimals 3
+basinoutput subbasin 17,4244,37
+mapoutput variable cout crun evap epot cprc ctmp srff
+mapoutput decimals 3
+mapoutput meanperiod 5
+timeoutput variable cout crun evap epot cprc ctmp srff
+timeoutput decimals 3
+timeoutput meanperiod 1
+!! -------------------------------------
+!! model performance evaluation settings
+!! -------------------------------------
+crit meanperiod 1
+crit datalimit 3
+crit 1 criterium MKG
+crit 1 cvariable cout
+crit 1 rvariable rout
+crit 1 weight 1

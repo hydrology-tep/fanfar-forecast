@@ -1,0 +1,6 @@
+hydrogfdei;https://catalog.terradue.com/hydro-smhi/description;[hydrogfdei,SMHI]
+od;https://catalog.terradue.com/hydro-smhi/description;[od,SMHI]
+ei-monthly;https://catalog.terradue.com/hydro-smhi/description;[ei,monthly,SMHI]
+od-daily;https://catalog.terradue.com/hydro-smhi/description;[od,daily,SMHI]
+od-monthly;https://catalog.terradue.com/hydro-smhi/description;[od,montly,SMHI]
+ecoper;https://catalog.terradue.com/hydro-smhi/description;[ecoper,SMHI]
