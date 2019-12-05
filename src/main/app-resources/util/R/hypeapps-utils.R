@@ -2830,6 +2830,7 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
       
       # basin outputfiles
       basinFiles=NULL
+      if(length(allFiles) > 0) {
       if(length(appInput$outbasins) > 0){
         outbasins = strsplit(appInput$outbasins,split = ",")[[1]]
         zeroString="0000000000000000000000000000000"
@@ -2862,12 +2863,15 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
           }
         }
       } # if(length(appInput$outbasins
+      } # if(length(allFiles) > 0
       # transform basinoutput files to csv format
       if(length(basinFiles)>0){
-        for(i in 1:length(basinFiles)){
-          resCsv = basinfiles2csv(hypeFile=paste(appSetup$resDir[k],basinFiles[i],sep="/"),
-                                  csvFile=paste(outDir[k],paste(prefix.csv,"_",prodTag,"_",substr(basinFiles[i],1,nchar(basinFiles[i])-3),"csv",sep=""),sep="/"),
-                                  hype2csvFile=hype2csvFile,assimOn=appInput$assimOn)
+        if(hype2csvExists){
+          for(i in 1:length(basinFiles)){
+            resCsv = basinfiles2csv(hypeFile=paste(appSetup$resDir[k],basinFiles[i],sep="/"),
+                                    csvFile=paste(outDir[k],paste(prefix.csv,"_",prodTag,"_",substr(basinFiles[i],1,nchar(basinFiles[i])-3),"csv",sep=""),sep="/"),
+                                    hype2csvFile=hype2csvFile,assimOn=appInput$assimOn)
+          }
         }
       }
       
