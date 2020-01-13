@@ -756,12 +756,17 @@ getHypeAppSetup<-function(modelName,
   
   # copy model files to working directory
   if(appName=="historical"|appName=="forecast"|appName=="eodata"){
-    fileNames=c("par.txt",
-                "GeoData.txt",
-                "GeoClass.txt",
-                "BranchData.txt",
-                "FloodData.txt",
-                "LakeData.txt")
+    # fileNames=c("par.txt",
+    #             "GeoData.txt",
+    #             "GeoClass.txt",
+    #             "BranchData.txt",
+    #             "FloodData.txt",
+    #             "LakeData.txt")
+    fileNames <- list.files(path=modelFilesPath,pattern="*.txt")
+    if(file.exists(paste0(modelFilesPath,"/filedir.txt"))){
+      # Skip
+      fileNames <- fileNames[-match("filedir.txt",fileNames)]
+    }
     
     if(appName=="historical"|appName=="eodata"){
       fileNames=c(fileNames,"info-historical.txt")
@@ -774,6 +779,8 @@ getHypeAppSetup<-function(modelName,
         fileNames=c(fileNames,"info-hindcast-assimilation.txt","info-historical-assimilation.txt","AssimInfo-AOWL.txt","AssimInfo-Openloop.txt","AssimInfo-Openloop-inibin.txt")
       }
     }
+
+    fileNames <- unique(fileNames)
     
     # ToDo: This currently copies "known" files from westafrica-hype-data/v1.3.6/
     #       Some of these files (info-*.txt) should instead be copied by path set by the configuration in run.R (e.g. modelDataPaths$fileInfoTxtHindcast)
