@@ -222,7 +222,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                  shapeFilesPath = shape.files.path,
                                  hype2csvPath = hype2csv.path,
                                  stateFilesPath = state.files.path,
-                                 stateFilesIN = state.files)
+                                 stateFilesIN = state.files,
+                                 debugPublishFiles = debugPublish)
 
     if (verboseVerbose == TRUE) {
         print("app.setup (output from getHypeAppSetup):")
