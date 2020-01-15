@@ -1367,9 +1367,9 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
   bdate <- as.Date(startDate)
   edate <- as.Date(endDate)
 
-  # cdate = edate - 60 days:
+  # cdate = edate - 130 days:
   calc.date <- as.POSIXlt(edate)
-  calc.date$mday <- calc.date$mday - 60
+  calc.date$mday <- calc.date$mday - 130
   cdate <- as.Date(calc.date)
 
   # Produced files to copy to run dir
@@ -1380,7 +1380,7 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
   forckey <- paste(obsDir,"ForcKey.txt",sep="/")
   nFiles  <- 0
 
-  publishFiles <- (debugPublishFiles || stateFileCreation)
+  publishFiles <- debugPublishFiles
   dstDir <- modelFilesRunDir
   if (file.exists(pobs)) {
       nFiles <- nFiles + 1
