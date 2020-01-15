@@ -768,6 +768,10 @@ getHypeAppSetup<-function(modelName,
       # Skip
       fileNames <- fileNames[-match("filedir.txt",fileNames)]
     }
+    if(file.exists(paste0(modelFilesPath,"/Qobs.txt"))){
+      # Skip
+      fileNames <- fileNames[-match("Qobs.txt",fileNames)]
+    }
     
     if(appName=="historical"|appName=="eodata"){
       fileNames=c(fileNames,"info-historical.txt")
