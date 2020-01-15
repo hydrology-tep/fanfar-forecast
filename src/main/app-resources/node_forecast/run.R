@@ -122,11 +122,11 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     logFile=appLogOpen(appName = app.name, tmpDir = getwd(),appDate = app.date,prefix=prefixLogFile)
 
     ## ------------------------------------------------------------------------------
-    # Get git commit
-    git_con <- file(paste0(Sys.getenv("_CIOP_APPLICATION_PATH"), "/git_commit.txt"),"r")
-    git_commit <- readLines(git_con,n=1)
-    close(git_con)
-    log.res=appLogWrite(logText = paste0("Running using git commit ", git_commit), fileConn = logFile$fileConn)
+    # # Get git commit
+    # git_con <- file(paste0(Sys.getenv("_CIOP_APPLICATION_PATH"), "/git_commit.txt"),"r")
+    # git_commit <- readLines(git_con,n=1)
+    # close(git_con)
+    # log.res=appLogWrite(logText = paste0("Running using git commit ", git_commit), fileConn = logFile$fileConn)
 
 
     #################################################################################
