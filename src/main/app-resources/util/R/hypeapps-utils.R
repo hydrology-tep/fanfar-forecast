@@ -705,7 +705,8 @@ getHypeAppSetup<-function(modelName,
                           shapeFilesPath=NULL,
                           hype2csvPath=NULL,
                           stateFilesPath=NULL,
-                          stateFilesIN=NULL){
+                          stateFilesIN=NULL,
+                          debugPublishFiles=FALSE){
 
 # 
 # forcingArchiveURL and stateFilesURL are only assigned to output
@@ -756,12 +757,17 @@ getHypeAppSetup<-function(modelName,
   
   # copy model files to working directory
   if(appName=="historical"|appName=="forecast"|appName=="eodata"){
-    fileNames=c("par.txt",
-                "GeoData.txt",
-                "GeoClass.txt",
-                "BranchData.txt",
-                "FloodData.txt",
-                "LakeData.txt")
+    # fileNames=c("par.txt",
+    #             "GeoData.txt",
+    #             "GeoClass.txt",
+    #             "BranchData.txt",
+    #             "FloodData.txt",
+    #             "LakeData.txt")
+    fileNames <- list.files(path=modelFilesPath,pattern="*.txt")
+    if(file.exists(paste0(modelFilesPath,"/filedir.txt"))){
+      # Skip
+      fileNames <- fileNames[-match("filedir.txt",fileNames)]
+    }
     
     if(appName=="historical"|appName=="eodata"){
       fileNames=c(fileNames,"info-historical.txt")
@@ -774,6 +780,8 @@ getHypeAppSetup<-function(modelName,
         fileNames=c(fileNames,"info-hindcast-assimilation.txt","info-historical-assimilation.txt","AssimInfo-AOWL.txt","AssimInfo-Openloop.txt","AssimInfo-Openloop-inibin.txt")
       }
     }
+
+    fileNames <- unique(fileNames)
     
     # ToDo: This currently copies "known" files from westafrica-hype-data/v1.3.6/
     #       Some of these files (info-*.txt) should instead be copied by path set by the configuration in run.R (e.g. modelDataPaths$fileInfoTxtHindcast)
@@ -785,15 +793,20 @@ getHypeAppSetup<-function(modelName,
                 to=paste(modelFilesRunDir,fileNames[i],sep="/"),
                 overwrite=T)
       rciop.log ("DEBUG", paste0("cp ",modelFilesPath,"/",fileNames[i]," to ",modelFilesRunDir,"/",fileNames[i]),"/util/R/hypeapps-utils.R")
+      if(debugPublishFiles){
+        rciop.publish(path=paste(modelFilesPath,fileNames[i],sep="/"),recursive=FALSE,metalink=TRUE)
+      }
       #}
     }
-
   }
   
   ## model binary file (stays in application folder)
   if(appName=="historical"|appName=="forecast"){
     # model binary source file
     modelBinaryFile=paste(appDir,'util/bin',modelBin,sep="/")
+    if(debugPublishFiles){
+      rciop.publish(path=modelBinaryFile,recursive=FALSE,metalink=TRUE)
+    }
     
     # command line to run the model "hype rundir"
     sysCommand = paste(paste(modelBinaryFile,modelFilesRunDir,sep=" "),"/",sep="")
