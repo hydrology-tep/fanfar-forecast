@@ -613,11 +613,20 @@ determine_interval_hydrogfdei <- function(hindcastStartDate,
 
       mday_as_char <- strftime(hydrogfdei.endDate,format="%d")
       mday_as_num  <- as.numeric(mday_as_char)
+
+      # Handle case for month day 31 (and 29, 30) and resulting months with less days.
+      # Month day after a month subtraction may for certain resulting months end up in the month n+1 as day 1 or 2.
+      # E.g. idate: yyyy-08-31 -> yyyy-05-01 instead of yyyy-04-30
+      #      idate: yyyy-06-30 -> yyyy-03-02 instead of yyyy-02-28 (or 29 for leap years)
+      tmpDate      <- hydrogfdei.endDate
+      tmpDate$mday <- 15
+
       if (mday_as_num < 10) {
-          hydrogfdei.endDate$mon <- hydrogfdei.endDate$mon - 5 # 4+1 due to round off below
+        tmpDate$mon <- tmpDate$mon - 5 # 4+1 due to round off to end of month below
       }else {
-          hydrogfdei.endDate$mon <- hydrogfdei.endDate$mon - 4
+        tmpDate$mon <- tmpDate$mon - 4
       }
+      hydrogfdei.endDate <- tmpDate
 
       # For shorter hindcast period lengths
       # E.g. idate: 2019-10-05, hc per len 123 => hc start: 2019-06-01, hc end: 2019-05-05 !
@@ -691,11 +700,17 @@ determine_interval_hydrogfdod <- function(hydrogfdeiEndDate,
 
       mday_as_char <- strftime(hydrogfdod.endDate,format="%d")
       mday_as_num  <- as.numeric(mday_as_char)
+
+      # Handle case for month day 31 (and 29, 30), see determine_interval_hydrogfdei()
+      tmpDate      <- hydrogfdod.endDate
+      tmpDate$mday <- 15
+
       if (mday_as_num < 10) {
-        hydrogfdod.endDate$mon <- hydrogfdod.endDate$mon - 2
+        tmpDate$mon <- tmpDate$mon - 2
       }else {
-        hydrogfdod.endDate$mon <- hydrogfdod.endDate$mon - 1
+        tmpDate$mon <- tmpDate$mon - 1
       }
+      hydrogfdod.endDate <- tmpDate
 
       # Round off to end of this month
       mon_as_char <- strftime(hydrogfdod.endDate,format="%m")
