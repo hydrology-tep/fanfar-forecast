@@ -81,7 +81,7 @@
     <node id="node_forecast">
       <job id="template_hypeapps"/>
       <sources>
-        <source id="model_config_file" scope="runtime" refid="string:list"></source>
+	<source id="dummy" refid="string:list">dummy</source>
       </sources>
     </node>
   </workflow>
