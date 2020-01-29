@@ -3,6 +3,8 @@
 # Constants
 nameOfSrcFile_PN <- "/util/R/process-forcing.R"
 
+cLimitHindcastPeriodDays <- 130
+
 #verbose <- TRUE
 verbose <- FALSE
 #verboseVerbose <- TRUE
@@ -444,11 +446,11 @@ process_forcing_get_requested_statefile_suffix <- function(meteo,meteoVersion=NU
 # Return the filename with the latest forecast issue date
 # Input  - local directory to check for state files
 # Output - status=0 and date (posix date class), filename incl. path.
-#        - status=1 when file not found or other error, return date 1901-01-01, filename NULL
+#        - status=1 when file not found or other error, return date 9999-01-01, filename NULL
 check_latest_statefiles_category <- function(filePath,meteo,meteoVersion,hindcastStartDate) #,forecastIssueDate)
 {
   status   <- 1 # NOK
-  fileDate <- "19010101"
+  fileDate <- "99990101"
   fileName <- NULL
   
   #state_save20180101.txt-hydrogfd2.0-bdate20100101
@@ -518,20 +520,23 @@ determine_interval_hindcast <- function(forecastIssueDate,
     hindcast.startDate$mday <- hindcast.startDate$mday - hindcastDays
 
     # Check if state file exists (independent of run type mode)
-    #resStateFile <- check_latest_statefiles(pathStateFiles) # hydrogfd version, hindcast.startDate, forecastIssueDate
     resStateFile <- check_latest_statefiles_category(pathStateFiles,
                                                      meteo=metHCType,
                                                      meteoVersion=NULL,
-                                                     #hindcast.startDate)
-                                                     hindcastStartDate=statefileHindcastDate) #"2010-01-01") # ToDo: Need to be read from configuration...
+                                                     hindcastStartDate=statefileHindcastDate)
 
-    doUseStateFile <- (! stateFileCreation)
+    limitDateForUseOfStateFile      <- resStateFile$fileDate
+    limitDateForUseOfStateFile$mday <- limitDateForUseOfStateFile$mday + cLimitHindcastPeriodDays
+
+    doUseStateFile <- (resStateFile$status == 0)
+    doUseStateFile <- doUseStateFile && (forecastIssueDate > limitDateForUseOfStateFile)
 
     # Base hindcast start date depeding on HYPE state file
     if ((hindcast.startDate <= resStateFile$fileDate) && doUseStateFile) {
       # Start date earlier
       hindcast.startDate      <- resStateFile$fileDate
       hindcast.startDate$mday <- hindcast.startDate$mday + 0 # + 1
+      rciop.log("INFO", paste0("Using state file: ",resStateFile$fileName),nameOfSrcFile_PN)
     }else {
       # Start date later
 
@@ -613,11 +618,20 @@ determine_interval_hydrogfdei <- function(hindcastStartDate,
 
       mday_as_char <- strftime(hydrogfdei.endDate,format="%d")
       mday_as_num  <- as.numeric(mday_as_char)
+
+      # Handle case for month day 31 (and 29, 30) and resulting months with less days.
+      # Month day after a month subtraction may for certain resulting months end up in the month n+1 as day 1 or 2.
+      # E.g. idate: yyyy-08-31 -> yyyy-05-01 instead of yyyy-04-30
+      #      idate: yyyy-06-30 -> yyyy-03-02 instead of yyyy-02-28 (or 29 for leap years)
+      tmpDate      <- hydrogfdei.endDate
+      tmpDate$mday <- 15
+
       if (mday_as_num < 10) {
-          hydrogfdei.endDate$mon <- hydrogfdei.endDate$mon - 5 # 4+1 due to round off below
+        tmpDate$mon <- tmpDate$mon - 5 # 4+1 due to round off to end of month below
       }else {
-          hydrogfdei.endDate$mon <- hydrogfdei.endDate$mon - 4
+        tmpDate$mon <- tmpDate$mon - 4
       }
+      hydrogfdei.endDate <- tmpDate
 
       # For shorter hindcast period lengths
       # E.g. idate: 2019-10-05, hc per len 123 => hc start: 2019-06-01, hc end: 2019-05-05 !
@@ -691,11 +705,17 @@ determine_interval_hydrogfdod <- function(hydrogfdeiEndDate,
 
       mday_as_char <- strftime(hydrogfdod.endDate,format="%d")
       mday_as_num  <- as.numeric(mday_as_char)
+
+      # Handle case for month day 31 (and 29, 30), see determine_interval_hydrogfdei()
+      tmpDate      <- hydrogfdod.endDate
+      tmpDate$mday <- 15
+
       if (mday_as_num < 10) {
-        hydrogfdod.endDate$mon <- hydrogfdod.endDate$mon - 2
+        tmpDate$mon <- tmpDate$mon - 2
       }else {
-        hydrogfdod.endDate$mon <- hydrogfdod.endDate$mon - 1
+        tmpDate$mon <- tmpDate$mon - 1
       }
+      hydrogfdod.endDate <- tmpDate
 
       # Round off to end of this month
       mon_as_char <- strftime(hydrogfdod.endDate,format="%m")
@@ -776,27 +796,32 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
 
     ## ------------------------------------------------------------------------------
     # Handle inputs
+    if (verbose == TRUE) {
+      print('Handle inputs:')
+      print('in_hindcastDays:')
+      print(in_hindcastDays)
+      print('in_forecastIssueDate:')
+      print(in_forecastIssueDate)
+      print('in_reforecast:')
+      print(in_reforecast)
+      print('in_stateFileCreation:')
+      print(in_stateFileCreation)
+      print('in_metHCType:')
+      print(in_metHCType)
+      print('in_statefileHindcastDate:')
+      print(in_statefileHindcastDate)
+      print('')
+    }
+
     hindcast.Days <- as.numeric(in_hindcastDays)
-    if (hindcast.Days < 0) {
-      hindcast.Days <- 0
+    if (hindcast.Days < cLimitHindcastPeriodDays) {
+        if(app.sys=="tep"){rciop.log ("ERROR", "Hindcast period length to short",nameOfSrcFile_PN)}
+        q(save="no", status=1)
     }
 
     # Convert to posix date format
     forecast.IssueDate <- as.Date(in_forecastIssueDate)
     forecast.IssueDate <- as.POSIXlt(forecast.IssueDate)
-
-    if (verbose == TRUE) {
-      print('Handle inputs:')
-      print('hindcast.Days:')
-      print(hindcast.Days)
-      print('forecast.IssueDate:')
-      print(forecast.IssueDate)
-      print('in_reforecast:')
-      print(in_reforecast)
-      print('in_stateFileCreation:')
-      print(in_stateFileCreation)
-      print('')
-    }
 
     if (in_stateFileCreation) {
       rciop.log("INFO","------------------------------------------------",nameOfSrcFile_PN)
@@ -1369,8 +1394,12 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
 
   # cdate = edate - 130 days:
   calc.date <- as.POSIXlt(edate)
-  calc.date$mday <- calc.date$mday - 130
+  calc.date$mday <- calc.date$mday - cLimitHindcastPeriodDays
   cdate <- as.Date(calc.date)
+  # Limit, minimum
+  if (cdate < bdate) {
+      cdate <- bdate
+  }
 
   # Produced files to copy to run dir
   pobs    <- paste(obsDir,"Pobs.txt",sep="/")
