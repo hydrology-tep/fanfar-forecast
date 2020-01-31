@@ -1238,7 +1238,7 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
       urlNC     <- modelConfig$gfdEcoperUrl
       query     <- modelConfig$gfdEcoperQuery
       startDate <- xCastsInterval$ecoperStartDateSearch
-      stopDate  <- xCastsInterval$ecoperEndDateSearch
+      stopDate  <- xCastsInterval$ecoperStartDateSearch # 1 file
 
       search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
       nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
