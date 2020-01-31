@@ -284,7 +284,7 @@ process_configuration_application_inputs <- function(applInput=NULL,          # 
   modelConfigPath   <- NULL
   meteoConfigSearch <- NULL
  
-  urlDefault <- 'https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast?uid=C67D3BFEC0ACEDAEFAD0D1BD5464FBE4BD3C6FCB'
+  urlDefault <- 'https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config/?uid=106AAE902A2C251194FB51BF55805F7759B0DB19'
   urlLen     <- nchar(urlDefault)
 
   # Check if the input reference url is valid, else use the defaults below
