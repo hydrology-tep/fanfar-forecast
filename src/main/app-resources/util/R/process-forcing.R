@@ -1300,6 +1300,7 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
                                                stateFileCreation, # True - run mode 'Statefile creation'
                                                metHCType, # Selected meteo hindcast type at run time, for locating state file
                                                statefileHindcastDate, # Hindcast date in state file, for locating state file
+                                               configGridLinkFilename, # Name of grid link file from configuration
                                                netcdfDir, # Input dir with hydrogfd netcdf files
                                                ncSubDir, # False-one dir, True-separate dir for each variable
                                                modelFilesRunDir, # HYPE model data files dir
@@ -1357,8 +1358,22 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
   endDate   <- prepHindcastInterval$hindcastEndDateSearch
 
   netcdf_to_obs_wd <- paste0(TMPDIR,"/netcdf_to_obs")
-  # ToDo: Do this once... when criteria is new or changed
-  #if (! dir.exists(gridMetaDir)){ # or a certain file (file.exists)
+
+  gridLinkFile       <- paste0(obsDir,"/gridLink.Rdata") # Used by netcdf_to_obs functions
+  configGridLinkFile <- "no-filename"
+  if (! is.null(configGridLinkFilename)) {
+      configGridLinkFile <- paste0(modelDataConfig,"/shapefiles/",configGridLinkFilename)
+  }
+
+  if (file.exists(configGridLinkFile)) {
+      if (! dir.exists(obsDir)){
+          dir.create(obsDir)
+      }
+      file.copy(from=configGridLinkFile,to=gridLinkFile,overwrite=TRUE)
+      rciop.log ("INFO", paste0("cp ",configGridLinkFile," to ",gridLinkFile,"/"),nameOfSrcFile_PN)
+  }
+
+  if (! file.exists(gridLinkFile)) {
       res <- run_netcdf_to_obs_gridLinkPreparation(workDir=netcdf_to_obs_wd,
                                                    ncRootDir=netcdfDir,
                                                    ncSubDir=ncSubDir,
@@ -1368,10 +1383,15 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
                                                    outPath=obsDir, # Should maybe be a temporary dir for next step, but need to be available for the corresponding functional call during forecast
                                                    startDate,
                                                    endDate)
+      if (file.exists(gridLinkFile) && debugPublishFiles) {
+          # Publish to let user access the file and later add file to a configuration object
+          rciop.publish(path=gridLinkFile,recursive=FALSE,metalink=TRUE)
+      }
+
       if (res > 0){
           rciop.log("INFO",paste0("run_netcdf_to_obs_gridLinkPreparation, exit code=",res),nameOfSrcFile_PN)
       }
-  #}
+  }
 
   res <- prepare_and_run_netcdf_to_obs(workDir=netcdf_to_obs_wd,
                                        ncRootDir=netcdfDir,
