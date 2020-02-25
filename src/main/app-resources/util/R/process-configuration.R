@@ -275,11 +275,12 @@ search_download_meteo_configuration <- function(url,
 } # search_download_meteo_configuration
 
 
-
+# Download selected main configuration and sub-parts
 process_configuration_application_inputs <- function(applInput=NULL,          # Input to application from stdin
                                                      applRuntimeOptions=NULL) # Application configuration from user, ToDo
 {
-  
+  # N.B. input to the application (input) cannot be completely empty due to the condition for the main/first while loop in run.R.
+
   # Outputs
   modelConfigPath   <- NULL
   meteoConfigSearch <- NULL
@@ -287,21 +288,39 @@ process_configuration_application_inputs <- function(applInput=NULL,          # 
   urlDefault <- 'https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config/?uid=106AAE902A2C251194FB51BF55805F7759B0DB19'
   urlLen     <- nchar(urlDefault)
 
-  # Check if the input reference url is valid, else use the defaults below
-  # It cannot be completely empty due to condition of the main while loop in run.R.
   if (is.null(applInput) || nchar(applInput) < urlLen){
-      # User
-      if (applRuntimeOptions$modelConfig == cModelConfigVariant1) {
+      # Using (url) from parameter field 'model config file' or
+      # selection of model configuration(s) from user
+      urlSelected <- FALSE
+
+      # It's up to the user to specify a correct url, so skip any checks of a valid url.
+      urlModelConfigFile <- rciop.getparam("model_config_file")
+      if ( (length(urlModelConfigFile) > 0) && ! is.null(urlModelConfigFile) ) {
+          if (nchar(urlModelConfigFile) > nchar("https://recast.terradue.com")) {
+              rciop.log("INFO","Using URL from optional parameter field (model config file) for the main configuration object",nameOfSrcFile_PC)
+              urlAndQuery <- urlModelConfigFile
+              opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
+              urlSelected <- TRUE
+          }
+      }
+
+      if (! urlSelected && applRuntimeOptions$modelConfig == cModelConfigVariant1) {
           rciop.log("INFO",paste0("Using default URL for the main configuration object: ",cModelConfigVariant1),nameOfSrcFile_PC)
           urlAndQuery <- urlDefault
           opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
-      }else{
+          urlSelected <- TRUE
+      }
+
+      # ToDo: Support other configuration(s)
+      # To run the corresponding hypeapps-forecast, either skip call to this function from run.R or handle remaining part of this function.
+
+      if (! urlSelected) {
           # Exit the application
           rciop.log("ERROR", "Unsupported configuration",nameOfSrcFile_PC)
           q(save="no",status=99)
       }
   }else {
-      # Using URL and query from stdin
+      # Using URL and query from input (stdin)
       opensearchCmd=paste0("opensearch-client '",applInput,"' enclosure")
   }
 
