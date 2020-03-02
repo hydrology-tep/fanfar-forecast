@@ -272,6 +272,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                                               stateFileCreation=(applRuntimeOptions$runTypeStateFileCreation == cRunTypeVariantStatefile),
                                                               metHCType=applRuntimeOptions$metHC,
                                                               modelConfigData$statefileHindcastDate,
+                                                              modelConfigData$configGridLinkFilename,
                                                               dirNCFiles,
                                                               ncSubDir=TRUE,
                                                               app.setup$runDir,
@@ -344,7 +345,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         #q()
     }
 
-    if(app.sys=="tep"){rciop.log ("DEBUG", paste("hindcast inputs modified"), nameOfSrcFile_Run)}
+    if(app.sys=="tep"){rciop.log ("DEBUG", paste("...hindcast inputs modified"), nameOfSrcFile_Run)}
     log.res=appLogWrite(logText = "hindcast model inputs modified",fileConn = logFile$fileConn)
 
     #################################################################################

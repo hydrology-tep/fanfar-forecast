@@ -282,10 +282,12 @@ process_configuration_application_inputs <- function(applInput=NULL,          # 
   # N.B. input to the application (input) cannot be completely empty due to the condition for the main/first while loop in run.R.
 
   # Outputs
-  modelConfigPath   <- NULL
-  meteoConfigSearch <- NULL
+  modelConfigPath        <- NULL
+  meteoConfigSearch      <- NULL
+  statefileHindcastDate  <- "1800-01-01"
+  configGridLinkFilename <- NULL
  
-  urlDefault <- 'https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config/?uid=106AAE902A2C251194FB51BF55805F7759B0DB19'
+  urlDefault <- 'https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config/?uid=8AFDC9E4C579CB1BCC3A318349EE347824BB0EE3'
   urlLen     <- nchar(urlDefault)
 
   if (is.null(applInput) || nchar(applInput) < urlLen){
@@ -360,7 +362,6 @@ process_configuration_application_inputs <- function(applInput=NULL,          # 
   local.hydroGFDConfigUrl <- NULL
   local.hydroGFDConfigQuery <- NULL
   #local.hydroGFDConfigComment <- NULL
-  statefileHindcastDate <- "1800-01-01"
   for (r in 1:nrow(main_config_data)) {
       subdir <- main_config_data[r,'localdirectory']
       if (subdir == 'hype-model') {
@@ -380,6 +381,10 @@ process_configuration_application_inputs <- function(applInput=NULL,          # 
           # Later used when searching for available state files.
           statefileHindcastDate <- as.character(main_config_data[r,'searchquery'])
       }
+      if (subdir == 'gridlink-filename') {
+          # Filename of corresponding file gridLink.Rdata in dir <configuration object>/shapefiles/
+          configGridLinkFilename <- as.character(main_config_data[r,'searchquery'])
+      }
   }
 
   modelConfigPath <- search_download_model_configuration(local.modelConfigUrl,
@@ -391,7 +396,8 @@ process_configuration_application_inputs <- function(applInput=NULL,          # 
     
   output <- list("modelConfig"=modelConfigPath,
                  "meteoConfig"=meteoConfigSearch,
-                 "statefileHindcastDate"=statefileHindcastDate)
+                 "statefileHindcastDate"=statefileHindcastDate,
+                 "configGridLinkFilename"=configGridLinkFilename)
 
   return (output)
 } # process_configuration_application_inputs
