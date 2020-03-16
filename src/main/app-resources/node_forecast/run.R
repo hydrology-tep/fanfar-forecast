@@ -356,13 +356,16 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         if(app.sys=="tep"){rciop.log ("DEBUG", " ...starting hindcast model run", nameOfSrcFile_Run)}
         log.res=appLogWrite(logText = "starting hindcast model run ...",fileConn = logFile$fileConn)
 
-        hindcast.run = system(command = app.setup$runCommand,intern = T)
+        hindcast.run = system(command = app.setup$runCommand,intern = F)
+        if (hindcast.run != 0){
+            rciop.log("ERROR",paste0("hindcast.run exit code: ",hindcast.run),nameOfSrcFile_Run)
 
-        # Publish hindcast log file(s) in case prepareHypeAppsOutput() is not called
-        hyssLogFiles = dir(path=app.setup$runDir,pattern=".log")
-        if (length(hyssLogFiles) > 0){
-            for (i in 1:length(hyssLogFiles)) {
-                rciop.publish(path=paste(app.setup$runDir,hyssLogFiles[i],sep="/"),recursive=FALSE,metalink=TRUE)
+            # Publish hindcast log file(s) in case prepareHypeAppsOutput() is not called
+            hyssLogFiles = dir(path=app.setup$runDir,pattern=".log")
+            if (length(hyssLogFiles) > 0){
+                for (i in 1:length(hyssLogFiles)) {
+                    rciop.publish(path=paste(app.setup$runDir,hyssLogFiles[i],sep="/"),recursive=FALSE,metalink=TRUE)
+                }
             }
         }
 
@@ -497,7 +500,10 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             if(app.sys=="tep"){rciop.log ("DEBUG", " ...starting forecast model run", nameOfSrcFile_Run)}
             log.res=appLogWrite(logText = "starting forecast model run ...",fileConn = logFile$fileConn)
 
-            forecast.run = system(command = app.setup$runCommand,intern = T)
+            forecast.run = system(command = app.setup$runCommand,intern = F)
+            if (forecast.run != 0){
+                rciop.log("ERROR",paste0("forecast.run exit code: ",forecast.run),nameOfSrcFile_Run)
+            }
 
             if (verboseVerbose == TRUE) {
                 print("List files after forecast, dir run dir")
@@ -528,11 +534,11 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     if (! doForecastSequence) {
         modelInput   <- hindcast.input
         modelForcing <- hindcast.forcing
-        runRes       <- attr(hindcast.run,"status")
+        runRes       <- hindcast.run
     } else {
         modelInput   <- forecast.input
         modelForcing <- forecast.forcing
-        runRes       <- attr(forecast.run,"status")
+        runRes       <- forecast.run
     }
 
     app.outfiles <- prepareHypeAppsOutput(appSetup  = app.setup, appInput = app.input,

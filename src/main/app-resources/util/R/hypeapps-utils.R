@@ -2787,17 +2787,27 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
       }
       
       # copy log-files from rundir to outdirs
-      # since this function is only called once in the end on run.R, log files for hindcast and forecast
-      # will end up in both out dirs but can be identified via the timestamp
-      #if (k==2) {
-        hyssLogFiles = dir(path = appSetup$runDir, pattern =".log") # hyss_x.log and tests_x.log
-        if(app.sys=="tep"){
-          if(length(hyssLogFiles) > 0){
-              file.copy(from = paste(appSetup$runDir,hyssLogFiles,sep="/"),
-                        to = outDir[k])
+      hyssLogFiles     = dir(path = appSetup$runDir,pattern="hyss_")
+      hyssTestLogFiles = dir(path = appSetup$runDir,pattern="tests_")
+
+      if(app.sys=="tep"){
+        if(length(hyssLogFiles) > 0){
+          hyssLogFiles <- sort(hyssLogFiles,decreasing=FALSE) # Lowest index - hindcast
+          srcFile <- paste(appSetup$runDir,hyssLogFiles[k],sep="/")
+          if (file.exists(srcFile)){ # Not all may exist depending on run type
+            file.copy(from = srcFile,
+                      to = paste(outDir[k],paste(prefix.log,prodTag,hyssLogFiles[k],sep="_"),sep="/"))
           }
         }
-      #}
+        if(length(hyssTestLogFiles) > 0){
+          hyssTestLogFiles <- sort(hyssTestLogFiles,decreasing=FALSE)
+          srcFile <- paste(appSetup$runDir,hyssTestLogFiles[k],sep="/")
+          if (file.exists(srcFile)){
+            file.copy(from = srcFile,
+                      to = paste(outDir[k],paste(prefix.log,prodTag,hyssTestLogFiles[k],sep="_"),sep="/"))
+          }
+        }
+      }
       
       # list files in result folder
       timeFiles   = dir(path = appSetup$resDir[k] , pattern ="time")
