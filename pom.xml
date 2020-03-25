@@ -49,7 +49,7 @@
                   <requires>
                     <require>miniconda</require>
                     <!-- proj 4.7, run-time error with 4.8 -->
-                    <require>proj = 4.7.0</require>
+                   <!-- <require>proj = 4.7.0</require> -->
                     <require>libgfortran</require>
                     <require>hdf5</require>
                     <require>netcdf</require>
