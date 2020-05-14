@@ -447,6 +447,18 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                 #q()
             }
 
+            # Cleanup certain forcing files from run dir for forecast run
+            hindcast_forcing_files = c('Qobs.txt','Xobs.txt')
+
+            hindcast_run_dir = app.setup$runDir
+            for(f in 1:length(hindcast_forcing_files)){
+                file_to_be_removed = paste0(hindcast_run_dir,'/',hindcast_forcing_files[f])
+                if (file.exists(file_to_be_removed)) {
+                    print(paste0("rm ",file_to_be_removed))
+                    file.remove(file_to_be_removed)
+                }
+            }
+
             # Minimal variants of original list types returned by getModelForcing()
             forecast.forcing <- list("status"=T,
                                     "localFile"=NULL,
