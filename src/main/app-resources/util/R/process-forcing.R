@@ -1412,10 +1412,16 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
   bdate <- as.Date(startDate)
   edate <- as.Date(endDate)
 
-  # cdate = edate - 130 days:
-  calc.date <- as.POSIXlt(edate)
-  calc.date$mday <- calc.date$mday - cLimitHindcastPeriodDays
-  cdate <- as.Date(calc.date)
+  if (! stateFileCreation){
+    # Standard
+    # cdate = edate - 130 days:
+    calc.date <- as.POSIXlt(edate)
+    calc.date$mday <- calc.date$mday - cLimitHindcastPeriodDays
+    cdate <- as.Date(calc.date)
+  }else{
+    # State file creation
+    cdate <- bdate
+  }
   # Limit, minimum
   if (cdate < bdate) {
       cdate <- bdate
