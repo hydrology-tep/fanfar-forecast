@@ -138,6 +138,12 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     rciop.log("INFO", "Processing user selection:")
     applRuntimeOptions <- process_configuration_application_runtime_options()
 
+    publishHindcastForcingFiles <- FALSE
+    if (applRuntimeOptions$runTypeStateFileCreation == cRunTypeVariantStatefile){
+        # Publish P/Tobs.txt or gridLink files for run type statefile creation
+        publishHindcastForcingFiles <- TRUE
+    }
+
     if (verboseVerbose == TRUE) {
         print("applRuntimeOptions (output from process_configuration_application_runtime_options):")
         print(applRuntimeOptions)
@@ -277,7 +283,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                                               ncSubDir=TRUE,
                                                               app.setup$runDir,
                                                               dirObsFiles,
-                                                              debugPublish)
+                                                              publishHindcastForcingFiles)
 
         # Minimal variants of original list types returned by getModelForcing()
         hindcast.forcing <- list("status"=T,
