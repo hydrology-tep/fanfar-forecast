@@ -101,7 +101,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## ------------------------------------------------------------------------------
     ## Load hypeapps environment and additional R utility functions
     if(app.sys=="tep"){
-        source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-forcing.R",sep="/"))
+        source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-forcing-hgfd2.R",sep="/"))
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/hypeapps-environment.R",sep="/"))
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/hypeapps-utils.R", sep="/"))
 

@@ -1,7 +1,7 @@
 #! /usr/bin/Rscript
 
 # Constants
-nameOfSrcFile_PN <- "/util/R/process-forcing.R"
+nameOfSrcFile_PN <- "/util/R/process-forcing-hgfd2.R"
 
 cLimitHindcastPeriodDays <- 130
 
@@ -49,7 +49,7 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
     currentDir <- setwd(workDir)
 
     # Source the utility file
-    fileToSource <- paste0(Sys.getenv("_CIOP_APPLICATION_PATH"), "/util/R/netcdf_to_obs_utils.R")
+    fileToSource <- paste0(Sys.getenv("_CIOP_APPLICATION_PATH"), "/util/R/netcdf_to_obs_hgfd2/netcdf_to_obs_utils_hgfd2.R")
     if (! file.exists(fileToSource)){
         rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",fileToSource),nameOfSrcFile_PN)
         q(save="no", status = 0) # 77
@@ -183,7 +183,7 @@ prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
     currentDir <- setwd(workDir)
 
     # Source the utility file
-    fileToSource <- paste0(Sys.getenv("_CIOP_APPLICATION_PATH"), "/util/R/netcdf_to_obs_utils.R")
+    fileToSource <- paste0(Sys.getenv("_CIOP_APPLICATION_PATH"), "/util/R/netcdf_to_obs_hgfd2/netcdf_to_obs_utils_hgfd2.R")
     if (! file.exists(fileToSource)){
         rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",fileToSource),nameOfSrcFile_PN)
         #q(save="no", status = 77)

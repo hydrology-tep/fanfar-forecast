@@ -64,9 +64,9 @@
 
    #### source the utility file (assumed to be located in the working directory)
   {
-    fileToSource <- paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/netcdf_to_obs_utils_hypetools.R",sep="/")
+    fileToSource <- paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/netcdf_to_obs_hgfd2/netcdf_to_obs_utils_hypetools.R",sep="/")
     if (! file.exists(fileToSource)){
-        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",fileToSource))
+        rciop.log("INFO", paste0("Aborting netcdf to obs hgfd2 - file missing: ",fileToSource))
         q(save="no", status = 0) # 77
     }
     source(fileToSource)
