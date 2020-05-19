@@ -49,9 +49,9 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
     currentDir <- setwd(workDir)
 
     # Source the utility file
-    fileToSource <- paste0(Sys.getenv("_CIOP_APPLICATION_PATH"), "/util/R/netcdf_to_obs_hgfd2/netcdf_to_obs_utils_hgfd2.R")
+    fileToSource <- paste0(Sys.getenv("_CIOP_APPLICATION_PATH"), "/util/R/netcdf_to_obs_hgfd2/netcdf_to_obs_hgfd2_utils.R")
     if (! file.exists(fileToSource)){
-        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",fileToSource),nameOfSrcFile_PN)
+        rciop.log("INFO", paste0("Aborting netcdf to obs hgfd2 - file missing: ",fileToSource),nameOfSrcFile_PN)
         q(save="no", status = 0) # 77
     }
     source(fileToSource)
@@ -183,9 +183,9 @@ prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
     currentDir <- setwd(workDir)
 
     # Source the utility file
-    fileToSource <- paste0(Sys.getenv("_CIOP_APPLICATION_PATH"), "/util/R/netcdf_to_obs_hgfd2/netcdf_to_obs_utils_hgfd2.R")
+    fileToSource <- paste0(Sys.getenv("_CIOP_APPLICATION_PATH"), "/util/R/netcdf_to_obs_hgfd2/netcdf_to_obs_hgfd2_utils.R")
     if (! file.exists(fileToSource)){
-        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",fileToSource),nameOfSrcFile_PN)
+        rciop.log("INFO", paste0("Aborting netcdf to obs hgfd2 - file missing: ",fileToSource),nameOfSrcFile_PN)
         #q(save="no", status = 77)
     }
     source(fileToSource)
