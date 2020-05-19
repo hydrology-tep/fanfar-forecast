@@ -4,7 +4,7 @@
 nameOfSrcFile_PC <- "/util/R/process-configuration.R"
 
 #verbose <- TRUE
-verbose <- FALSE
+#verbose <- FALSE
 
 source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/constants.R",sep="/"))
 
@@ -58,18 +58,18 @@ process_configuration_application_runtime_options <- function()
       runTypeStateFileCreation <- cRunTypeVariantStatefile # True
     }
 
-    rciop.log("INFO", "-------Global configuration options:-------", nameOfSrcFile_PC)
-    rciop.log("INFO", paste0("modelConfig:   ",modelConfig), nameOfSrcFile_PC)
+    cmn.log("-------Global configuration options:-------", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+    cmn.log(paste0("modelConfig:   ",modelConfig), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
     # rciop.log("INFO", paste0("hydModel:      ",hydModel), nameOfSrcFile_PC)
     # rciop.log("INFO", paste0("metHC:         ",metHC), nameOfSrcFile_PC)
     # rciop.log("INFO", paste0("metFC:         ",metFC), nameOfSrcFile_PC)
-    rciop.log("INFO", paste0("runType:       ",runType), nameOfSrcFile_PC)
+    cmn.log(paste0("runType:       ",runType), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
     if (runTypeStateFileCreation == cRunTypeVariantStatefile){
-      rciop.log("INFO", "runTypeStateFileCreation: TRUE", nameOfSrcFile_PC)
+        cmn.log("runTypeStateFileCreation: TRUE", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
     }
-    rciop.log("INFO", paste0("idate:         ",rciop.getparam("idate")), nameOfSrcFile_PC)
-    rciop.log("INFO", paste0("hcperiodlen:   ",rciop.getparam("hcperiodlen")), nameOfSrcFile_PC)
-    rciop.log("INFO", "-------------------------------------------", nameOfSrcFile_PC)
+    cmn.log(paste0("idate:         ",rciop.getparam("idate")), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+    cmn.log(paste0("hcperiodlen:   ",rciop.getparam("hcperiodlen")), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+    cmn.log("-------------------------------------------", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
 
     outputApplRuntimeOptions <- list("modelConfig"=modelConfig,
                                     #  "hydModel"=hydModel,
@@ -85,7 +85,7 @@ process_configuration_application_runtime_options <- function()
 check_dir_exist <- function(absPath)
 {
     if(is.null(absPath) || !dir.exists(absPath)) {
-        rciop.log("INFO",paste0("Dir missing: ",absPath),nameOfSrcFile_PC)
+        cmn.log(paste0("Dir missing: ",absPath), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
     }
 }
 
@@ -93,7 +93,7 @@ check_dir_exist <- function(absPath)
 check_file_exist <- function(absPath)
 {
     if(is.null(absPath) || !file.exists(absPath)) {
-        rciop.log("INFO",paste0("File missing: ",absPath),nameOfSrcFile_PC)
+        cmn.log(paste0("File missing: ",absPath), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
     }
 }
 
@@ -106,7 +106,7 @@ search_download_model_configuration <- function(url,
     modelConfigPath <- NULL
 
     if (is.null(url) || is.null(query)){
-        print("ERROR, HYPE model configuration items missing")
+        cmn.log("HYPE model configuration items missing", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PC)
         q(save="no",status=1)
     }
 
@@ -114,7 +114,7 @@ search_download_model_configuration <- function(url,
     opensearchCmd=paste0("opensearch-client '",url,query,"' enclosure")
     message(opensearchCmd)
     res_enclosure <- system(command = opensearchCmd,intern = T)
-    rciop.log("INFO", res_enclosure)
+    cmn.log(res_enclosure, logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
 
     # Download
     tmp_dir=paste0(TMPDIR,"/hype-model/config")
@@ -123,7 +123,7 @@ search_download_model_configuration <- function(url,
     if (res_copy$exit.code==0) {
         modelConfigPath <- res_copy$output
     }else{
-        print("ERROR, could not find or download the configuration")
+        cmn.log("Could not find or download the configuration", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PC)
         q(save="no",status=1)
     }
     
@@ -167,7 +167,7 @@ search_download_meteo_configuration <- function(url,
     #gfdGridComment <- NULL
 
     if (is.null(url) || is.null(query)){
-        print("ERROR, HydroGFD meteo configuration items missing")
+        cmn.log("HydroGFD meteo configuration items missing", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PC)
         q(save="no",status=1)
     }
 
@@ -175,7 +175,7 @@ search_download_meteo_configuration <- function(url,
     opensearchCmd=paste0("opensearch-client '",url,query,"' enclosure")
     message(opensearchCmd)
     res_enclosure <- system(command = opensearchCmd,intern = T)
-    rciop.log("INFO", res_enclosure)
+    cmn.log(res_enclosure, logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
 
     # Download
     tmp_dir=paste0(TMPDIR,"/hydrogfd/config")
@@ -185,7 +185,7 @@ search_download_meteo_configuration <- function(url,
     if (res_copy$exit.code==0) {
         local.meteoConfig <- res_copy$output
     }else{
-        print("ERROR, could not find or download the configuration")
+        cmn.log("Could not find or download the configuration", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PC)
         q(save="no",status=1)
     }
 
@@ -193,7 +193,7 @@ search_download_meteo_configuration <- function(url,
     meteo_config_file <- paste0(local.meteoConfig,"/dependencies.txt")
 
     if (! file.exists(meteo_config_file)) {
-        print("ERROR, configuration file missing")
+        cmn.log("Configuration file missing", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PC)
         q(save="no",status=1)
     }
 
@@ -299,7 +299,7 @@ process_configuration_application_inputs <- function(applInput=NULL,          # 
       urlModelConfigFile <- rciop.getparam("model_config_file")
       if ( (length(urlModelConfigFile) > 0) && ! is.null(urlModelConfigFile) ) {
           if (nchar(urlModelConfigFile) > nchar("https://recast.terradue.com")) {
-              rciop.log("INFO","Using URL from optional parameter field (model config file) for the main configuration object",nameOfSrcFile_PC)
+              cmn.log("Using URL from optional parameter field (model config file) for the main configuration object", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
               urlAndQuery <- urlModelConfigFile
               opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
               urlSelected <- TRUE
@@ -307,7 +307,7 @@ process_configuration_application_inputs <- function(applInput=NULL,          # 
       }
 
       if (! urlSelected && applRuntimeOptions$modelConfig == cModelConfigVariant1) {
-          rciop.log("INFO",paste0("Using default URL for the main configuration object: ",cModelConfigVariant1),nameOfSrcFile_PC)
+          cmn.log(paste0("Using default URL for the main configuration object: ",cModelConfigVariant1), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
           urlAndQuery <- urlDefault
           opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
           urlSelected <- TRUE
@@ -318,7 +318,7 @@ process_configuration_application_inputs <- function(applInput=NULL,          # 
 
       if (! urlSelected) {
           # Exit the application
-          rciop.log("ERROR", "Unsupported configuration",nameOfSrcFile_PC)
+          cmn.log("Unsupported configuration", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PC)
           q(save="no",status=99)
       }
   }else {
@@ -329,7 +329,7 @@ process_configuration_application_inputs <- function(applInput=NULL,          # 
   # Search for the main configuration and download the configuration object
   message(opensearchCmd)
   res_enclosure <- system(command = opensearchCmd,intern = T)
-  rciop.log("INFO", res_enclosure)
+  cmn.log(res_enclosure, logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
 
   # Download
   tmp_dir=paste0(TMPDIR,"/forecast/config")
@@ -337,10 +337,9 @@ process_configuration_application_inputs <- function(applInput=NULL,          # 
 
   local.mainConfig <- NULL
   if (res_copy$exit.code==0) {
-      #print("Status ok")
       local.mainConfig <- res_copy$output
   }else{
-      rciop.log("ERROR","Could not find or download the main configuration object",nameOfSrcFile_PC)
+      cmn.log("Could not find or download the main configuration object", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PC)
       q(save="no",status=1)
   }
 
@@ -348,7 +347,7 @@ process_configuration_application_inputs <- function(applInput=NULL,          # 
   main_config_file <- paste0(local.mainConfig,"/dependencies.txt")
 
   if (! file.exists(main_config_file)) {
-      rciop.log("ERROR",paste0("main configuration file missing: ",main_config_file),nameOfSrcFile_PC)
+      cmn.log(paste0("Main configuration file missing: ",main_config_file), logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PC)
       q(save="no",status=1)
   }
 
