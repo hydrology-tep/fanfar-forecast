@@ -10,39 +10,97 @@ source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/constants.R",sep="/")
 
 # Process user options/selections to later select between different variants
 # of models, datasets etc.
-process_configuration_application_runtime_options <- function()
+process_configuration_application_runtime_options <- function(applInput=NULL) # Input to application from stdin
 {
-    # Outputs
-    modelConfig <- NULL
+    # N.B. input to the application (input) cannot be completely empty due to the condition for the main/first while loop in run.R.
 
-    # hydModel <- NULL
-    metHC    <- NULL
-    # metFC    <- NULL
+    # Outputs
+    prelMainConfig <- NULL
+    prelModelConfig <- NULL
     runType  <- NULL
     runTypeStateFileCreation <- NULL
 
-    # hydModelIn <- rciop.getparam("hydmodel")
-    # if (hydModelIn == cHydModelVariant1){ hydModel <- cHydModelVariant1 }
-    # if (hydModelIn == cHydModelVariant2){ hydModel <- cHydModelVariant2 }
 
-    # metHCIn <- rciop.getparam("methc")
-    # if (metHCIn == cMetHCVariant1){ metHC <- cMetHCVariant1 }
-    # if (metHCIn == cMetHCVariant2){ metHC <- cMetHCVariant2 }
+    urlDefault <- 'https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config/?uid=8AFDC9E4C579CB1BCC3A318349EE347824BB0EE3'
+    urlLen     <- nchar(urlDefault)
 
-    # metFCIn <- rciop.getparam("metfc")
-    # if (metFCIn == cMetFCVariant1){ metFC <- cMetFCVariant1 }
+    if (is.null(applInput) || nchar(applInput) < urlLen){
+        # Using (url) from parameter field 'model config file' or
+        # selected model configuration from parameter field 'model config'
+        urlSelected <- FALSE
+        urlModelConfigFile <- "No value"
+        modelConfigIn <- "No value"
 
-    modelConfigIn <- rciop.getparam("model_config")
-    if (modelConfigIn == cModelConfigVariant1) {
-        modelConfig <- cModelConfigVariant1
-        
-        # ToDo: Necessary any longer
-        # hydModel <- cHydModelVariant2
-        metHC    <- cMetHCVariant2
-        # metFC    <- cMetFCVariant1
-    }else{
-        metHC    <- cMetHCVariant1
+        # It's up to the user to specify a correct url, so skip any checks of a valid url.
+        urlModelConfigFile <- rciop.getparam("model_config_file")
+        if ( (length(urlModelConfigFile) > 0) && ! is.null(urlModelConfigFile) ) {
+            if (nchar(urlModelConfigFile) > nchar("https://recast.terradue.com")) {
+                cmn.log("Using URL from optional parameter field (model config file) as the main model configuration object", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+                urlAndQuery <- urlModelConfigFile
+                opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
+                urlSelected <- TRUE
+            }
+        }
+
+        if (urlSelected) {
+            # Read model config name string from csv file. Information not available at this stage
+        }else{
+            # No model config file as input
+            # Use the user selected configuration from the drop down field
+            modelConfigIn <- rciop.getparam("model_config")
+
+            if (modelConfigIn == cModelConfigVariant1) {
+                prelModelConfig <- cModelConfigVariant1
+                urlAndQuery <- paste0("No model config URL for ",cModelConfigVariant1)
+                opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
+                #urlSelected <- TRUE
+
+            }else if (modelConfigIn == cModelConfigVariant2) {
+                prelModelConfig <- cModelConfigVariant2
+                urlAndQuery <- urlDefault
+                opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
+                urlSelected <- TRUE
+
+            }else if (modelConfigIn == cModelConfigVariant3) {
+                prelModelConfig <- cModelConfigVariant3
+                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=B549B1A002E214E90620FA86D0134C5A83C92068"
+                opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
+                urlSelected <- TRUE
+
+            }else if (modelConfigIn == cModelConfigVariant4) {
+                prelModelConfig <- cModelConfigVariant4
+                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=669425BDDA51E2900C83D14AE6CEFE56F3BA7056"
+                opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
+                urlSelected <- TRUE
+            }
+            if (! urlSelected) {
+                cmn.log(paste0("Unsupported configuration via parameter 'model_config': ",modelConfigIn), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+            }
+        }
+
+        if (! urlSelected) {
+            # Exit the application
+            cmn.log(paste0("Unsupported configuration via parameter 'model_config_file' or 'model_config': ",urlModelConfigFile,modelConfigIn), logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PC)
+            q(save="no",status=99)
+        }
+    }else {
+        # Using URL and query from input (stdin)
+        opensearchCmd=paste0("opensearch-client '",applInput,"' enclosure")
     }
+
+    # Search for the main model configuration and download the configuration object
+    message(opensearchCmd)
+    res_enclosure <- system(command = opensearchCmd,intern = T)
+    cmn.log(res_enclosure, logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+
+    # Download
+    tmp_dir=paste0(TMPDIR,"/forecast/config")
+    res_copy <- rciop.copy(res_enclosure,target=tmp_dir,uncompress=TRUE,createOutputDirectory=TRUE)
+
+    if (res_copy$exit.code==0) {
+        prelMainConfig <- res_copy$output
+    }
+
 
     runTypeIn <- rciop.getparam("runtype")
     if (runTypeIn == cRunTypeVariantOperational){
@@ -51,33 +109,29 @@ process_configuration_application_runtime_options <- function()
     }
     if (runTypeIn == cRunTypeVariantReforecast){
       runType                  <- cRunTypeVariantReforecast
-      runTypeStateFileCreation <- cRunTypeVariantReforecast
+      runTypeStateFileCreation <- cRunTypeVariantReforecast # False
     }
     if (runTypeIn == cRunTypeVariantStatefile){
       runType                  <- cRunTypeVariantReforecast
       runTypeStateFileCreation <- cRunTypeVariantStatefile # True
     }
 
-    cmn.log("-------Global configuration options:-------", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
-    cmn.log(paste0("modelConfig:   ",modelConfig), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
-    # rciop.log("INFO", paste0("hydModel:      ",hydModel), nameOfSrcFile_PC)
-    # rciop.log("INFO", paste0("metHC:         ",metHC), nameOfSrcFile_PC)
-    # rciop.log("INFO", paste0("metFC:         ",metFC), nameOfSrcFile_PC)
-    cmn.log(paste0("runType:       ",runType), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+    cmn.log("-------Run configuration options:-------", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+    cmn.log(paste0("run type:               ",runType), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
     if (runTypeStateFileCreation == cRunTypeVariantStatefile){
-        cmn.log("runTypeStateFileCreation: TRUE", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+           cmn.log("statefile creation:     TRUE", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
     }
-    cmn.log(paste0("idate:         ",rciop.getparam("idate")), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
-    cmn.log(paste0("hcperiodlen:   ",rciop.getparam("hcperiodlen")), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+    cmn.log(paste0("forecast issue date:    ",rciop.getparam("idate")), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+    cmn.log(paste0("hindcast period length: ",rciop.getparam("hcperiodlen")), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
     cmn.log("-------------------------------------------", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
 
-    outputApplRuntimeOptions <- list("modelConfig"=modelConfig,
-                                    #  "hydModel"=hydModel,
-                                    "metHC"=metHC,
-                                    #  "metFC"=metFC,
+    outputApplRuntimeOptions <- list("prelMainConfig"=prelMainConfig,
+                                     "prelModelConfig"=prelModelConfig,
                                      "runType"=runType,
                                      "runTypeStateFileCreation"=runTypeStateFileCreation
-                                    )
+                                     )
+
+    return (outputApplRuntimeOptions)
 
 } # process_configuration_application_runtime_options
 
@@ -107,7 +161,7 @@ search_download_model_configuration <- function(url,
 
     if (is.null(url) || is.null(query)){
         cmn.log("HYPE model configuration items missing", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PC)
-        q(save="no",status=1)
+        q(save="no",status=11)
     }
 
     # Query the model config reference
@@ -124,7 +178,7 @@ search_download_model_configuration <- function(url,
         modelConfigPath <- res_copy$output
     }else{
         cmn.log("Could not find or download the configuration", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PC)
-        q(save="no",status=1)
+        q(save="no",status=12)
     }
     
     return (modelConfigPath)
@@ -139,36 +193,50 @@ search_download_meteo_configuration <- function(url,
     gfdHydrogfdeiSubDir  <- NULL
     gfdHydrogfdeiUrl     <- NULL
     gfdHydrogfdeiQuery   <- NULL
-    #gfdHydrogfdeiComment <- NULL
     
     gfdHydrogfdodSubDir  <- NULL
     gfdHydrogfdodUrl     <- NULL
     gfdHydrogfdodQuery   <- NULL
-    #gfdHydrogfdodComment <- NULL
     
     gfdOdDailySubDir  <- NULL
     gfdOdDailyUrl     <- NULL
     gfdOdDailyQuery   <- NULL
-    #gfdOdDailyComment <- NULL
     
-    gfdEcoperDailySubDir  <- NULL
-    gfdEcoperDailyUrl     <- NULL
-    gfdEcoperDailyQuery   <- NULL
-    #gfdEcoperDailyComment <- NULL
+    gfdEcoperSubDir  <- NULL
+    gfdEcoperUrl     <- NULL
+    gfdEcoperQuery   <- NULL
     
     gfdElevationSubDir  <- NULL
     gfdElevationUrl     <- NULL
     gfdElevationQuery   <- NULL
-    #gfdElevationComment <- NULL
     
     gfdGridSubDir  <- NULL
     gfdGridUrl     <- NULL
     gfdGridQuery   <- NULL
-    #gfdGridComment <- NULL
+    
+    gfdHe5SubDir  <- NULL
+    gfdHe5Url     <- NULL
+    gfdHe5Query   <- NULL
+
+    gfdHe5tmSubDir  <- NULL
+    gfdHe5tmUrl     <- NULL
+    gfdHe5tmQuery   <- NULL
+
+    gfdHe5tdSubDir  <- NULL
+    gfdHe5tdUrl     <- NULL
+    gfdHe5tdQuery   <- NULL
+    
+    gfdOdSubDir  <- NULL
+    gfdOdUrl     <- NULL
+    gfdOdQuery   <- NULL
+    
+    gfdOdfSubDir  <- NULL
+    gfdOdfUrl     <- NULL
+    gfdOdfQuery   <- NULL
 
     if (is.null(url) || is.null(query)){
         cmn.log("HydroGFD meteo configuration items missing", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PC)
-        q(save="no",status=1)
+        q(save="no",status=13)
     }
 
     # Query the meteo config reference
@@ -186,7 +254,7 @@ search_download_meteo_configuration <- function(url,
         local.meteoConfig <- res_copy$output
     }else{
         cmn.log("Could not find or download the configuration", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PC)
-        q(save="no",status=1)
+        q(save="no",status=14)
     }
 
     # Read the hydrogfd meteo configuration file
@@ -194,7 +262,7 @@ search_download_meteo_configuration <- function(url,
 
     if (! file.exists(meteo_config_file)) {
         cmn.log("Configuration file missing", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PC)
-        q(save="no",status=1)
+        q(save="no",status=15)
     }
 
     meteo_config_data <- read.csv2(meteo_config_file, header=TRUE, sep=";")
@@ -205,70 +273,103 @@ search_download_meteo_configuration <- function(url,
           gfdHydrogfdeiSubDir  <- meteo_config_data[r,'localdirectory'] # Intended to be used both for dir name (rciop.copy) and part of filename
           gfdHydrogfdeiUrl     <- meteo_config_data[r,'url']
           gfdHydrogfdeiQuery   <- meteo_config_data[r,'searchquery']
-          #gfdHydrogfdeiComment <- meteo_config_data[r,'comment']
         }
         if (subdir == 'hydrogfdod') {
           gfdHydrogfdodSubDir  <- meteo_config_data[r,'localdirectory']
           gfdHydrogfdodUrl     <- meteo_config_data[r,'url']
           gfdHydrogfdodQuery   <- meteo_config_data[r,'searchquery']
-          #gfdHydrogfdodComment <- meteo_config_data[r,'comment']
         }
         if (subdir == 'od-daily') {
           gfdOdDailySubDir  <- meteo_config_data[r,'localdirectory']
           gfdOdDailyUrl     <- meteo_config_data[r,'url']
           gfdOdDailyQuery   <- meteo_config_data[r,'searchquery']
-          #gfdOdDailyComment <- meteo_config_data[r,'comment']
         }
         if (subdir == 'ecoper') {
           gfdEcoperSubDir  <- meteo_config_data[r,'localdirectory']
           gfdEcoperUrl     <- meteo_config_data[r,'url']
           gfdEcoperQuery   <- meteo_config_data[r,'searchquery']
-          #gfdEcoperComment <- meteo_config_data[r,'comment']
         }
         # Skip subdir 'ei-monthly' and 'od-monthly'
         if (subdir == 'elevation') {
           gfdElevationSubDir  <- meteo_config_data[r,'localdirectory']
           gfdElevationUrl     <- meteo_config_data[r,'url']
           gfdElevationQuery   <- meteo_config_data[r,'searchquery']
-          #gfdElevationComment <- meteo_config_data[r,'comment']
         }
         if (subdir == 'grid-meta') {
           gfdGridSubDir  <- meteo_config_data[r,'localdirectory']
           gfdGridUrl     <- meteo_config_data[r,'url']
           gfdGridQuery   <- meteo_config_data[r,'searchquery']
-          #gfdGridComment <- meteo_config_data[r,'comment']
+        }
+        if (subdir == 'he5tm') {
+          gfdHe5tmSubDir  <- meteo_config_data[r,'localdirectory']
+          gfdHe5tmUrl     <- meteo_config_data[r,'url']
+          gfdHe5tmQuery   <- meteo_config_data[r,'searchquery']
+        }
+        if (subdir == 'he5td') {
+          gfdHe5tdSubDir  <- meteo_config_data[r,'localdirectory']
+          gfdHe5tdUrl     <- meteo_config_data[r,'url']
+          gfdHe5tdQuery   <- meteo_config_data[r,'searchquery']
+        }
+        if (subdir == 'he5') {
+          gfdHe5SubDir  <- meteo_config_data[r,'localdirectory']
+          gfdHe5Url     <- meteo_config_data[r,'url']
+          gfdHe5Query   <- meteo_config_data[r,'searchquery']
+        }
+        if (subdir == 'odf') {
+          gfdOdfSubDir  <- meteo_config_data[r,'localdirectory']
+          gfdOdfUrl     <- meteo_config_data[r,'url']
+          gfdOdfQuery   <- meteo_config_data[r,'searchquery']
+        }
+        if (subdir == 'od') {
+          gfdOdSubDir  <- meteo_config_data[r,'localdirectory']
+          gfdOdUrl     <- meteo_config_data[r,'url']
+          gfdOdQuery   <- meteo_config_data[r,'searchquery']
         }
     }
 
     output <- list("gfdHydrogfdeiSubDir"=gfdHydrogfdeiSubDir,
                    "gfdHydrogfdeiUrl"=gfdHydrogfdeiUrl,
                    "gfdHydrogfdeiQuery"=gfdHydrogfdeiQuery,
-                   #"gfdHydrogfdeiComment"=gfdHydrogfdeiComment,
                             
                    "gfdHydrogfdodSubDir"=gfdHydrogfdodSubDir,
                    "gfdHydrogfdodUrl"=gfdHydrogfdodUrl,
                    "gfdHydrogfdodQuery"=gfdHydrogfdodQuery,
-                   #"gfdHydrogfdodComment"=gfdHydrogfdodComment,
                             
                    "gfdOdDailySubDir"=gfdOdDailySubDir,
                    "gfdOdDailyUrl"=gfdOdDailyUrl,
                    "gfdOdDailyQuery"=gfdOdDailyQuery,
-                   #"gfdOdDailyComment"=gfdOdDailyComment,
                             
                    "gfdEcoperSubDir"=gfdEcoperSubDir,
                    "gfdEcoperUrl"=gfdEcoperUrl,
                    "gfdEcoperQuery"=gfdEcoperQuery,
-                   #"gfdEcoperComment"=gfdEcoperComment,
                             
                    "gfdElevationSubDir"=gfdElevationSubDir,
                    "gfdElevationUrl"=gfdElevationUrl,
                    "gfdElevationQuery"=gfdElevationQuery,
-                   #"gfdElevationComment"=gfdElevationComment,
                             
                    "gfdGridSubDir"=gfdGridSubDir,
                    "gfdGridUrl"=gfdGridUrl,
-                   "gfdGridQuery"=gfdGridQuery #,
-                   #"gfdGridComment"=gfdGridComment
+                   "gfdGridQuery"=gfdGridQuery,
+                   
+                   "gfdHe5SubDir"=gfdHe5SubDir,
+                   "gfdHe5Url"=gfdHe5Url,
+                   "gfdHe5Query"=gfdHe5Query,
+
+                   "gfdHe5tmSubDir"=gfdHe5tmSubDir,
+                   "gfdHe5tmUrl"=gfdHe5tmUrl,
+                   "gfdHe5tmQuery"=gfdHe5tmQuery,
+
+                   "gfdHe5tdSubDir"=gfdHe5tdSubDir,
+                   "gfdHe5tdUrl"=gfdHe5tdUrl,
+                   "gfdHe5tdQuery"=gfdHe5tdQuery,
+                    
+                   "gfdOdSubDir"=gfdOdSubDir,
+                   "gfdOdUrl"=gfdOdUrl,
+                   "gfdOdQuery"=gfdOdQuery,
+                    
+                   "gfdOdfSubDir"=gfdOdfSubDir,
+                   "gfdOdfUrl"=gfdOdfUrl,
+                   "gfdOdfQuery"=gfdOdfQuery
                   )
 
     return (output)
@@ -276,127 +377,212 @@ search_download_meteo_configuration <- function(url,
 
 
 # Download selected main configuration and sub-parts
-process_configuration_application_inputs <- function(applInput=NULL,          # Input to application from stdin
-                                                     applRuntimeOptions=NULL) # Application configuration from user, ToDo
+process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # Application configuration from user, ToDo
 {
-  # N.B. input to the application (input) cannot be completely empty due to the condition for the main/first while loop in run.R.
 
-  # Outputs
-  modelConfigPath        <- NULL
-  meteoConfigSearch      <- NULL
-  statefileHindcastDate  <- "1800-01-01"
-  configGridLinkFilename <- NULL
- 
-  urlDefault <- 'https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config/?uid=8AFDC9E4C579CB1BCC3A318349EE347824BB0EE3'
-  urlLen     <- nchar(urlDefault)
-
-  if (is.null(applInput) || nchar(applInput) < urlLen){
-      # Using (url) from parameter field 'model config file' or
-      # selection of model configuration(s) from user
-      urlSelected <- FALSE
-
-      # It's up to the user to specify a correct url, so skip any checks of a valid url.
-      urlModelConfigFile <- rciop.getparam("model_config_file")
-      if ( (length(urlModelConfigFile) > 0) && ! is.null(urlModelConfigFile) ) {
-          if (nchar(urlModelConfigFile) > nchar("https://recast.terradue.com")) {
-              cmn.log("Using URL from optional parameter field (model config file) for the main configuration object", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
-              urlAndQuery <- urlModelConfigFile
-              opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
-              urlSelected <- TRUE
-          }
-      }
-
-      if (! urlSelected && applRuntimeOptions$modelConfig == cModelConfigVariant1) {
-          cmn.log(paste0("Using default URL for the main configuration object: ",cModelConfigVariant1), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
-          urlAndQuery <- urlDefault
-          opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
-          urlSelected <- TRUE
-      }
-
-      # ToDo: Support other configuration(s)
-      # To run the corresponding hypeapps-forecast, either skip call to this function from run.R or handle remaining part of this function.
-
-      if (! urlSelected) {
-          # Exit the application
-          cmn.log("Unsupported configuration", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PC)
-          q(save="no",status=99)
-      }
-  }else {
-      # Using URL and query from input (stdin)
-      opensearchCmd=paste0("opensearch-client '",applInput,"' enclosure")
-  }
-
-  # Search for the main configuration and download the configuration object
-  message(opensearchCmd)
-  res_enclosure <- system(command = opensearchCmd,intern = T)
-  cmn.log(res_enclosure, logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
-
-  # Download
-  tmp_dir=paste0(TMPDIR,"/forecast/config")
-  res_copy <- rciop.copy(res_enclosure,target=tmp_dir,uncompress=TRUE,createOutputDirectory=TRUE)
-
-  local.mainConfig <- NULL
-  if (res_copy$exit.code==0) {
-      local.mainConfig <- res_copy$output
-  }else{
-      cmn.log("Could not find or download the main configuration object", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PC)
-      q(save="no",status=1)
-  }
-
-  # Read main configuration
-  main_config_file <- paste0(local.mainConfig,"/dependencies.txt")
-
-  if (! file.exists(main_config_file)) {
-      cmn.log(paste0("Main configuration file missing: ",main_config_file), logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PC)
-      q(save="no",status=1)
-  }
-
-  main_config_data <- read.csv2(main_config_file,header=TRUE,sep=";")
-
-  #local.modelConfigSubDir <- NULL
-  local.modelConfigUrl <- NULL
-  local.modelConfigQuery <- NULL
-  #local.modelConfigComment <- NULL
-  #local.hydroGFDConfigSubDir <- NULL
-  local.hydroGFDConfigUrl <- NULL
-  local.hydroGFDConfigQuery <- NULL
-  #local.hydroGFDConfigComment <- NULL
-  for (r in 1:nrow(main_config_data)) {
-      subdir <- main_config_data[r,'localdirectory']
-      if (subdir == 'hype-model') {
-          #local.modelConfigSubDir  <- main_config_data[r,'localdirectory'] # Intended to be used as dir name for rciop.copy TMPDIR/subdir/
-          local.modelConfigUrl     <- main_config_data[r,'url']
-          local.modelConfigQuery   <- main_config_data[r,'searchquery']
-          #local.modelConfigComment <- main_config_data[r,'comment']
-      }
-      if (subdir == 'hydrogfd-config') {
-          #local.hydroGFDConfigSubDir  <- main_config_data[r,'localdirectory']
-          local.hydroGFDConfigUrl     <- main_config_data[r,'url']
-          local.hydroGFDConfigQuery   <- main_config_data[r,'searchquery']
-          #local.hydroGFDConfigComment <- main_config_data[r,'comment']
-      }
-      if (subdir == 'statefile-bdate') {
-          # Supposed date for hindcast period used when state file was created, e.g. "2019-01-01" or "20190101"
-          # Later used when searching for available state files.
-          statefileHindcastDate <- as.character(main_config_data[r,'searchquery'])
-      }
-      if (subdir == 'gridlink-filename') {
-          # Filename of corresponding file gridLink.Rdata in dir <configuration object>/shapefiles/
-          configGridLinkFilename <- as.character(main_config_data[r,'searchquery'])
-      }
-  }
-
-  modelConfigPath <- search_download_model_configuration(local.modelConfigUrl,
-                                                         local.modelConfigQuery)
-  #print(list.files(modelConfigPath))
-
-  meteoConfigSearch <- search_download_meteo_configuration(local.hydroGFDConfigUrl,
-                                                           local.hydroGFDConfigQuery)
+    # Outputs
+    modelConfigName        <- NULL
+    hydrologicalModel      <- NULL
+    meteoHindcast          <- NULL
+    meteoForecast          <- NULL
+    modelFiles             <- NULL
+    meteoConfigSearch      <- NULL
+    statefileHindcastDate  <- "1800-01-01"
+    configGridLinkFilename <- NULL
     
-  output <- list("modelConfig"=modelConfigPath,
-                 "meteoConfig"=meteoConfigSearch,
-                 "statefileHindcastDate"=statefileHindcastDate,
-                 "configGridLinkFilename"=configGridLinkFilename)
 
-  return (output)
+    # Read model configuration
+    main_config_file <- paste0(applRuntimeOptions$prelMainConfig,"/dependencies.txt")
+
+    if (! file.exists(main_config_file)) {
+        cmn.log(paste0("Model configuration file missing: ",main_config_file), logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PC)
+        q(save="no",status=16)
+    }
+
+    main_config_data <- read.csv2(main_config_file,header=TRUE,sep=";")
+
+    local.modelConfigName <- NULL
+    local.modelConfigUrl <- NULL
+    local.modelConfigQuery <- NULL
+    local.hydroGFDConfigUrl <- NULL
+    local.hydroGFDConfigQuery <- NULL
+    for (r in 1:nrow(main_config_data)) {
+        subdir <- main_config_data[r,'localdirectory']
+        if (subdir == 'model-config-name') {
+            # Optional
+            local.modelConfigName   <- main_config_data[r,'searchquery']
+            print('found string from model-config-name 111')
+        }
+        if (subdir == 'hype-model') {
+            #local.modelConfigSubDir  <- main_config_data[r,'localdirectory'] # Intended to be used as dir name for rciop.copy TMPDIR/subdir/
+            local.modelConfigUrl     <- main_config_data[r,'url']
+            local.modelConfigQuery   <- main_config_data[r,'searchquery']
+            #local.modelConfigComment <- main_config_data[r,'comment']
+        }
+        if (subdir == 'hydrogfd-config') {
+            local.hydroGFDConfigUrl     <- main_config_data[r,'url']
+            local.hydroGFDConfigQuery   <- main_config_data[r,'searchquery']
+        }
+        if (subdir == 'statefile-bdate') {
+            # Supposed date for hindcast period used when state file was created, e.g. "2019-01-01" or "20190101"
+            # Later used when searching for available state files.
+            statefileHindcastDate <- as.character(main_config_data[r,'searchquery'])
+        }
+        if (subdir == 'gridlink-filename') {
+            # Filename of corresponding file gridLink.Rdata in dir <configuration object>/shapefiles/
+            configGridLinkFilename <- as.character(main_config_data[r,'searchquery'])
+        }
+    }
+
+    # Main model configuration
+
+    if (is.null(local.modelConfigName)){
+        # No configuration name from csv file (optional)
+
+        # Check selection by user
+        if (is.null(applRuntimeOptions$prelModelConfig)){
+            # Exit the application
+            cmn.log(paste0("Unsupported configuration, 'model-config-name' missing in ",main_config_file), logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PC)
+            q(save="no",status=98)
+        }else{
+            # Use selection from parameter field 'model_config'
+            modelConfigName = applRuntimeOptions$prelModelConfig
+            print('found/using string from model-config-name 222')
+        }
+    }else{
+        # Check against supported configurations
+        resConfigName = NULL
+        
+        for (v in 1:length(cModelConfigVariants)) {
+            if (local.modelConfigName == cModelConfigVariants[v]){
+                resConfigName = cModelConfigVariants[v]
+                print('found/using string from model-config-name 333')
+            }
+        }
+
+        if (is.null(resConfigName)){
+            # Unknown variant, try to extract meteo variants at least for hindcast and forecast
+            if (grepl('Niger',local.modelConfigName,fixed=TRUE)) {
+                hydrologicalModel = cHydrologicalModelVariant1
+                print('found hyd 1')
+            }else if (grepl('World',local.modelConfigName,fixed=TRUE)) {
+                hydrologicalModel = cHydrologicalModelVariant2
+                print('found hyd 2')
+            }else if (grepl('West',local.modelConfigName,fixed=TRUE)) {
+                hydrologicalModel = cHydrologicalModelVariant3
+                print('found hyd 3')
+            }else{
+                # Not found, use complete name
+                hydrologicalModel = local.modelConfigName # ToDo: Extract first part of string
+                print('not found hyd, using all text as name')
+            }
+
+            if (grepl(cMeteoHindcastVariant1,local.modelConfigName,fixed=TRUE)) {
+                meteoHindcast = cMeteoHindcastVariant1
+                print('found hc 1')
+            }else if (grepl(cMeteoHindcastVariant2,local.modelConfigName,fixed=TRUE)) {
+                meteoHindcast = cMeteoHindcastVariant2
+                print('found hc 2')
+            }else if (grepl(cMeteoHindcastVariant3,local.modelConfigName,fixed=TRUE)) {
+                meteoHindcast = cMeteoHindcastVariant3
+                print('found hc 3')
+            }
+
+            if (grepl(cMeteoForecastVariant1,local.modelConfigName,fixed=TRUE)) {
+                meteoForecast = cMeteoForecastVariant1
+                print('found fc 1')
+            }else if (grepl(cMeteoForecastVariant2,local.modelConfigName,fixed=TRUE)) {
+                meteoForecast = cMeteoForecastVariant2
+                print('found fc 2')
+            }
+
+            if (! is.null(meteoHindcast) && ! is.null(meteoForecast)){
+                # Still an unsupported configuration and hydrologicalModel may be unknown/incorrect, but
+                # at least meteo forcing for hindcast and forecast is known
+                resConfigName = local.modelConfigName
+                cmn.log("Not fully supported configuration from 'model_config_file', attempt to run with the following settings:", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PC)
+                cmn.log(paste0("hydrological model:      ",hydrologicalModel), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+                cmn.log(paste0("meteo forcing hindcast:  ",meteoHindcast), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+                cmn.log(paste0("meteo forcing forecast:  ",meteoForecast), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+            }
+        }
+
+        if (is.null(resConfigName)){
+            # Exit the application
+            cmn.log(paste0("Unsupported configuration, user selection not valid ",local.modelConfigName), logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PC)
+            q(save="no",status=97)
+        }else{
+            modelConfigName = resConfigName
+        }
+    # }else{
+    #     # Check against supported configurations
+    #     resConfigName = NULL
+        
+    #     for (v in 1:length(cModelConfigVariants)) {
+    #         if (local.modelConfigName == cModelConfigVariants[v]){
+    #             resConfigName = cModelConfigVariants[v]
+    #         }
+    #     }
+    #     if (is.null(resConfigName)){
+    #         # Exit the application
+    #         cmn.log(paste0("Unsupported configuration, user selection not valid ",local.modelConfigName), logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PC)
+    #         q(save="no",status=97)
+    #     }else{
+    #         modelConfigName = resConfigName
+    #     }
+    } # local.modelConfigName
+
+    # Main configuration available
+    # Assign outputs mainly for use as conditions in run.R to call different functions
+    if (modelConfigName == cModelConfigVariant1) {
+        hydrologicalModel = cHydrologicalModelVariant1
+        meteoHindcast     = cMeteoHindcastVariant1
+        meteoForecast     = cMeteoForecastVariant1
+        print('using standard modelConfigName cModelConfigVariant1')
+
+    }else if (modelConfigName == cModelConfigVariant2) {
+        hydrologicalModel = cHydrologicalModelVariant2
+        meteoHindcast     = cMeteoHindcastVariant2
+        meteoForecast     = cMeteoForecastVariant1
+        print('using standard modelConfigName cModelConfigVariant2')
+
+    }else if (modelConfigName == cModelConfigVariant3) {
+        hydrologicalModel = cHydrologicalModelVariant3
+        meteoHindcast     = cMeteoHindcastVariant2
+        meteoForecast     = cMeteoForecastVariant1
+        print('using standard modelConfigName cModelConfigVariant3')
+
+    }else if (modelConfigName == cModelConfigVariant4) {
+        hydrologicalModel = cHydrologicalModelVariant3
+        meteoHindcast     = cMeteoHindcastVariant3
+        meteoForecast     = cMeteoForecastVariant2
+        print('using standard modelConfigName cModelConfigVariant4')
+    }
+
+    # HYPE model
+    modelFiles <- search_download_model_configuration(local.modelConfigUrl,
+                                                      local.modelConfigQuery)
+    #print(list.files(modelFiles))
+
+    # GFD/HydroGFD
+    meteoConfigSearch <- search_download_meteo_configuration(local.hydroGFDConfigUrl,
+                                                             local.hydroGFDConfigQuery)
+
+    cmn.log("-------Model configuration options:-------", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+    cmn.log(modelConfigName, logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+    cmn.log(paste0("hydrological model:      ",hydrologicalModel), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+    cmn.log(paste0("meteo forcing hindcast:  ",meteoHindcast), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+    cmn.log(paste0("meteo forcing forecast:  ",meteoForecast), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+    cmn.log("-------------------------------------------", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+
+    output <- list("modelConfigName"=modelConfigName, # Do not use for if statements etc. Rather use the individual parts meteoHindcast etc.
+                   "hydrologicalModel"=hydrologicalModel,  # Do not use for if statements etc. at this time, for now treat more as info
+                   "meteoHindcast"=meteoHindcast,
+                   "meteoForecast"=meteoForecast,
+                   "modelFiles"=modelFiles,
+                   "meteoConfig"=meteoConfigSearch,
+                   "statefileHindcastDate"=statefileHindcastDate,
+                   "configGridLinkFilename"=configGridLinkFilename)
+
+    return (output)
 } # process_configuration_application_inputs

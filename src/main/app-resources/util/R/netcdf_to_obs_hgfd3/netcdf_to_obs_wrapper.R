@@ -78,12 +78,18 @@ netcdf_to_obs_gridLinkPreparation <- function(pathToNetcdfToObs,
         print(paste0("Aborting netcdf to obs - file missing: ",resource_dir_path)) # Change to cmn.log()
         #q(save="no", status = 0)
     }
+    # print("List files resource_dir_path:")
+    # tmpPath=resource_dir_path
+    # print(list.files(tmpPath))
 
     grid_elev_path <- gridElevPath
     if (! file.exists(grid_elev_path)){
         #rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",grid_elev_path),nameOfSrcFile_PN)
         print(paste0("Aborting netcdf to obs - file missing: ",grid_elev_path)) # Change to cmn.log()
         #q(save="no", status = 0)
+    # }else{
+    #   print("grid_elev_path exists")
+    #   print(grid_elev_path)
     }
 
     nc_var_name     <- c("pr","tas","tasmin","tasmax")
@@ -146,7 +152,6 @@ netcdf_to_obs_gridLinkPreparation <- function(pathToNetcdfToObs,
     # print(paste0("grid.meta: ",resource_dir_path))
     # print(paste0("output.path: ",out_path))
     # print(paste0("model.shape: ",shape_file_path))
-    #print(paste0(": ",))
 
     # Change to workDir
     #currentDir <- setwd(workDir)
