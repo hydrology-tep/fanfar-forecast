@@ -2423,6 +2423,12 @@ updateModelInput<-function(appSetup=NULL,appInput=NULL,hindcast=NULL,modelForcin
       info$info.lines[info$outstatedate.lineNr]=paste('outstatedate',DATE2INFODATE(modelForcing$issueDate),sep=" ")
     }
     
+    # # ar update
+    # if(! is.null(modelForcing$arUpdate)){
+    #   info$info.lines[info$instate.lineNr]=paste('update','qar',sep=" ") # ToDo: Replace instate etc.
+    #   info$info.lines[info$instate.lineNr]=paste('update','quseobs',sep=" ")
+    # }
+    
     # remove existing XobsFile if existing
     if(is.null(xobsInput) & file.exists(paste(appSetup$runDir,"Xobs.txt",sep="/"))){
       file.remove(paste(appSetup$runDir,"Xobs.txt",sep="/"))

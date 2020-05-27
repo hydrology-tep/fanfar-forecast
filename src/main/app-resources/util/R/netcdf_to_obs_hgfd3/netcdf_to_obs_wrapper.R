@@ -4,7 +4,7 @@ library(ncdf4)
 
 ## ------------------------------------------------------------------------------
 # Based on 'test/netcdf_to_obs_example.R'
-netcdf_to_obs_gridLinkPreparation <- function(pathToNetcdfToObs,
+netcdf_to_obs_gridLinkPreparation3 <- function(pathToNetcdfToObs,
                                               workDir, # TMPDIR/netcdf_to_obs
                                               ncRootDir, # Path to netcdf files
                                               ncSubDir, # False-one dir, True-separate dir for each variable
@@ -15,11 +15,12 @@ netcdf_to_obs_gridLinkPreparation <- function(pathToNetcdfToObs,
                                               startDate, # yyyy-mm-dd
                                               endDate, # yyyy-mm-dd
                                               currentSystem='tep',
+                                              debugPublishFiles,
                                               verbose=F,
                                               verboseVerbose=F)
 {
     if (verbose) {
-        print('netcdf_to_obs_gridLinkPreparation():')
+        print('netcdf_to_obs_gridLinkPreparation3():')
         print(paste0("pathToNetcdfToObs: ",pathToNetcdfToObs))
         print(paste0("workDir: ",workDir))
         print(paste0("ncRootDir: ",ncRootDir))
@@ -31,6 +32,7 @@ netcdf_to_obs_gridLinkPreparation <- function(pathToNetcdfToObs,
         print(paste0("startDate: ",startDate))
         print(paste0("endDate: ",endDate))
         print(paste0("currentSystem: ",currentSystem))
+        print(paste0("debugPublishFiles: ",debugPublishFiles))
     }
 
     # Output
@@ -168,6 +170,16 @@ netcdf_to_obs_gridLinkPreparation <- function(pathToNetcdfToObs,
                     ,model.shape = shape_file_path
                     ,cleanGeometry = cleanGeometry
                     ,crsProj = crsProjProc)
+
+    # Publish gridLink.Rdata
+    if (debugPublishFiles){
+        gridLinkFile = paste0(out_path,"/gridLink.Rdata")
+        if (file.exists(gridLinkFile)){
+            print(paste0("1111publish ",gridLinkFile))
+            rciop.publish(path=gridLinkFile,recursive=FALSE,metalink=TRUE)
+        }
+    }
+
     if (isGridLink > 0){
         #rciop.log("INFO", paste0("Aborting netcdf to obs - gridLinkPreparation(): ",isGridLink),nameOfSrcFile_PN)
         print(paste0("Aborting netcdf to obs - gridLinkPreparation(): ",isGridLink)) # Change to cmn.log()
@@ -181,10 +193,10 @@ netcdf_to_obs_gridLinkPreparation <- function(pathToNetcdfToObs,
     }
 
     return (status)
-} # netcdf_to_obs_gridLinkPreparation
+} # netcdf_to_obs_gridLinkPreparation3
 
 
-netcdf_to_obs_readGridsAndWriteObs <- function(pathToNetcdfToObs,
+netcdf_to_obs_readGridsAndWriteObs3 <- function(pathToNetcdfToObs,
                                                workDir, # TMPDIR/netcdf_to_obs
                                                ncRootDir, # Path to netcdf files
                                                ncSubDir, # False-one dir, True-separate dir for each variable
@@ -197,7 +209,7 @@ netcdf_to_obs_readGridsAndWriteObs <- function(pathToNetcdfToObs,
                                                verboseVerbose=F)
 {
     if (verbose) {
-        print('netcdf_to_obs_readGridsAndWriteObs():')
+        print('netcdf_to_obs_readGridsAndWriteObs3():')
         print(paste0("pathToNetcdfToObs: ",pathToNetcdfToObs))
         print(paste0("workDir: ",workDir))
         print(paste0("ncRootDir: ",ncRootDir))
@@ -354,5 +366,5 @@ netcdf_to_obs_readGridsAndWriteObs <- function(pathToNetcdfToObs,
     }
 
     return (status)
-} # netcdf_to_obs_readGridsAndWriteObs
+} # netcdf_to_obs_readGridsAndWriteObs3
 ## ------------------------------------------------------------------------------

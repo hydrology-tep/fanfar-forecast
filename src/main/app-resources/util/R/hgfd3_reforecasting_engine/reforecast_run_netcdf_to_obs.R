@@ -213,6 +213,17 @@ run_hindcast_netcdf_to_obs<-function(
         nc_dir = tmp_nc_dir
 
     }else if (app_sys == 'tep'){
+
+        if (reforecasting_method == 2){
+            # For he5, remove ending time steps
+            utils_file_htep_remove_ending_time_steps_he5(
+                file_dir=hgfd_nc_dir_htep,
+                var_as_subdir=hgfd_nc_subdir,
+                dateobj_end_date=dateobj_he5_enddate,
+                verbose=T,
+                debug_publish=T)
+        }
+
         nc_dir = hgfd_nc_dir_htep
 
     }else {
@@ -236,6 +247,7 @@ run_hindcast_netcdf_to_obs<-function(
         startDate=dateobj_hindcast_startdate,
         endDate=dateobj_hindcast_enddate,
         outputDir=output_dir,
+        debugPublishFiles=run_mode_state_file_creation,
         verbose=T)
 
     return (status_netcdf_2_obs)
@@ -323,6 +335,7 @@ run_forecast_netcdf_to_obs<-function(
         startDate=dateobj_forecast_startdate,
         endDate=dateobj_forecast_enddate,
         outputDir=output_dir,
+        debugPublishFiles=F,
         verbose=T)
 
     return (status_netcdf_2_obs)

@@ -154,7 +154,7 @@ download_netcdf_hgfd3 <- function(modelConfig,    # sub-dir to use for local dow
         subDir    <- modelConfig$gfdElevationSubDir
 
         process_search_and_download(url,query,netcdfDir,subDir)
-        expFilename <- paste(netcdfDir,subDir,"HydroGFD3elevation.nc",sep="/")
+        expFilename <- paste(netcdfDir,subDir,"hgfd_orography.nc",sep="/")
         if (! file.exists(expFilename)){
             nMissing <- 1
             cmn.log(paste0("Missing file: ",expFilename), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
@@ -340,7 +340,7 @@ process_forcing_hydrogfd3_hindcast <- function(modelConfig, # Misc config data, 
                 hgfd_nc_dir_htep=netcdfDir, # Dir with downloaded netcdf files
                 hgfd_nc_subdir=ncSubDir,
                 grid_shape_file_dir=paste(netcdfDir,modelConfig$gfdGridSubDir,"grid.meta","grid.meta",sep="/"),
-                grid_elevation_file=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD3elevation.nc",sep="/"),
+                grid_elevation_file=paste(netcdfDir,modelConfig$gfdElevationSubDir,"hgfd_orography.nc",sep="/"),
                 subid_shape_file=paste(modelFiles,"subidshapefile","SUBID_shapefile.shp", sep="/"),
                 #grid_link_file=gridLinkFile,
                 grid_link_file=paste0(modelFiles,"/shapefiles/",configGridLinkFilename),
@@ -361,6 +361,15 @@ process_forcing_hydrogfd3_hindcast <- function(modelConfig, # Misc config data, 
                 dateobj_od_enddate=intervals$odEndDate)
     print(status)
     #q(save="no", status = 0)
+
+    # # Publish gridLink.Rdata
+    # if (debugPublishFiles){
+    #     gridLinkFile = paste0(obsDir,"/gridLink.Rdata")
+    #     if (file.exists(gridLinkFile)){
+    #         cmn.log(paste0("222222publish ",gridLinkFile), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
+    #         rciop.publish(path=gridLinkFile,recursive=FALSE,metalink=TRUE)
+    #     }
+    # }
 
     # Copy produced files to HYPE run dir
     process_copy_obs_files(fromDir=obsDir,
@@ -490,7 +499,7 @@ process_forcing_hydrogfd3_forecast <- function(modelConfig, # Misc config data, 
                 hgfd_nc_dir_htep=netcdfDir, # Dir with downloaded netcdf files
                 hgfd_nc_subdir=ncSubDir,
                 grid_shape_file_dir=paste(netcdfDir,modelConfig$gfdGridSubDir,"grid.meta","grid.meta",sep="/"),
-                grid_elevation_file=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD3elevation.nc",sep="/"),
+                grid_elevation_file=paste(netcdfDir,modelConfig$gfdElevationSubDir,"hgfd_orography.nc",sep="/"),
                 subid_shape_file=paste(modelFiles,"subidshapefile","SUBID_shapefile.shp", sep="/"),
                 #grid_link_file=gridLinkFile,
                 grid_link_file=paste0(modelFiles,"/shapefiles/",configGridLinkFilename),

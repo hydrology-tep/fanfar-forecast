@@ -5,6 +5,9 @@ if(app.sys=="tep") {
     source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/hgfd3_reforecasting_engine/utils_time.R",sep="/"))
 }
 
+nameOfSrcFile_UFH <- "util/R/hgfd3_reforecasting_engine/utils_file_htep.R"
+
+
 # Input  - meteo type (e.g. GFD, HydroGFD, HydroGFD 2.0), meteo version (e.g. 1.3, 2.0) optional, hindcast start date (bdate).
 # Output - formatted string to use as prefix for comparing filenames of state files.
 #          Uses naming from the constant cMeteoHindcastVariants.
@@ -158,3 +161,64 @@ utils_file_search_and_locate_latest_date <- function(url,query)
 
     return (output)
 } # utils_file_search_and_locate_latest_date
+
+
+# Remove ending time steps in he5 file
+utils_file_htep_remove_ending_time_steps_he5<-function(file_dir,var_as_subdir=F,dateobj_end_date,verbose=F,debug_publish=F)
+{
+    status = 1 # NOK
+
+    start_date = dateobj_end_date # format: '2020-03-28'
+    stop_date  = dateobj_subtract_days(dateobj_end_date,0,setDayLast=T) # format: '2020-03-28'
+
+    if (start_date == stop_date){
+        # Last day in month, not necessary to remove any time steps
+        # Return and use the complete nc file
+
+        status = 0
+    }else{
+
+        # cdo not available, instead use nco
+        # Specify days to keep. First day in month => 0 (day-1)
+        command = 'ncks'
+
+        end_date_as_list = dateobj_to_string_ymd_list(start_date)
+        end_day          = as.numeric(end_date_as_list$day) - 1
+
+        variables = c("pr","tas","tasmin","tasmax")
+        for (var in 1:length(variables)){
+            if (var_as_subdir){
+                local_dir = paste(file_dir,variables[var],sep="/")
+            }else{
+                # All files into one dir
+                local_dir = file_dir
+            }
+
+            file_date    = paste0(end_date_as_list$year,end_date_as_list$month)
+            exp_filename = paste0(variables[var],'_he5_',file_date,'_fanfar_SMHI.nc')
+            src_file     = paste(local_dir,exp_filename,sep="/")
+
+            if (! file.exists(src_file)){
+                cmn.log(paste0("File missing: ",src_file), logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_UFH)
+            }else{
+                # Use -O to enable overwrite of file
+                args = paste0('-d',' ','time',',','0',',',end_day,' ',src_file,' ',src_file,' ','-O')
+                
+                if (verbose){
+                    cmn.log(paste(command,args,sep=' '), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_UFH)
+                }
+
+                status = system2(command=command,args=args)
+                cmn.log(paste0('ncks status: ',status), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_UFH)
+
+                if (debug_publish){
+                    #cmn.log(paste(command,args,sep=' '), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_UFH)
+                    rciop.publish(path=src_file, recursive=FALSE, metalink=TRUE)
+
+                }
+            }
+        }
+    }
+
+    return (status)
+}
