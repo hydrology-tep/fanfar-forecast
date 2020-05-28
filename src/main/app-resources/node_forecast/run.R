@@ -138,6 +138,12 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     rciop.log("INFO", "Processing user selection:")
     applRuntimeOptions <- process_configuration_application_runtime_options()
 
+    publishHindcastForcingFiles <- FALSE
+    if (applRuntimeOptions$runTypeStateFileCreation == cRunTypeVariantStatefile){
+        # Publish P/Tobs.txt or gridLink files for run type statefile creation
+        publishHindcastForcingFiles <- TRUE
+    }
+
     if (verboseVerbose == TRUE) {
         print("applRuntimeOptions (output from process_configuration_application_runtime_options):")
         print(applRuntimeOptions)
@@ -277,7 +283,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                                               ncSubDir=TRUE,
                                                               app.setup$runDir,
                                                               dirObsFiles,
-                                                              debugPublish)
+                                                              publishHindcastForcingFiles)
 
         # Minimal variants of original list types returned by getModelForcing()
         hindcast.forcing <- list("status"=T,
@@ -445,6 +451,18 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             }else {
                 rciop.log("INFO",paste0("File missing: ",stateFile),nameOfSrcFile_Run)
                 #q()
+            }
+
+            # Cleanup certain forcing files from run dir for forecast run
+            hindcast_forcing_files = c('Qobs.txt','Xobs.txt')
+
+            hindcast_run_dir = app.setup$runDir
+            for(f in 1:length(hindcast_forcing_files)){
+                file_to_be_removed = paste0(hindcast_run_dir,'/',hindcast_forcing_files[f])
+                if (file.exists(file_to_be_removed)) {
+                    print(paste0("rm ",file_to_be_removed))
+                    file.remove(file_to_be_removed)
+                }
             }
 
             # Minimal variants of original list types returned by getModelForcing()
