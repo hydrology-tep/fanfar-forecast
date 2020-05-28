@@ -198,24 +198,43 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     # later on by the netcdf2obs sequence.
 
     ## ------------------------------------------------------------------------------
-    if (modelConfigData$meteoHindcast == cMeteoHindcastVariant1) { # ToDo: Replace with cHydrologicalModelVariant1 or a new input option
+
+    if (modelConfigData$hydrologicalModel == cHydrologicalModelVariant1) {
         # Niger-HYPE
         # Name of local subdir (run-dir/subdir), prefix in some filenames
         modelName <- model.name # hypeapps-model-settings.R
         modelBin  <- model.bin  # hypeapps-model-settings.R
-    }
 
-    if (modelConfigData$meteoHindcast == cMeteoHindcastVariant2 ||
-        modelConfigData$meteoHindcast == cMeteoHindcastVariant3) { # ToDo: Replace with cHydrologicalModelVariant2 or 3 or a new input option
-        # WWH or WestAfrica HYPE
-        modelName <- "westafrica-hype"
-        modelBin  <- "hype-5.8.0.exe"
+    }else if (modelConfigData$hydrologicalModel == cHydrologicalModelVariant2 ||
+              modelConfigData$hydrologicalModel == cHydrologicalModelVariant3) {
 
         # HYPE 5.8.0 required newer gfortran than part of gcc-4.4.7 during build.
         Sys.setenv(LD_LIBRARY_PATH=paste0("/opt/anaconda/pkgs/gcc-4.8.5-7/lib"))
-        #print(Sys.getenv(LD_LIBRARY_PATH))
-        # ToDo: Move this
+        #print(Sys.getenv('LD_LIBRARY_PATH'))
+
+        if (modelConfigData$hydrologicalModel == cHydrologicalModelVariant2) {
+            modelName <- "wwh"
+            modelBin  <- "hype-5.8.0.exe"
+        }else{
+            modelName <- "westafrica-hype"
+            modelBin  <- "hype-5.8.0.exe"
+            #modelBin  <- "hype-5.11.0.exe"
+            #modelBin  <- "hype_assimilation-5.11.0.exe"
+        }
+
+    }else{
+        # Default
+        modelName <- "westafrica-hype"
+        modelBin  <- "hype-5.8.0.exe"
+        print('modelBin from model default')
     }
+
+    # From configuration file
+    if (! is.null(modelConfigData$modelBin)){
+        modelBin = modelConfigData$modelBin
+        print('modelBin from configuration file')
+    }
+    cmn.log(paste0("HYPE model binary file: ",modelBin), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
 
     ## ------------------------------------------------------------------------------
     app.setup <- getHypeAppSetup(modelName = modelName,
@@ -286,7 +305,15 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
         if (modelConfigData$meteoHindcast == cMeteoHindcastVariant3) {
             cmn.log("Forcing data: HydroGFD 3", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
-            reforecastingMethod <- rciop.getparam("reforecasting_method") # Development option
+
+            reforcasting_method = 2 # Default for run type reforecast
+            if (! is.null(modelConfigData$reforecastingMethod)){
+                # From configuration file
+                reforcasting_method = modelConfigData$reforecastingMethod
+            }else if (applRuntimeOptions$runType == cRunTypeVariantOperational){
+                reforcasting_method = 1
+            }
+
             hindcastForcing <- process_forcing_hydrogfd3_hindcast(
                                     modelConfigData$meteoConfig,
                                     modelConfigData$modelFiles,
@@ -303,7 +330,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                     dirObsFiles,
                                     dirNetcdfToObsTmp,
                                     publishHindcastForcingFiles,
-                                    reforecastingMethod)
+                                    reforcasting_method)
         }
 
         # Minimal variants of original list types returned by getModelForcing()

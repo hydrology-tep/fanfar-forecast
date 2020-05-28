@@ -21,7 +21,7 @@ process_configuration_application_runtime_options <- function(applInput=NULL) # 
     runTypeStateFileCreation <- NULL
 
 
-    urlDefault <- 'https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config/?uid=8AFDC9E4C579CB1BCC3A318349EE347824BB0EE3'
+    urlDefault <- 'https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=E8063368628860F74178C1F3C7FB5DA11B5D97C0'
     urlLen     <- nchar(urlDefault)
 
     if (is.null(applInput) || nchar(applInput) < urlLen){
@@ -63,13 +63,13 @@ process_configuration_application_runtime_options <- function(applInput=NULL) # 
 
             }else if (modelConfigIn == cModelConfigVariant3) {
                 prelModelConfig <- cModelConfigVariant3
-                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=B549B1A002E214E90620FA86D0134C5A83C92068"
+                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=956373199977FBE1A7FFAD708379E7B3ABA108A5"
                 opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
                 urlSelected <- TRUE
 
             }else if (modelConfigIn == cModelConfigVariant4) {
                 prelModelConfig <- cModelConfigVariant4
-                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=669425BDDA51E2900C83D14AE6CEFE56F3BA7056"
+                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=8936FADB1602786E7178B389A854F224BA4A552F"
                 opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
                 urlSelected <- TRUE
             }
@@ -389,6 +389,8 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
     meteoConfigSearch      <- NULL
     statefileHindcastDate  <- "1800-01-01"
     configGridLinkFilename <- NULL
+    reforecastingMethod    <- NULL
+    modelBin               <- NULL
     
 
     # Read model configuration
@@ -411,7 +413,6 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
         if (subdir == 'model-config-name') {
             # Optional
             local.modelConfigName   <- main_config_data[r,'searchquery']
-            print('found string from model-config-name 111')
         }
         if (subdir == 'hype-model') {
             #local.modelConfigSubDir  <- main_config_data[r,'localdirectory'] # Intended to be used as dir name for rciop.copy TMPDIR/subdir/
@@ -432,6 +433,14 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
             # Filename of corresponding file gridLink.Rdata in dir <configuration object>/shapefiles/
             configGridLinkFilename <- as.character(main_config_data[r,'searchquery'])
         }
+        if (subdir == 'reforecasting-method') {
+            # 1 - standard, 2 - he5+od
+            reforecastingMethod <- as.numeric(main_config_data[r,'searchquery'])
+        }
+        if (subdir == 'model-bin') {
+            # Filename of HYPE binary/executable file
+            modelBin <- as.character(main_config_data[r,'searchquery'])
+        }
     }
 
     # Main model configuration
@@ -447,7 +456,6 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
         }else{
             # Use selection from parameter field 'model_config'
             modelConfigName = applRuntimeOptions$prelModelConfig
-            print('found/using string from model-config-name 222')
         }
     }else{
         # Check against supported configurations
@@ -456,7 +464,6 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
         for (v in 1:length(cModelConfigVariants)) {
             if (local.modelConfigName == cModelConfigVariants[v]){
                 resConfigName = cModelConfigVariants[v]
-                print('found/using string from model-config-name 333')
             }
         }
 
@@ -464,36 +471,27 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
             # Unknown variant, try to extract meteo variants at least for hindcast and forecast
             if (grepl('Niger',local.modelConfigName,fixed=TRUE)) {
                 hydrologicalModel = cHydrologicalModelVariant1
-                print('found hyd 1')
             }else if (grepl('World',local.modelConfigName,fixed=TRUE)) {
                 hydrologicalModel = cHydrologicalModelVariant2
-                print('found hyd 2')
             }else if (grepl('West',local.modelConfigName,fixed=TRUE)) {
                 hydrologicalModel = cHydrologicalModelVariant3
-                print('found hyd 3')
             }else{
                 # Not found, use complete name
                 hydrologicalModel = local.modelConfigName # ToDo: Extract first part of string
-                print('not found hyd, using all text as name')
             }
 
             if (grepl(cMeteoHindcastVariant1,local.modelConfigName,fixed=TRUE)) {
                 meteoHindcast = cMeteoHindcastVariant1
-                print('found hc 1')
             }else if (grepl(cMeteoHindcastVariant2,local.modelConfigName,fixed=TRUE)) {
                 meteoHindcast = cMeteoHindcastVariant2
-                print('found hc 2')
             }else if (grepl(cMeteoHindcastVariant3,local.modelConfigName,fixed=TRUE)) {
                 meteoHindcast = cMeteoHindcastVariant3
-                print('found hc 3')
             }
 
             if (grepl(cMeteoForecastVariant1,local.modelConfigName,fixed=TRUE)) {
                 meteoForecast = cMeteoForecastVariant1
-                print('found fc 1')
             }else if (grepl(cMeteoForecastVariant2,local.modelConfigName,fixed=TRUE)) {
                 meteoForecast = cMeteoForecastVariant2
-                print('found fc 2')
             }
 
             if (! is.null(meteoHindcast) && ! is.null(meteoForecast)){
@@ -538,25 +536,21 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
         hydrologicalModel = cHydrologicalModelVariant1
         meteoHindcast     = cMeteoHindcastVariant1
         meteoForecast     = cMeteoForecastVariant1
-        print('using standard modelConfigName cModelConfigVariant1')
 
     }else if (modelConfigName == cModelConfigVariant2) {
         hydrologicalModel = cHydrologicalModelVariant2
         meteoHindcast     = cMeteoHindcastVariant2
         meteoForecast     = cMeteoForecastVariant1
-        print('using standard modelConfigName cModelConfigVariant2')
 
     }else if (modelConfigName == cModelConfigVariant3) {
         hydrologicalModel = cHydrologicalModelVariant3
         meteoHindcast     = cMeteoHindcastVariant2
         meteoForecast     = cMeteoForecastVariant1
-        print('using standard modelConfigName cModelConfigVariant3')
 
     }else if (modelConfigName == cModelConfigVariant4) {
         hydrologicalModel = cHydrologicalModelVariant3
         meteoHindcast     = cMeteoHindcastVariant3
         meteoForecast     = cMeteoForecastVariant2
-        print('using standard modelConfigName cModelConfigVariant4')
     }
 
     # HYPE model
@@ -573,6 +567,12 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
     cmn.log(paste0("hydrological model:      ",hydrologicalModel), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
     cmn.log(paste0("meteo forcing hindcast:  ",meteoHindcast), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
     cmn.log(paste0("meteo forcing forecast:  ",meteoForecast), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+    if (! is.null(reforecastingMethod)){
+        cmn.log(paste0("reforcasting method:     ",reforecastingMethod), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+    }
+    if (! is.null(modelBin)){
+        cmn.log(paste0("HYPE binary/executable:  ",modelBin), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+    }
     cmn.log("-------------------------------------------", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
 
     output <- list("modelConfigName"=modelConfigName, # Do not use for if statements etc. Rather use the individual parts meteoHindcast etc.
@@ -582,7 +582,9 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
                    "modelFiles"=modelFiles,
                    "meteoConfig"=meteoConfigSearch,
                    "statefileHindcastDate"=statefileHindcastDate,
-                   "configGridLinkFilename"=configGridLinkFilename)
+                   "configGridLinkFilename"=configGridLinkFilename,
+                   "reforecastingMethod"=reforecastingMethod,
+                   "modelBin"=modelBin)
 
     return (output)
 } # process_configuration_application_inputs
