@@ -217,9 +217,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             modelBin  <- "hype-5.8.0.exe"
         }else{
             modelName <- "westafrica-hype"
-            modelBin  <- "hype-5.8.0.exe"
-            #modelBin  <- "hype-5.11.0.exe"
-            #modelBin  <- "hype_assimilation-5.11.0.exe"
+            #modelBin  <- "hype-5.11.r15986.exe"
+            modelBin  <- "hype_assimilation-5.11.r15986.exe"
         }
 
     }else{
