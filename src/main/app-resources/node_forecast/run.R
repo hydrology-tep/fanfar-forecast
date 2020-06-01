@@ -171,6 +171,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     app.input <- getHypeAppInput(appName = app.name)
 
     cmn.log("Inputs and parameters read", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
+    print(app.input$assimOn)
+    print(app.input$assimOnAR)
 
     #################################################################################
     ## 3 - Application setup
@@ -213,12 +215,12 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         #print(Sys.getenv('LD_LIBRARY_PATH'))
 
         if (modelConfigData$hydrologicalModel == cHydrologicalModelVariant2) {
-            modelName <- "wwh"
+            modelName <- tolower(cHydrologicalModelVariant2)
             modelBin  <- "hype-5.8.0.exe"
         }else{
-            modelName <- "westafrica-hype"
-            #modelBin  <- "hype-5.11.r15986.exe"
-            modelBin  <- "hype_assimilation-5.11.r15986.exe"
+            modelName <- tolower(cHydrologicalModelVariant3)
+            #modelBin  <- "hype-5.11.1.exe"
+            modelBin  <- "hype_assimilation-5.11.1.exe"
         }
 
     }else{

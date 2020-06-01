@@ -48,9 +48,10 @@
 
         <parameter id="xobs" title="Optional: Xobs file(s) with EO and/or In-situ data" abstract="Xobs file(s) with pre-processed EO or In-situ data" minOccurs="0" maxOccurs="10" scope="runtime" type="LiteralData"></parameter>
 
-        <parameter id="assimOn" title="Assimilation on/off" abstract="Data assimilation on/off" minOccurs="1" maxOccurs="1" scope="runtime" type="LiteralData">
+        <parameter id="assimOn" title="Assimilation on/off" abstract="Data assimilation on/on with auto-regressive updating/off" minOccurs="1" maxOccurs="1" scope="runtime" type="LiteralData">
           <options>
             <option>on</option>
+            <option>on with auto-regressive updating</option>
             <option>off</option>
             <default>off</default>
           </options>

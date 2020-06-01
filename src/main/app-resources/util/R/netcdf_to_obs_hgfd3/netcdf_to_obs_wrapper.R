@@ -100,8 +100,8 @@ netcdf_to_obs_gridLinkPreparation3 <- function(pathToNetcdfToObs,
         # hgfd3: symlinks or files  ends with '_pr.nc'
         nc_file_pattern <- c("_pr\\.","_tas\\.","_tasmin\\.","_tasmax\\.")
     }else if (currentSystem == 'tep'){
-        # hgfd3: symlinks or files ends with _pr_fanfar_SMHI.nc'
-        nc_file_pattern <- c("_pr_","_tas_","_tasmin_","_tasmax_")
+        # hgfd3: starts with 'pr_'
+        nc_file_pattern <- c("pr_","tas_","tasmin_","tasmax_")
     }else{
         # hgfd2: starts with 'pr_'
         nc_file_pattern <- c("pr_","tas_","tasmin_","tasmax_")
@@ -271,8 +271,8 @@ netcdf_to_obs_readGridsAndWriteObs3 <- function(pathToNetcdfToObs,
         # hgfd3: symlinks or files  ends with '_pr.nc'
         nc_file_pattern <- c("_pr\\.","_tas\\.","_tasmin\\.","_tasmax\\.")
     }else if (currentSystem == 'tep'){
-        # hgfd3: symlinks or files ends with _pr_fanfar_SMHI.nc'
-        nc_file_pattern <- c("_pr_","_tas_","_tasmin_","_tasmax_")
+        # hgfd3: starts with 'pr_'
+        nc_file_pattern <- c("pr_","tas_","tasmin_","tasmax_")
     }else{
         # hgfd2
         nc_file_pattern <- c("pr_","tas_","tasmin_","tasmax_")

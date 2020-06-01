@@ -291,6 +291,14 @@ getHypeAppInput<-function(appName){
 
       # temporarily commenting out the assimilation in the forecast application (David 20170827)
       assimOn     <- rciop.getparam("assimOn")     # Assimilation on/off
+      assimOnAR   <- "off"
+      if(assimOn=="on with auto-regressive updating"){
+        print("on with auto-regressive updating")
+        #assimOn="on"
+        assimOn="off"
+        assimOnAR="on"
+      }
+
       assimVarIN  <- rciop.getparam("assimVars")   # Assimilation variables
       # parse the outvar inputs
       outvarSplit = trimws(strsplit(outvarsIN,split = ",")[[1]])
@@ -490,9 +498,10 @@ getHypeAppInput<-function(appName){
                   "xobsNum"   = xobsNum,
                   "xobsURL"   = xobsURL,
                   "assimOn"   = assimOn,   # Assimilation on/off
+                  "assimOnAR" = assimOnAR, # Assimilation with auto-regressive updating on/off
                   "assimVar"  = assimVar,  # Assimilation variables (pairs, obs/sim)
                   "hcperiodlen" = hcperiodlen) # Intended to be used together with netcdf2obs
-    
+    # appName=="forecast" end
   }else if(appName=="returnperiod"){
     if(app.sys=="tep"){
       
@@ -2423,11 +2432,17 @@ updateModelInput<-function(appSetup=NULL,appInput=NULL,hindcast=NULL,modelForcin
       info$info.lines[info$outstatedate.lineNr]=paste('outstatedate',DATE2INFODATE(modelForcing$issueDate),sep=" ")
     }
     
-    # # ar update
-    # if(! is.null(modelForcing$arUpdate)){
-    #   info$info.lines[info$instate.lineNr]=paste('update','qar',sep=" ") # ToDo: Replace instate etc.
-    #   info$info.lines[info$instate.lineNr]=paste('update','quseobs',sep=" ")
-    # }
+    # ar update - disable lines when not assimiliation
+    if(appInput$assimOnAR=="off"){
+      if (info$updateqar_variable){
+        info$info.lines[info$updateqar.lineNr]=paste('!! update qar',sep=" ")
+        print("disable updateqar in info.txt")
+      }
+      if (info$updatequseobs_variable){
+        info$info.lines[info$updatequseobs.lineNr]=paste('!! update quseobs',sep=" ")
+        print("disable updatequseobs in info.txt")
+      }
+    }
     
     # remove existing XobsFile if existing
     if(is.null(xobsInput) & file.exists(paste(appSetup$runDir,"Xobs.txt",sep="/"))){
