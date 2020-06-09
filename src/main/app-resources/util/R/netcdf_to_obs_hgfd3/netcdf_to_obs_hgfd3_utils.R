@@ -627,6 +627,8 @@
         coordinates(gfd.point.e)<-c("x","y")
         crs(gfd.point.e)=CRSlatlon
         
+        # skip interpolation - and assume elevation and gfd nc files are on the same grid:
+
 #        # interpolate elevation from the CRU elevation grid to the hydrogfdv3 grid 
 #        require(akima)
 #        iGFD3 = which(!is.na(nc.grid.val))
@@ -634,10 +636,29 @@
 #        gfd.point@data$elev[iGFD3]=elev.int$z
 #        gfd.point.out = gfd.point[iGFD3,]
         
-        # GFD elevation from the provided orography file
+        
+        # GFD elevation from the provided orography file (here we need to match lat-lon in case the elevation grid is no identical to gfd-grid)
         gfd.point@data$elev = gfd.point.e@data$elev
         
-               
+        # northern hemisphere
+        inh = which(gfd.point$lat>=0)
+        if(length(inh)>0){
+          inh.e = which(gfd.point.e$lat>=0)
+          gfdxy = gfd.point$lon[inh]*1e6 + gfd.point$lat[inh]
+          elevxy = gfd.point.e$lon[inh.e]*1e6 + gfd.point.e$lat[inh.e]
+          ielev = inh.e[match(gfdxy,elevxy)]
+          gfd.point$elev[inh] = gfd.point.e$elev[ielev]
+        }
+        # southern hemisphere
+        ish = which(gfd.point$lat<0)
+        if(length(ish)>0){
+          ish.e = which(gfd.point.e$lat<0)
+          gfdxy = gfd.point$lon[ish]*1e6 - gfd.point$lat[ish]
+          elevxy = gfd.point.e$lon[ish.e]*1e6 - gfd.point.e$lat[ish.e]
+          ielev = ish.e[match(gfdxy,elevxy)]
+          gfd.point$elev[ish] = gfd.point.e$elev[ielev]
+        }
+        
         # write to file
         if(!is.null(layer.point) & !is.null(dsn)){
           writeOGR(obj = gfd.point,dsn = dsn,layer = layer.point,driver = "ESRI Shapefile",overwrite_layer = T)
@@ -671,20 +692,22 @@
         # make polygon from raster
         gfd.poly = rasterToPolygons(x = nc.grid.raster,na.rm = F)
         
-        # sort the polygons in the same way as the points layer
-        gfd.poly.xy = coordinates(gfd.poly)
+        # sort the polygons in the same way as the points layer (add 180 and 90 degrees to obtain positive numbers)
+        gfd.poly.xy  = coordinates(gfd.poly)
+        gfd.point.xy = coordinates(gfd.point)
         
-        targetVal = round(gfd.point@data$lon*1E5, 0)*1E8 + round(gfd.point@data$lat*1E5, 0)
-        sortVal   = round(gfd.poly.xy[,1]*1E5, 0)*1E8 + round(gfd.poly.xy[,2]*1E5, 0)
+        gfd.poly.xy[,1] = gfd.poly.xy[,1] + 180
+        gfd.poly.xy[,2] = gfd.poly.xy[,2] + 90
+        
+        gfd.point.xy[,1] = gfd.point.xy[,1] + 180
+        gfd.point.xy[,2] = gfd.point.xy[,2] + 90
+        
+        targetVal = gfd.point.xy[,1]*1e6 + gfd.point.xy[,2]
+        sortVal   = gfd.poly.xy[,1]*1e6 + gfd.poly.xy[,2]
         iSort     = match(targetVal,sortVal)
         
         gfd.poly = gfd.poly[iSort,]
-        
         gfd.poly@data = gfd.point@data
-        
-  #      gfd.poly.out = gfd.poly[iGFD3,]
-  #      plot(gfd.poly.out[1:10,])
-  #      plot(gfd.point.out[1:10,],add=T)
         
         # write to file
         if(!is.null(layer.poly) & !is.null(dsn)){
@@ -1155,7 +1178,9 @@
     }
     
     # Main wrapper function to prepare the "gridLink.Rdata" file hgfd3 version
-    gridLinkPreparation.hgfd3<-function(grid.meta=NULL,output.path="./",redoGridLink=F,model.shape=NULL,
+    # DG: added arguments to generate grid shapefiles if missing
+    gridLinkPreparation.hgfd3<-function(grid.path=NULL,grid.pattern=NULL,grid.elev=NULL,var.name=NULL,
+                                        grid.meta=NULL,output.path="./",redoGridLink=F,model.shape=NULL,
                                   cleanGeometry=F,crsProj=NULL,areaChangeMax = 0.005,
                                   grid.point.layer="grid.point",grid.polygon.layer="grid.polygon"){
       
@@ -1231,8 +1256,37 @@
             if(!file.exists(paste(grid.shapes.dsn,"/",grid.point.layer,".shp",sep=""))|
                !file.exists(paste(grid.shapes.dsn,"/",grid.polygon.layer,".shp",sep=""))){
               
+              print("INFO: generating missing grid.point.layer and grid.polygon.layer shapefiles!")
+              
+              #DG added call to the shapefile generation script again
+              if(!is.null(grid.path) & !is.null(grid.pattern)){
+                grid.files = dir(path = grid.path,pattern = grid.pattern)
+                if(length(grid.files)>0){
+                  grid.files=paste(grid.path,"/",grid.files[1],sep="")
+                  if(file.exists(grid.files)){
+                    makeGFDv3SpatialLayers(grid.nc=grid.files
+                                           ,elev.nc=grid.elev
+                                           ,dsn=grid.shapes.dsn
+                                           ,layer.point=grid.point.layer
+                                           ,layer.poly=grid.polygon.layer)
+                  }else{
+                    print("ERROR grid.files not found")
+                  }
+                }else{
+                  print("ERROR no valid netcdf files found in grid.path")
+                }
+              }else{
+                print("ERROR path to netcdf files missing - and grid layer shaefiles missing")
+              }
+              if(!file.exists(paste(grid.shapes.dsn,"/",grid.point.layer,".shp",sep=""))|
+                 !file.exists(paste(grid.shapes.dsn,"/",grid.polygon.layer,".shp",sep=""))){
                 print("ERROR grid.point.layer shapefile and/or grid.polygon.layer shapefile is missing!")
                 return(1)
+              }else{
+                # read files (maybe memeory intensive if the full hgfd3 global grids area used)
+                grid.point = readOGR(dsn = grid.shapes.dsn,layer = grid.point.layer)
+                grid.poly  = readOGR(dsn = grid.shapes.dsn,layer = grid.polygon.layer)
+              }
             }else{
               # read files (maybe memeory intensive if the full hgfd3 global grids area used)
               grid.point = readOGR(dsn = grid.shapes.dsn,layer = grid.point.layer)
@@ -2271,11 +2325,13 @@
           }
 
           # Tobias
-          if(is.null(gridFiles)){
-            # Support files in flat dir (no subdirs)
-            newFiles = dir(path = grid.path,pattern = grid.pattern[i])
-            for(f in 1:length(newFiles)){
-              gridFiles[f] = paste(grid.path,newFiles[f],sep='/')
+          if(app.sys != 'tep'){
+            if(is.null(gridFiles)){
+              # Support files in flat dir (no subdirs)
+              newFiles = dir(path = grid.path,pattern = grid.pattern[i])
+              for(f in 1:length(newFiles)){
+                gridFiles[f] = paste(grid.path,newFiles[f],sep='/')
+              }
             }
           }
 
@@ -2746,12 +2802,19 @@
           }
 
           # Tobias
-          if(is.null(gridFiles)){
-            # Support files in flat dir (no subdirs)
-            newFiles = dir(path = grid.path,pattern = grid.pattern[i])
-            for(f in 1:length(newFiles)){
-              gridFiles[f] = paste(grid.path,newFiles[f],sep='/')
+          if(app.sys != 'tep'){
+            if(is.null(gridFiles)){
+              # Support files in flat dir (no subdirs)
+              newFiles = dir(path = grid.path,pattern = grid.pattern[i])
+              for(f in 1:length(newFiles)){
+                gridFiles[f] = paste(grid.path,newFiles[f],sep='/')
+              }
             }
+          }else if(app.sys == 'tep'){
+            # tep - as done in netcdf_to_obs_hgfd2
+            # list files
+            gridFiles = dir(path = grid.path.vector[i],pattern = grid.pattern[i])
+            gridFiles = paste(grid.path.vector[i],"/",gridFiles,sep="")
           }
 
           # read grid files and export as obsfile directly with new function

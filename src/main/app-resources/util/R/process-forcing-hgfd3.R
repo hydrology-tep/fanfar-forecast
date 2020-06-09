@@ -194,7 +194,7 @@ process_forcing_hydrogfd3_hindcast <- function(modelConfig, # Misc config data, 
                                                dirNetcdfToObsTmp, # Temporary work dir for netcdf_to_obs
                                                debugPublishFiles=FALSE, # Condition to publish files during development
                                                reforecastingMethod=1, # 1 - standard, 2 - minimal
-                                               verbose=T) # More output
+                                               verbose=F) # More output
 {
     if (verbose){
         print(paste0("modelConfig: ",modelConfig))
@@ -259,9 +259,6 @@ process_forcing_hydrogfd3_hindcast <- function(modelConfig, # Misc config data, 
     cmn.log(paste0("bdate: ",intervals$bdate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
     cmn.log(paste0("cdate: ",intervals$cdate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
     cmn.log(paste0("edate: ",intervals$edate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
-    print(intervals)
-    print(intervals$statefile_instate_date)
-    print(statefile_instate)
 
     # Download netcdf files
 
@@ -303,30 +300,10 @@ process_forcing_hydrogfd3_hindcast <- function(modelConfig, # Misc config data, 
                                            odfEndDate=NULL)
     if (nMissingFiles > 0) {
         cmn.log("Aborting due to missing HydroGFD 3 netcdf file(s)", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PF3)
-        #q(save="no", status = 2)
+        q(save="no", status = 2)
     }
-    #cmn.log("DEBUG: Quitting program", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
-    #q(save="no", status = 0)
 
     # Run netcdf_to_obs
-
-    # Work dir
-    #netcdf_to_obs_wd <- paste0(TMPDIR,"/netcdf_to_obs")
-
-    # # Copy existing gridlink file to netcdf_to_obs output dir
-    # gridLinkFile       <- paste0(obsDir,"/gridLink.Rdata")
-    # configGridLinkFile <- "no-filename"
-    # if (! is.null(configGridLinkFilename)) {
-    #     configGridLinkFile <- paste0(modelFiles,"/shapefiles/",configGridLinkFilename)
-    # }
-
-    # if (file.exists(configGridLinkFile)) {
-    #     if (! dir.exists(obsDir)){
-    #         dir.create(obsDir)
-    #     }
-    #     file.copy(from=configGridLinkFile,to=gridLinkFile,overwrite=TRUE)
-    #     cmn.log(paste0("cp ",configGridLinkFile," to ",gridLinkFile,"/"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
-    # }
 
     application_root=paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/netcdf_to_obs_hgfd3",sep="/")
     status = run_hindcast_netcdf_to_obs( # reforecast_run_netcdf_to_obs.R
@@ -359,8 +336,6 @@ process_forcing_hydrogfd3_hindcast <- function(modelConfig, # Misc config data, 
                 dateobj_he5td_enddate=intervals$he5tdEndDate,
                 dateobj_od_startdate=intervals$odStartDate,
                 dateobj_od_enddate=intervals$odEndDate)
-    print(status)
-    #q(save="no", status = 0)
 
     # # Publish gridLink.Rdata
     # if (debugPublishFiles){
@@ -375,7 +350,7 @@ process_forcing_hydrogfd3_hindcast <- function(modelConfig, # Misc config data, 
     process_copy_obs_files(fromDir=obsDir,
                             toDir=modelFilesRunDir,
                             publishFiles=debugPublishFiles,
-                            textFilename='netcdf-to-obs-hgfd2-hindcast')
+                            textFilename='netcdf-to-obs-hgfd3-hindcast')
 
     # Copy state file to run dir
     dstFile = NULL
@@ -407,8 +382,9 @@ process_forcing_hydrogfd3_hindcast <- function(modelConfig, # Misc config data, 
 # External function
 # Wrapper for netcdf2obs sequence
 process_forcing_hydrogfd3_forecast <- function(modelConfig, # Misc config data, now
-                                               #modelFiles, # Misc model config data, paths to state files, forcing, shape files
+                                               modelFiles, # Misc model config data, paths to state files, forcing, shape files
                                                forecastIssueDate, # yyyy-mm-dd
+                                               configGridLinkFilename, # Name of grid link file from configuration
                                                netcdfDir, # Input dir with hydrogfd netcdf files
                                                ncSubDir, # False-one dir, True-separate dir for each variable
                                                modelFilesRunDir = NULL, # HYPE model data files
@@ -418,14 +394,14 @@ process_forcing_hydrogfd3_forecast <- function(modelConfig, # Misc config data, 
 {
     if (verbose){
         print(paste0("modelConfig: ",modelConfig))
-        # #print(paste0("modelFiles: ",modelFiles))
+        print(paste0("modelFiles: ",modelFiles))
         print(paste0("forecastIssueDate: ",forecastIssueDate))
         # print(paste0("hindcastPeriodLength: ",hindcastPeriodLength))
         # print(paste0("reforecast: ",reforecast))
         # print(paste0("stateFileCreation: ",stateFileCreation))
         # print(paste0("meteoHindcastType: ",meteoHindcastType))
         # print(paste0("statefileHindcastDate: ",statefileHindcastDate))
-        # print(paste0("configGridLinkFilename: ",configGridLinkFilename))
+        print(paste0("configGridLinkFilename: ",configGridLinkFilename))
         print(paste0("netcdfDir: ",netcdfDir))
         print(paste0("ncSubDir: ",ncSubDir))
         print(paste0("modelFilesRunDir: ",modelFilesRunDir))
@@ -458,7 +434,6 @@ process_forcing_hydrogfd3_forecast <- function(modelConfig, # Misc config data, 
     cmn.log(paste0("bdate: ",intervals$bdate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
     cmn.log(paste0("cdate: ",intervals$cdate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
     cmn.log(paste0("edate: ",intervals$edate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
-    print(intervals)
 
     # For the calculated time interval, search and download hydrogfd netcdf files
     nMissingFiles <- download_netcdf_hgfd3(modelConfig,
@@ -478,14 +453,10 @@ process_forcing_hydrogfd3_forecast <- function(modelConfig, # Misc config data, 
                                            odfEndDate=intervals$forecastStartDate) # One file with ten time steps
     if (nMissingFiles > 0) {
         cmn.log("Aborting due to missing HydroGFD 3 netcdf file(s)", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PF3)
-        #q(save="no", status = 2)
+        q(save="no", status = 2)
     }
-    #cmn.log("DEBUG: Quitting program", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
-    #q(save="no", status = 0)
 
     # Run netcdf_to_obs
-    # Work dir
-    #netcdf_to_obs_wd <- paste0(TMPDIR,"/netcdf_to_obs")
 
     application_root=paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/netcdf_to_obs_hgfd3",sep="/")
     status = run_forecast_netcdf_to_obs( # reforecast_run_netcdf_to_obs.R
@@ -508,7 +479,6 @@ process_forcing_hydrogfd3_forecast <- function(modelConfig, # Misc config data, 
                 #
                 dateobj_forecast_startdate=intervals$forecastStartDate,
                 dateobj_forecast_enddate=intervals$forecastEndDate)
-    print(status)
 
     # Copy produced files to HYPE run dir
     process_copy_obs_files(fromDir=obsDir,

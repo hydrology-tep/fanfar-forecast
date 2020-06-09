@@ -294,8 +294,7 @@ getHypeAppInput<-function(appName){
       assimOnAR   <- "off"
       if(assimOn=="on with auto-regressive updating"){
         print("on with auto-regressive updating")
-        #assimOn="on"
-        assimOn="off"
+        assimOn="off" # ToDo: Need work
         assimOnAR="on"
       }
 
@@ -801,20 +800,29 @@ getHypeAppSetup<-function(modelName,
       file.copy(from=paste(modelFilesPath,fileNames[i],sep="/"),  # or copying files from the corresponding download dir whe not on TEP?
                 to=paste(modelFilesRunDir,fileNames[i],sep="/"),
                 overwrite=T)
-      rciop.log ("DEBUG", paste0("cp ",modelFilesPath,"/",fileNames[i]," to ",modelFilesRunDir,"/",fileNames[i]),"/util/R/hypeapps-utils.R")
-      if(debugPublishFiles){
-        rciop.publish(path=paste(modelFilesPath,fileNames[i],sep="/"),recursive=FALSE,metalink=TRUE)
+      if(app.sys=="tep"){
+        rciop.log ("DEBUG", paste0("cp ",modelFilesPath,"/",fileNames[i]," to ",modelFilesRunDir,"/",fileNames[i]),"/util/R/hypeapps-utils.R")
+        if(debugPublishFiles){
+          rciop.publish(path=paste(modelFilesPath,fileNames[i],sep="/"),recursive=FALSE,metalink=TRUE)
+        }
       }
-      #}
     }
   }
   
   ## model binary file (stays in application folder)
   if(appName=="historical"|appName=="forecast"){
     # model binary source file
-    modelBinaryFile=paste(appDir,'util/bin',modelBin,sep="/")
-    if(debugPublishFiles){
-      rciop.publish(path=modelBinaryFile,recursive=FALSE,metalink=TRUE)
+    if (app.sys=='local' || app.sys=='server'){
+      modelBinaryFile=paste(appDir,modelBin,sep="/")
+    }else if(app.sys=="tep"){
+      modelBinaryFile=paste(appDir,'util/bin',modelBin,sep="/")
+    }else{
+      modelBinaryFile=paste(appDir,'util/bin',modelBin,sep="/")
+    }
+    if(app.sys=="tep"){
+      if(debugPublishFiles){
+        rciop.publish(path=modelBinaryFile,recursive=FALSE,metalink=TRUE)
+      }
     }
     
     # command line to run the model "hype rundir"
@@ -872,14 +880,16 @@ getHypeAppSetup<-function(modelName,
                 to=shapefileDir,overwrite=T)
     }
 
-    # Disable version tag for now 20190312
-    # shape_ver <- strsplit(shapefile.url, "/")[[1]][8]
-    shape_ver <- ""
+    if(app.sys=="tep"){
+      # Disable version tag for now 20190312
+      # shape_ver <- strsplit(shapefile.url, "/")[[1]][8]
+      shape_ver <- ""
 
-    rciop.log ("DEBUG", shapefileDir, "getHypeSetup")
-    syscmd = paste("zip -j ", shapefileDir, "/", "subbasin_shp", shape_ver, ".zip ", shapefileDir, "/", shapefile.layer, "*", sep="")
-    system(command = syscmd,intern = T)
-    rciop.publish(path=paste(shapefileDir, "/", "subbasin_shp", shape_ver, ".zip", sep=""), recursive=FALSE, metalink=TRUE)
+      rciop.log ("DEBUG", shapefileDir, "getHypeSetup")
+      syscmd = paste("zip -j ", shapefileDir, "/", "subbasin_shp", shape_ver, ".zip ", shapefileDir, "/", shapefile.layer, "*", sep="")
+      system(command = syscmd,intern = T)
+      rciop.publish(path=paste(shapefileDir, "/", "subbasin_shp", shape_ver, ".zip", sep=""), recursive=FALSE, metalink=TRUE)
+    }
 
     # open and save shapefile as Rdata
     shapefileData = readOGR(dsn = shapefileDir, layer = shapefile.layer)
@@ -1288,7 +1298,11 @@ analyseTimeOutputData<-function(appSetup,appInput,timeData,appDate){
 ## DATE2INFODATE - function to return a date as a textstring suitable for info.txt
 DATE2INFODATE<-function(datepsx){
   datetxt=as.character(datepsx)
-  infodate=paste(substr(datetxt,1,4),substr(datetxt,6,7),substr(datetxt,9,10),sep="")
+  if (nchar(datetxt) > 8){
+    infodate=paste(substr(datetxt,1,4),substr(datetxt,6,7),substr(datetxt,9,10),sep="")
+  }else{
+    infodate=paste(substr(datetxt,1,4),substr(datetxt,5,6),substr(datetxt,7,8),sep="")
+  }
   return(infodate)
 }
 

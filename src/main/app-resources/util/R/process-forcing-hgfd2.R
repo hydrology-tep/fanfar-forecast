@@ -16,7 +16,7 @@ cLimitHindcastPeriodDays <- 130
 #verboseVerbose <- FALSE
 
 # Includes that the sourced R-files uses
-library(ncdf4)
+#library(ncdf4)
 
 ## ------------------------------------------------------------------------------
 # For information on local variables and call sequence within this function,

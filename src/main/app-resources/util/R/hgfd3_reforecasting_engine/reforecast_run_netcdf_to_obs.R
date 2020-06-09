@@ -45,28 +45,28 @@ run_hindcast_netcdf_to_obs<-function(
     )
 {
     #if (TRUE){
-        print(paste0("application_root: ",application_root))
-        print(paste0("application: ",application))
-        print(paste0("app_sys: ",app_sys))
-        print(paste0("hgfd_nc_dir_htep: ",hgfd_nc_dir_htep))
-        print(paste0("grid_shape_file_dir: ",grid_shape_file_dir))
-        print(paste0("grid_elevation_file: ",grid_elevation_file))
-        print(paste0("subid_shape_file: ",subid_shape_file))
-        print(paste0("grid_link_file: ",grid_link_file))
-        print(paste0("output_dir: ",output_dir))
-        print(paste0("tmp_dir: ",tmp_dir))
-        print(paste0("reforecasting_method: ",reforecasting_method))
-        print(paste0("run_mode_state_file_creation: ",run_mode_state_file_creation))
-        print(paste0("dateobj_hindcast_startdate: ",dateobj_hindcast_startdate))
-        print(paste0("dateobj_hindcast_enddate: ",dateobj_hindcast_enddate))
-        print(paste0("dateobj_he5_startdate: ",dateobj_he5_startdate))
-        print(paste0("dateobj_he5_enddate: ",dateobj_he5_enddate))
-        print(paste0("dateobj_he5tm_startdate: ",dateobj_he5tm_startdate))
-        print(paste0("dateobj_he5tm_enddate: ",dateobj_he5tm_enddate))
-        print(paste0("dateobj_he5td_startdate: ",dateobj_he5td_startdate))
-        print(paste0("dateobj_he5td_enddate: ",dateobj_he5td_enddate))
-        print(paste0("dateobj_od_startdate: ",dateobj_od_startdate))
-        print(paste0("dateobj_od_enddate: ",dateobj_od_enddate))
+        # print(paste0("application_root: ",application_root))
+        # print(paste0("application: ",application))
+        # print(paste0("app_sys: ",app_sys))
+        # print(paste0("hgfd_nc_dir_htep: ",hgfd_nc_dir_htep))
+        # print(paste0("grid_shape_file_dir: ",grid_shape_file_dir))
+        # print(paste0("grid_elevation_file: ",grid_elevation_file))
+        # print(paste0("subid_shape_file: ",subid_shape_file))
+        # print(paste0("grid_link_file: ",grid_link_file))
+        # print(paste0("output_dir: ",output_dir))
+        # print(paste0("tmp_dir: ",tmp_dir))
+        # print(paste0("reforecasting_method: ",reforecasting_method))
+        # print(paste0("run_mode_state_file_creation: ",run_mode_state_file_creation))
+        # print(paste0("dateobj_hindcast_startdate: ",dateobj_hindcast_startdate))
+        # print(paste0("dateobj_hindcast_enddate: ",dateobj_hindcast_enddate))
+        # print(paste0("dateobj_he5_startdate: ",dateobj_he5_startdate))
+        # print(paste0("dateobj_he5_enddate: ",dateobj_he5_enddate))
+        # print(paste0("dateobj_he5tm_startdate: ",dateobj_he5tm_startdate))
+        # print(paste0("dateobj_he5tm_enddate: ",dateobj_he5tm_enddate))
+        # print(paste0("dateobj_he5td_startdate: ",dateobj_he5td_startdate))
+        # print(paste0("dateobj_he5td_enddate: ",dateobj_he5td_enddate))
+        # print(paste0("dateobj_od_startdate: ",dateobj_od_startdate))
+        # print(paste0("dateobj_od_enddate: ",dateobj_od_enddate))
     #}
 
     status_netcdf_2_obs = 1 # NOK
@@ -221,7 +221,7 @@ run_hindcast_netcdf_to_obs<-function(
                 var_as_subdir=hgfd_nc_subdir,
                 dateobj_end_date=dateobj_he5_enddate,
                 verbose=T,
-                debug_publish=T)
+                debug_publish=F)
         }
 
         nc_dir = hgfd_nc_dir_htep

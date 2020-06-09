@@ -76,7 +76,7 @@ netcdf_to_obs_wrapper<-function(pathToNetcdfToObs,        # path to external net
         # Create gridLink.Rdata
 
         # Rename these input/output parameters below to names according to names used in the different netcdf_to_obs functions
-        resGridLink <- netcdf_to_obs_gridLinkPreparation3(
+        resGridLink <- netcdf_to_obs_hgfd3_gridLinkPreparation(
                             pathToNetcdfToObs=pathToNetcdfToObs,
                             workDir=workDir,
                             ncRootDir=netcdfRootDir,
@@ -93,8 +93,8 @@ netcdf_to_obs_wrapper<-function(pathToNetcdfToObs,        # path to external net
                             verboseVerbose=F)
 
         if (resGridLink > 0){
-            #rciop.log('INFO',paste0('netcdf_to_obs_gridLinkPreparation3, exit code=',resGridLink),nameOfSrcFile_PN)
-            print(paste0('netcdf_to_obs_gridLinkPreparation3, exit code=',resGridLink)) # Replace by cmn.log()
+            #rciop.log('INFO',paste0('netcdf_to_obs_hgfd3_gridLinkPreparation, exit code=',resGridLink),nameOfSrcFile_PN)
+            print(paste0('netcdf_to_obs_hgfd3_gridLinkPreparation, exit code=',resGridLink)) # Replace by cmn.log()
         }
 
         if (verbose) {
@@ -111,7 +111,7 @@ netcdf_to_obs_wrapper<-function(pathToNetcdfToObs,        # path to external net
         # Create obs files
 
         # Rename these input/output parameters below to names according to names used in the different netcdf_to_obs functions
-        resObs <- netcdf_to_obs_readGridsAndWriteObs3(
+        resObs <- netcdf_to_obs_hgfd3_readGridsAndWriteObs(
                         pathToNetcdfToObs=pathToNetcdfToObs,
                         workDir=workDir,
                         ncRootDir=netcdfRootDir,
@@ -125,8 +125,8 @@ netcdf_to_obs_wrapper<-function(pathToNetcdfToObs,        # path to external net
                         verboseVerbose=F)
 
         if (resObs > 0){
-            #rciop.log('INFO',paste0('netcdf_to_obs_readGridsAndWriteObs3, exit code=',resObs),nameOfSrcFile_PN)
-            print(paste0('netcdf_to_obs_readGridsAndWriteObs3, exit code=',resObs)) # Replace by cmn.log()
+            #rciop.log('INFO',paste0('netcdf_to_obs_hgfd3_readGridsAndWriteObs, exit code=',resObs),nameOfSrcFile_PN)
+            print(paste0('netcdf_to_obs_hgfd3_readGridsAndWriteObs, exit code=',resObs)) # Replace by cmn.log()
         }
     }
 

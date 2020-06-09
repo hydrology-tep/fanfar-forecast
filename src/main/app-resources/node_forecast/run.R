@@ -106,27 +106,17 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                              filePath=TMPDIR)
     cmn.log(paste("app.sys:", app.sys, sep=" "), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
 
-    ## ------------------------------------------------------------------------------
+    # ## ------------------------------------------------------------------------------
     ## Load hypeapps environment and additional R utility functions
     if(app.sys=="tep"){
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/constants.R",sep="/"))
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-configuration.R",sep="/"))
-        source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-forcing-hgfd2.R",sep="/"))
-        source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-forcing-hgfd3.R",sep="/"))
-
-        source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/hypeapps-environment.R",sep="/"))
-        source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/hypeapps-utils.R", sep="/"))
 
     }else if(app.sys=="win"){
         source("application/util/R/constants.R")
         source("application/util/R/process-configuration.R")
-        source("application/util/R/process-forcing-hgfd2.R",sep="/")
-        source("application/util/R/process-forcing-hgfd3.R",sep="/")
-
-        source("application/util/R/hypeapps-environment.R")
-        source("application/util/R/hypeapps-utils.R")
     }
-    cmn.log("Libraries loaded and utilities sourced", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
+    cmn.log("Configuration utilities sourced", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
 
     #################################################################################
     ## 2 - Application inputs
@@ -136,9 +126,6 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     # of models, datasets etc.
     cmn.log("Processing user selection:", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
     applRuntimeOptions <- process_configuration_application_runtime_options(input)
-
-    print(applRuntimeOptions)
-    #q(save="no",status=0)
 
     publishHindcastForcingFiles <- FALSE
     if (applRuntimeOptions$runTypeStateFileCreation == cRunTypeVariantStatefile){
@@ -162,17 +149,41 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         cmn.log("modelConfigData (output from process_configuration_application_input):", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
         cmn.log(modelConfigData, logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
     }
-    
-    print(modelConfigData)
-    #q(save="no",status=0)
+
+    ## Load hypeapps environment and additional R utility functions
+    if(app.sys=="tep"){
+        if (modelConfigData$meteoHindcast == cMeteoHindcastVariant2) {
+            source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-forcing-hgfd2.R",sep="/"))
+            cmn.log("Libraries loaded and utilities for HydroGFD 2 sourced", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
+        }
+        if (modelConfigData$meteoHindcast == cMeteoHindcastVariant3) {
+            source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-forcing-hgfd3.R",sep="/"))
+            cmn.log("Libraries loaded and utilities for HydroGFD 3 sourced", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
+        }
+
+        source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/hypeapps-environment.R",sep="/"))
+        source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/hypeapps-utils.R", sep="/"))
+
+    }else if(app.sys=="win"){
+        if (modelConfigData$meteoHindcast == cMeteoHindcastVariant2) {
+            source("application/util/R/process-forcing-hgfd2.R",sep="/")
+            cmn.log("Libraries loaded and utilities for HydroGFD 2 sourced", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
+        }
+        if (modelConfigData$meteoHindcast == cMeteoHindcastVariant3) {
+            source("application/util/R/process-forcing-hgfd3.R",sep="/")
+            cmn.log("Libraries loaded and utilities for HydroGFD 3 sourced", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
+        }
+
+        source("application/util/R/hypeapps-environment.R")
+        source("application/util/R/hypeapps-utils.R")
+    }
+    cmn.log("Libraries loaded and common utilities sourced", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
 
     ## ------------------------------------------------------------------------------
     ## Handle application input parameters, rciop.get_param(), for internal hypeapps functionality
     app.input <- getHypeAppInput(appName = app.name)
 
     cmn.log("Inputs and parameters read", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
-    print(app.input$assimOn)
-    print(app.input$assimOnAR)
 
     #################################################################################
     ## 3 - Application setup
@@ -307,11 +318,12 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         if (modelConfigData$meteoHindcast == cMeteoHindcastVariant3) {
             cmn.log("Forcing data: HydroGFD 3", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
 
-            reforcasting_method = 2 # Default for run type reforecast
+            reforcasting_method = 2 # Default for run type 'reforcast'
             if (! is.null(modelConfigData$reforecastingMethod)){
                 # From configuration file
                 reforcasting_method = modelConfigData$reforecastingMethod
-            }else if (applRuntimeOptions$runType == cRunTypeVariantOperational){
+            }else if (applRuntimeOptions$runType == cRunTypeVariantOperational ||
+                      applRuntimeOptions$runTypeStateFileCreation == cRunTypeVariantStatefile){
                 reforcasting_method = 1
             }
 
@@ -326,7 +338,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                     modelConfigData$statefileHindcastDate,
                                     modelConfigData$configGridLinkFilename,
                                     dirNCFiles,
-                                    ncSubDir=TRUE, # FALSE,
+                                    ncSubDir=TRUE,
                                     app.setup$runDir,
                                     dirObsFiles,
                                     dirNetcdfToObsTmp,
@@ -345,8 +357,6 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                  "outstateDate"=NULL, # or NA
                                  #"stateFile"=stateFile) # ToDo: Add path to output
                                  "stateFile"=hindcastForcing$stateFile)
-        print("hindcast.forcing")
-        print(hindcast.forcing)
     } # HydroGFD
 
     if (verboseVerbose) {
@@ -356,8 +366,19 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
     cmn.log("Hindcast forcing data downloaded and prepared", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
 
-    # cmn.log("DEBUG: Quitting program", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
-    # q(save="no", status = 0)
+    if (app.input$assimOnAR == "off"){
+        # Cleanup certain assimilation files from run dir for upcoming hindcast and forecast run
+        hindcast_assimilation_files = c('update.txt')
+
+        hindcast_run_dir = app.setup$runDir
+        for(f in 1:length(hindcast_assimilation_files)){
+            file_to_remove = paste0(hindcast_run_dir,'/',hindcast_assimilation_files[f])
+            if (file.exists(file_to_remove)) {
+                cmn.log(paste0("rm ",file_to_remove), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
+                file.remove(file_to_remove)
+            }
+        }
+    }
 
     ## ------------------------------------------------------------------------------
     ## get Xobs input file(s) from open catalogue
@@ -374,7 +395,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## ------------------------------------------------------------------------------
     ## read downloaded Xobs input file(s) - merge into one Xobs.txt in the model run folder
     xobs.input <- readXobsData(appSetup = app.setup,
-                                xobsData = xobs.data)
+                               xobsData = xobs.data)
 
     if (verboseVerbose) {
         cmn.log("xobs.input (output from readXobsData):", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
@@ -474,7 +495,6 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                                 appInput   = app.input,
                                                 dataSource = forcing.data.source,
                                                 hindcast   = F)
-
         }
 
         if (modelConfigData$meteoHindcast == cMeteoHindcastVariant2 ||
@@ -502,9 +522,11 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                 cmn.log("Forcing data: HydroGFD 3, ODF", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
                 forecastForcing <- process_forcing_hydrogfd3_forecast(
                                         modelConfigData$meteoConfig,
+                                        modelConfigData$modelFiles,
                                         app.input$idate,
+                                        modelConfigData$configGridLinkFilename,
                                         dirNCFiles,
-                                        ncSubDir=TRUE, # FALSE,
+                                        ncSubDir=TRUE,
                                         app.setup$runDir,
                                         dirObsFiles,
                                         dirNetcdfToObsTmp,
@@ -536,8 +558,6 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                     "edate"=forecastForcing$edate,
                                     "outstateDate"=outStateDate,
                                     "stateFile"=stateFile)
-            print("forecast.forcing")
-            print(forecast.forcing)
 
             if (verboseVerbose) {
                 cmn.log("forecast.forcing (output from process_forecast_netcdf2obs):", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)

@@ -311,7 +311,12 @@ determine_hindcast_intervals<-function(idate=NULL, # Forecast issue date (htep)
 
     operationalEndDatePart1 = hgfdStartDate # Only to assign value to variable for upcoming function calls
     operationalEndDatePart2 = hgfdStartDate
-    if (runModeOperational){
+    if (runModeStatefileCreation){
+        # For time calculations only, this is a third run type.
+        runModeOperational = F
+        runModeReforecast  = F
+
+    } else if (runModeOperational){
         operationalEndDatePart1 = dateobj_set_monthday_last(string_to_dateobj(latest_date_monthly_part1))
         operationalEndDatePart2 = dateobj_set_monthday_last(string_to_dateobj(latest_date_monthly_part2))
         runModeReforecast        = F
@@ -320,10 +325,6 @@ determine_hindcast_intervals<-function(idate=NULL, # Forecast issue date (htep)
     }else if (runModeReforecast){
         runModeOperational       = F
         runModeStatefileCreation = F
-
-    }else if (runModeStatefileCreation){
-        runModeOperational = F
-        runModeReforecast  = F
 
     }else{
         print('Error: Unsupported run mode')

@@ -2,6 +2,9 @@
 # Common forcing utililties
 #
 
+# Includes that the sourced R-files uses
+library(ncdf4)
+
 # Constants
 nameOfSrcFile_PFC <- "/util/R/process-forcing-common.R"
 

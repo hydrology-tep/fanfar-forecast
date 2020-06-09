@@ -4,23 +4,23 @@ library(ncdf4)
 
 ## ------------------------------------------------------------------------------
 # Based on 'test/netcdf_to_obs_example.R'
-netcdf_to_obs_gridLinkPreparation3 <- function(pathToNetcdfToObs,
-                                              workDir, # TMPDIR/netcdf_to_obs
-                                              ncRootDir, # Path to netcdf files
-                                              ncSubDir, # False-one dir, True-separate dir for each variable
-                                              resourceDir, # Path to resources (shapefiles with (gfd) grid points and polygons)
-                                              gridElevPath, # Path to netcdf file with elevation
-                                              shapeFilePath, # Path to model shapefile
-                                              outPath, # Path for output files, gridLink.Rdata etc.
-                                              startDate, # yyyy-mm-dd
-                                              endDate, # yyyy-mm-dd
-                                              currentSystem='tep',
-                                              debugPublishFiles,
-                                              verbose=F,
-                                              verboseVerbose=F)
+netcdf_to_obs_hgfd3_gridLinkPreparation <- function(pathToNetcdfToObs,
+                                                    workDir, # TMPDIR/netcdf_to_obs
+                                                    ncRootDir, # Path to netcdf files
+                                                    ncSubDir, # False-one dir, True-separate dir for each variable
+                                                    resourceDir, # Path to resources (shapefiles with (gfd) grid points and polygons)
+                                                    gridElevPath, # Path to netcdf file with elevation
+                                                    shapeFilePath, # Path to model shapefile
+                                                    outPath, # Path for output files, gridLink.Rdata etc.
+                                                    startDate, # yyyy-mm-dd
+                                                    endDate, # yyyy-mm-dd
+                                                    currentSystem='tep',
+                                                    debugPublishFiles,
+                                                    verbose=F,
+                                                    verboseVerbose=F)
 {
     if (verbose) {
-        print('netcdf_to_obs_gridLinkPreparation3():')
+        print('netcdf_to_obs_hgfd3_gridLinkPreparation():')
         print(paste0("pathToNetcdfToObs: ",pathToNetcdfToObs))
         print(paste0("workDir: ",workDir))
         print(paste0("ncRootDir: ",ncRootDir))
@@ -108,7 +108,10 @@ netcdf_to_obs_gridLinkPreparation3 <- function(pathToNetcdfToObs,
     }
     print(nc_file_pattern)
 
-    obsScale  <- c(86400,1,1,1)
+    #DG: In HGFD3 pr is already in mm/d OR do you scale it to kg/m2/s for the HTEP extraction
+    #DG: Otherwise obsScale should be 1 also for pr
+    #obsScale  <- c(86400,1,1,1)                  
+    obsScale  <- c(1,1,1,1)                  
     obsOffset <- c(0,-273.15,-273.15,-273.15)
     obsDigits <- c(3,1,1,1)
 
@@ -158,13 +161,14 @@ netcdf_to_obs_gridLinkPreparation3 <- function(pathToNetcdfToObs,
     # Change to workDir
     #currentDir <- setwd(workDir)
 
+    # DG: re-adding arguments in order to re-generate shapefiles if missing 
     # Check/re-generate gridLink
     isGridLink = gridLinkPreparation.hgfd3(
-                    #grid.path = grid_dir_path[1]
-                    #,grid.pattern = nc_file_pattern[1]
-                    #,grid.elev = grid_elev_path
-                    #,var.name = nc_var_name[1]
-                    grid.meta = resource_dir_path
+                    grid.path = grid_dir_path[1]
+                    ,grid.pattern = nc_file_pattern[1]
+                    ,grid.elev = grid_elev_path
+                    ,var.name = nc_var_name[1]
+                    ,grid.meta = resource_dir_path
                     ,output.path = out_path
                     ,redoGridLink = redoGridLink
                     ,model.shape = shape_file_path
@@ -193,23 +197,23 @@ netcdf_to_obs_gridLinkPreparation3 <- function(pathToNetcdfToObs,
     }
 
     return (status)
-} # netcdf_to_obs_gridLinkPreparation3
+} # netcdf_to_obs_hgfd3_gridLinkPreparation
 
 
-netcdf_to_obs_readGridsAndWriteObs3 <- function(pathToNetcdfToObs,
-                                               workDir, # TMPDIR/netcdf_to_obs
-                                               ncRootDir, # Path to netcdf files
-                                               ncSubDir, # False-one dir, True-separate dir for each variable
-                                               gridLinkFile, # paste(out_path,"/gridLink.Rdata" # Existing file or path+name of file to be created
-                                               outPath, # Path for output files, calling function to handle publish?
-                                               startDate, # yyyy-mm-dd
-                                               endDate, # yyyy-mm-dd
-                                               currentSystem='tep',
-                                               verbose=F,
-                                               verboseVerbose=F)
+netcdf_to_obs_hgfd3_readGridsAndWriteObs <- function(pathToNetcdfToObs,
+                                                     workDir, # TMPDIR/netcdf_to_obs
+                                                     ncRootDir, # Path to netcdf files
+                                                     ncSubDir, # False-one dir, True-separate dir for each variable
+                                                     gridLinkFile, # paste(out_path,"/gridLink.Rdata" # Existing file or path+name of file to be created
+                                                     outPath, # Path for output files, calling function to handle publish?
+                                                     startDate, # yyyy-mm-dd
+                                                     endDate, # yyyy-mm-dd
+                                                     currentSystem='tep',
+                                                     verbose=F,
+                                                     verboseVerbose=F)
 {
     if (verbose) {
-        print('netcdf_to_obs_readGridsAndWriteObs3():')
+        print('netcdf_to_obs_hgfd3_readGridsAndWriteObs():')
         print(paste0("pathToNetcdfToObs: ",pathToNetcdfToObs))
         print(paste0("workDir: ",workDir))
         print(paste0("ncRootDir: ",ncRootDir))
@@ -366,5 +370,5 @@ netcdf_to_obs_readGridsAndWriteObs3 <- function(pathToNetcdfToObs,
     }
 
     return (status)
-} # netcdf_to_obs_readGridsAndWriteObs3
+} # netcdf_to_obs_hgfd3_readGridsAndWriteObs
 ## ------------------------------------------------------------------------------
