@@ -283,6 +283,10 @@ getHypeAppInput<-function(appName){
       xobs        <- rciop.getparam("xobs")        # EO/Insitu data Xobs file
       hcperiodlen <- rciop.getparam("hcperiodlen") # Hindcast period length (days)
 
+      if (length(rpcout) == 0){
+        rpcout = "default"
+      }
+
       hcperiodlen <- as.numeric(hcperiodlen)
       if(hcperiodlen < 123){
         if(app.sys=="tep"){rciop.log ("ERROR", "Hindcast period length to short","/util/R/hypeapps-utils.R")}
@@ -917,8 +921,10 @@ getHypeAppSetup<-function(modelName,
       # path to downloaded rpfile
       rpFileCOUT = paste(modelResDir[2],paste(paste(modelName,"-rp-cout.txt",sep="")),sep="/")
 
-      file.copy(from=rpFilePath,to=rpFileCOUT,overwrite=T)
-      rciop.log ("DEBUG", paste0("cp ",rpFilePath," to ",rpFileCOUT),"/util/R/hypeapps-utils.R")
+      if (file.exists(rpFilePath)){
+        file.copy(from=rpFilePath,to=rpFileCOUT,overwrite=T)
+        rciop.log ("DEBUG", paste0("cp ",rpFilePath," to ",rpFileCOUT),"/util/R/hypeapps-utils.R")
+      }
 
     }else{
       # download the file specified by user input
