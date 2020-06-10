@@ -24,6 +24,7 @@
 ## --------------------------------------------------------------------------------
 # set system flag if not set
 if(!exists("app.sys")){
+  print('INCORRECT SYSTEM')
   app.sys ="tep"
 }
 
@@ -272,7 +273,18 @@ getHypeAppInput<-function(appName){
     
     ## FORECAST ##
   }else if(appName=="forecast"){
-    
+    # Output variables was not set when app.sys=local or server
+    basins      <- NULL
+    basins.name <- ""
+    basins.id   <- ""
+    basins.num  <- 0
+    outvars.name=''
+    outvars.name2=''
+    outvars.unit=''
+    outvars.id=''
+    outvars.num=0
+    rpcout=NULL
+
     if(app.sys=="tep"){
       # get parameters with rciop function when running on the TEP system
       idate       <- rciop.getparam("idate")       # Forecast issue date
@@ -283,10 +295,6 @@ getHypeAppInput<-function(appName){
       xobs        <- rciop.getparam("xobs")        # EO/Insitu data Xobs file
       hcperiodlen <- rciop.getparam("hcperiodlen") # Hindcast period length (days)
 
-      if (length(rpcout) == 0){
-        rpcout = "default"
-      }
-
       hcperiodlen <- as.numeric(hcperiodlen)
       if(hcperiodlen < 123){
         if(app.sys=="tep"){rciop.log ("ERROR", "Hindcast period length to short","/util/R/hypeapps-utils.R")}
@@ -295,13 +303,6 @@ getHypeAppInput<-function(appName){
 
       # temporarily commenting out the assimilation in the forecast application (David 20170827)
       assimOn     <- rciop.getparam("assimOn")     # Assimilation on/off
-      assimOnAR   <- "off"
-      if(assimOn=="on with auto-regressive updating"){
-        print("on with auto-regressive updating")
-        assimOn="off" # ToDo: Need work
-        assimOnAR="on"
-      }
-
       assimVarIN  <- rciop.getparam("assimVars")   # Assimilation variables
       # parse the outvar inputs
       outvarSplit = trimws(strsplit(outvarsIN,split = ",")[[1]])
@@ -334,10 +335,6 @@ getHypeAppInput<-function(appName){
       }
 
       # parse the basinselect and basinset inputs
-      basins      <- NULL
-      basins.name <- ""
-      basins.id   <- ""
-      basins.num  <- 0
       if(length(basinselect) > 0){
         basinSplit = trimws(strsplit(basinselect,split = ",")[[1]])
         nBasin=length(basinSplit)
@@ -471,6 +468,46 @@ getHypeAppInput<-function(appName){
         assimVar  <- win.assimVar  # Assimilation variables (pairs, obs/sim)
         hcperiodlen <- win.hcperiodlen
       }
+
+    }else if(app.sys=="local" || app.sys=="server"){
+      # outvars.name=''
+      # outvars.name2=''
+      # outvars.unit=''
+      # outvars.id=''
+      # outvars.num=0
+      # set to default values, if not set
+      # set some test values for development on windows:
+      if(!exists("local.idate")|
+         !exists("local.outvars")|
+         !exists("local.outbasins")|
+         #!exists("local.wlperiod")|
+         #!exists("local.statfile")|
+         !exists("local.xobs")|
+         !exists("local.assimOn")|
+         !exists("local.assimVar")|
+         !exists("local.hcperiodlen")){
+        idate     <- "2017-01-01"  # Forecast issue date
+        outvars   <- "cout"        # Output variables
+        outbasins <- "37"          # Output basins
+        rpfile    <- "default"     # Return periods levels file
+        xobs      <- "-9999"       # EO/Insitu data Xobs file
+        xobsNum=0
+        xobsURL=NULL
+        assimOn   <- "off"         # Assimilation on/off
+        assimVar  <- "9999,9999"   # Assimilation variables (pairs, obs/sim)
+        hcperiodlen <- "123"
+      }else{
+        idate     <- local.idate  # Forecast issue date
+        outvars   <- local.outvars  # Output variables
+        outbasins <- local.outbasins  # Output basins
+        rpfile    <- local.rpfile  # Return periods levels file
+        xobs      <- local.xobs  # EO/Insitu data Xobs file
+        xobsNum=0
+        xobsURL=NULL
+        assimOn   <- local.assimOn  # Assimilation on/off
+        assimVar  <- local.assimVar  # Assimilation variables (pairs, obs/sim)
+        hcperiodlen <- local.hcperiodlen
+      }
     }else{
       idate     <- NULL  # Forecast issue date
       outvars   <- NULL  # Output variables
@@ -501,10 +538,9 @@ getHypeAppInput<-function(appName){
                   "xobsNum"   = xobsNum,
                   "xobsURL"   = xobsURL,
                   "assimOn"   = assimOn,   # Assimilation on/off
-                  "assimOnAR" = assimOnAR, # Assimilation with auto-regressive updating on/off
                   "assimVar"  = assimVar,  # Assimilation variables (pairs, obs/sim)
                   "hcperiodlen" = hcperiodlen) # Intended to be used together with netcdf2obs
-    # appName=="forecast" end
+    
   }else if(appName=="returnperiod"){
     if(app.sys=="tep"){
       
@@ -921,10 +957,8 @@ getHypeAppSetup<-function(modelName,
       # path to downloaded rpfile
       rpFileCOUT = paste(modelResDir[2],paste(paste(modelName,"-rp-cout.txt",sep="")),sep="/")
 
-      if (file.exists(rpFilePath)){
-        file.copy(from=rpFilePath,to=rpFileCOUT,overwrite=T)
-        rciop.log ("DEBUG", paste0("cp ",rpFilePath," to ",rpFileCOUT),"/util/R/hypeapps-utils.R")
-      }
+      file.copy(from=rpFilePath,to=rpFileCOUT,overwrite=T)
+      rciop.log ("DEBUG", paste0("cp ",rpFilePath," to ",rpFileCOUT),"/util/R/hypeapps-utils.R")
 
     }else{
       # download the file specified by user input
@@ -2450,18 +2484,6 @@ updateModelInput<-function(appSetup=NULL,appInput=NULL,hindcast=NULL,modelForcin
     # outstatedate
     if(hindcast){
       info$info.lines[info$outstatedate.lineNr]=paste('outstatedate',DATE2INFODATE(modelForcing$issueDate),sep=" ")
-    }
-    
-    # ar update - disable lines when not assimiliation
-    if(appInput$assimOnAR=="off"){
-      if (info$updateqar_variable){
-        info$info.lines[info$updateqar.lineNr]=paste('!! update qar',sep=" ")
-        print("disable updateqar in info.txt")
-      }
-      if (info$updatequseobs_variable){
-        info$info.lines[info$updatequseobs.lineNr]=paste('!! update quseobs',sep=" ")
-        print("disable updatequseobs in info.txt")
-      }
     }
     
     # remove existing XobsFile if existing

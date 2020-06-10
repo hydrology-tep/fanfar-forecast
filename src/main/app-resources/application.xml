@@ -7,8 +7,11 @@
 
         <parameter id="model_config" title="Model configuration" abstract="Hydrological model, meterological hindcast and forecast dataset" minOccurs="1" maxOccurs="1" scope="runtime" type="LiteralData">
           <options>
-            <option>World Wide-HYPE 1.3.6 + HydroGFD 2.0 + ECOPER</option>
-            <default>World Wide-HYPE + HydroGFD 2.0 + ECOPER</default> 
+            <!-- <option>Niger-HYPE + GFD 1.3 + ECOPER</option> -->
+            <option>WorldWide-HYPE 1.3.6 + HydroGFD 2.0 + ECOPER</option>
+            <option>WestAfrica-HYPE 0.5 + HydroGFD 2.0 + ECOPER</option>
+            <option>WestAfrica-HYPE 1.0 + HydroGFD 3.0 + ODF</option>
+            <default>WorldWide-HYPE 1.3.6 + HydroGFD 2.0 + ECOPER</default>
           </options>
         </parameter>
 
@@ -45,9 +48,10 @@
 
         <parameter id="xobs" title="Optional: Xobs file(s) with EO and/or In-situ data" abstract="Xobs file(s) with pre-processed EO or In-situ data" minOccurs="0" maxOccurs="10" scope="runtime" type="LiteralData"></parameter>
 
-        <parameter id="assimOn" title="Assimilation on/off" abstract="Data assimilation on/off" minOccurs="1" maxOccurs="1" scope="runtime" type="LiteralData">
+        <parameter id="assimOn" title="Assimilation on/off" abstract="Data assimilation on/on with auto-regressive updating/off" minOccurs="1" maxOccurs="1" scope="runtime" type="LiteralData">
           <options>
             <option>on</option>
+            <option>on with auto-regressive updating</option>
             <option>off</option>
             <default>off</default>
           </options>
