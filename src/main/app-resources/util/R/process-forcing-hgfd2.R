@@ -1,17 +1,22 @@
-#! /usr/bin/Rscript
+
+if(app.sys=="tep") {
+    source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-forcing-common.R",sep="/"))
+}else{
+    source ('process-forcing-common.R')
+}
 
 # Constants
-nameOfSrcFile_PN <- "/util/R/process-forcing.R"
+nameOfSrcFile_PF2 <- "/util/R/process-forcing-hgfd2.R"
 
 cLimitHindcastPeriodDays <- 130
 
 #verbose <- TRUE
-verbose <- FALSE
+#verbose <- FALSE
 #verboseVerbose <- TRUE
-verboseVerbose <- FALSE
+#verboseVerbose <- FALSE
 
 # Includes that the sourced R-files uses
-library(ncdf4)
+#library(ncdf4)
 
 ## ------------------------------------------------------------------------------
 # For information on local variables and call sequence within this function,
@@ -49,9 +54,9 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
     currentDir <- setwd(workDir)
 
     # Source the utility file
-    fileToSource <- paste0(Sys.getenv("_CIOP_APPLICATION_PATH"), "/util/R/netcdf_to_obs_utils.R")
+    fileToSource <- paste0(Sys.getenv("_CIOP_APPLICATION_PATH"), "/util/R/netcdf_to_obs_hgfd2/netcdf_to_obs_hgfd2_utils.R")
     if (! file.exists(fileToSource)){
-        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",fileToSource),nameOfSrcFile_PN)
+        cmn.log(paste0("Aborting netcdf to obs hgfd2 - file missing: ",fileToSource), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
         q(save="no", status = 0) # 77
     }
     source(fileToSource)
@@ -69,14 +74,20 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
 
     resource_dir_path <- resourceDir # NULL => code sets output to output.path
     if (! file.exists(resource_dir_path)){ # dir.exists
-        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",resource_dir_path),nameOfSrcFile_PN)
+        cmn.log(paste0("Aborting netcdf to obs - file missing: ",resource_dir_path), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
         #q(save="no", status = 0)
     }
+    #print("List files resource_dir_path:")
+    #tmpPath=resource_dir_path
+    #print(list.files(tmpPath))
 
     grid_elev_path <- gridElevPath
     if (! file.exists(grid_elev_path)){
-        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",grid_elev_path),nameOfSrcFile_PN)
+        cmn.log(paste0("Aborting netcdf to obs - file missing: ",grid_elev_path), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
         #q(save="no", status = 0)
+    #}else{
+    #  print("grid_elev_path exists")
+    #  print(grid_elev_path)
     }
 
     nc_var_name     <- c("pr","tas","tasmin","tasmax")
@@ -90,7 +101,7 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
     # Model input
     shape_file_path <- shapeFilePath
     if (! file.exists(shape_file_path)){
-        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",shape_file_path),nameOfSrcFile_PN)
+        cmn.log(paste0("Aborting netcdf to obs - file missing: ",shape_file_path), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
         #q(save="no", status = 0)
     }
 
@@ -122,13 +133,12 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
     timeStart.1=as.POSIXct(startDate,tz = "GMT")
     timeEnd.1=as.POSIXct(endDate,tz = "GMT")
 
-    #print("PATHS:")
-    #print(paste0("grid.path: ",grid_dir_path[1]))
+    # print("PATHS:")
+    # print(paste0("grid.path: ",grid_dir_path[1]))
     # print(paste0("grid.elev: ",grid_elev_path))
     # print(paste0("grid.meta: ",resource_dir_path))
     # print(paste0("output.path: ",out_path))
     # print(paste0("model.shape: ",shape_file_path))
-    #print(paste0(": ",))
 
     # Check/re-generate gridLink
     isGridLink = gridLinkPreparation(grid.path = grid_dir_path[1]
@@ -142,7 +152,7 @@ run_netcdf_to_obs_gridLinkPreparation <- function(workDir, # TMPDIR/netcdf_to_ob
                                     ,cleanGeometry = cleanGeometry
                                     ,crsProj = crsProjProc)
     if (isGridLink > 0){
-        rciop.log("INFO", paste0("Aborting netcdf to obs - gridLinkPreparation(): ",isGridLink),nameOfSrcFile_PN)
+        cmn.log(paste0("Aborting netcdf to obs - gridLinkPreparation(): ",isGridLink), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
         #q(save="no", status = 76)
         #status <- status + 1
     }
@@ -183,9 +193,9 @@ prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
     currentDir <- setwd(workDir)
 
     # Source the utility file
-    fileToSource <- paste0(Sys.getenv("_CIOP_APPLICATION_PATH"), "/util/R/netcdf_to_obs_utils.R")
+    fileToSource <- paste0(Sys.getenv("_CIOP_APPLICATION_PATH"), "/util/R/netcdf_to_obs_hgfd2/netcdf_to_obs_hgfd2_utils.R")
     if (! file.exists(fileToSource)){
-        rciop.log("INFO", paste0("Aborting netcdf to obs - file missing: ",fileToSource),nameOfSrcFile_PN)
+        cmn.log(paste0("Aborting netcdf to obs hgfd2 - file missing: ",fileToSource), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
         #q(save="no", status = 77)
     }
     source(fileToSource)
@@ -256,7 +266,7 @@ prepare_and_run_netcdf_to_obs <- function(workDir, # TMPDIR/netcdf_to_obs
                           ,time.end          = timeEnd.1
                           ,weightedOrNearest = weightedOrNearest)
     if (readWriteResult > 0){
-        rciop.log("INFO", paste0("Aborting netcdf to obs - readGridsAndWriteObs(): ",readWriteResult),nameOfSrcFile_PN)
+        cmn.log(paste0("Aborting netcdf to obs - readGridsAndWriteObs(): ",readWriteResult), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
         #q(save="no", status = 76)
         #status <- status + 2
     }
@@ -332,7 +342,7 @@ search_and_locate_latest_date <- function(url,
             yyyymmdd <- paste(yyyy,mm,dd,sep="-")
             status   <- 0
         }else{
-            paste("Could not locate date in filename")
+            print("Could not locate date in filename")
         }
     }
 
@@ -397,8 +407,8 @@ search_and_locate_latest_date <- function(url,
 # External function
 # Input  - meteo type (e.g. GFD, HydroGFD, HydroGFD 2.0), meteo version (e.g. 1.3, 2.0) optional, hindcast start date (bdate).
 # Output - formatted string to use as prefix for comparing filenames of state files.
-#          Uses naming from the constant cMetHCVariants.
-process_forcing_get_requested_statefile_suffix <- function(meteo,meteoVersion=NULL,hindcastStartDate)
+#          Uses naming from the constant cMeteoHindcastVariants.
+get_requested_statefile_suffix <- function(meteo,meteoVersion=NULL,hindcastStartDate)
 {
   defMet    <- "unknown"
   defMetVer <- "0.0"
@@ -407,9 +417,9 @@ process_forcing_get_requested_statefile_suffix <- function(meteo,meteoVersion=NU
   metVer <- defMetVer
 
   if (is.null(meteoVersion)) {
-    # Assume meteo is one of the defined constants (cMetHCVariantx) with both name and version
-    for (v in 1:length(cMetHCVariants)) {
-      m1 <- tolower(cMetHCVariants[v])
+    # Assume meteo is one of the defined constants (cMeteoHindcastVariantx) with both name and version
+    for (v in 1:length(cMeteoHindcastVariants)) {
+      m1 <- tolower(cMeteoHindcastVariants[v])
       m2 <- tolower(meteo)
       # Compare with input data
       if (m1 == m2) {
@@ -418,9 +428,9 @@ process_forcing_get_requested_statefile_suffix <- function(meteo,meteoVersion=NU
       }
     }
   }else {
-    # Check both name and version against the defined constants (cMetHCVariantx)
-    for (v in 1:length(cMetHCVariants)) {
-      variantList <- as.list(strsplit(cMetHCVariants[v],'\\s+')[[1]]) # Split constant string on space
+    # Check both name and version against the defined constants (cMeteoHindcastVariantx)
+    for (v in 1:length(cMeteoHindcastVariants)) {
+      variantList <- as.list(strsplit(cMeteoHindcastVariants[v],'\\s+')[[1]]) # Split constant string on space
       if (length(variantList) > 1) {
         m1    <- tolower(variantList[1])
         m1ver <- variantList[2]
@@ -439,7 +449,7 @@ process_forcing_get_requested_statefile_suffix <- function(meteo,meteoVersion=NU
   requestedFileNameSuffix <- paste0("-",met,meteoVersion,"-bdate",hcdate)
 
   return (requestedFileNameSuffix)
-} # process_forcing_get_requested_statefile_suffix
+} # get_requested_statefile_suffix
 
 
 # Get forecast issue date from filename(s) matching the requested categories
@@ -456,7 +466,7 @@ check_latest_statefiles_category <- function(filePath,meteo,meteoVersion,hindcas
   #state_save20180101.txt-hydrogfd2.0-bdate20100101
   
   requestedFileNamePrefix <- "state_save"
-  requestedFileNameSuffix <- process_forcing_get_requested_statefile_suffix(meteo,meteoVersion,hindcastStartDate)
+  requestedFileNameSuffix <- get_requested_statefile_suffix(meteo,meteoVersion,hindcastStartDate)
   requestedFileNameSuffix <- paste0(".txt",requestedFileNameSuffix)
   
   latestDate <- 0
@@ -506,7 +516,7 @@ check_latest_statefiles_category <- function(filePath,meteo,meteoVersion,hindcas
 determine_interval_hindcast <- function(forecastIssueDate,
                                         hindcastDays, # Integer/Numeric
                                         stateFileCreation,
-                                        metHCType,
+                                        meteoHindcastType,
                                         statefileHindcastDate,
                                         pathStateFiles)
 {
@@ -521,7 +531,7 @@ determine_interval_hindcast <- function(forecastIssueDate,
 
     # Check if state file exists (independent of run type mode)
     resStateFile <- check_latest_statefiles_category(pathStateFiles,
-                                                     meteo=metHCType,
+                                                     meteo=meteoHindcastType,
                                                      meteoVersion=NULL,
                                                      hindcastStartDate=statefileHindcastDate)
 
@@ -536,7 +546,7 @@ determine_interval_hindcast <- function(forecastIssueDate,
       # Start date earlier
       hindcast.startDate      <- resStateFile$fileDate
       hindcast.startDate$mday <- hindcast.startDate$mday + 0 # + 1
-      rciop.log("INFO", paste0("Using state file: ",resStateFile$fileName),nameOfSrcFile_PN)
+      cmn.log(paste0("Using state file: ",resStateFile$fileName), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
     }else {
       # Start date later
 
@@ -556,7 +566,7 @@ determine_interval_hindcast <- function(forecastIssueDate,
     # Limited in this function instead of in determine_interval_hydrogfdei() since output parameter
     # may be used by other functions
     if (hindcast.startDate < cFilesHydroGFD2EIStartDate) {
-      print("Limiting hindcast start date due to available files for HydroGFD 2")
+      cmn.log("Limiting hindcast start date due to available files for HydroGFD 2", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
       hindcast.startDate <- cFilesHydroGFD2EIStartDate
     }
 
@@ -572,11 +582,9 @@ determine_interval_hindcast <- function(forecastIssueDate,
       resStateFile$fileName <- NULL
     }
 
-    #if (verbose == TRUE) {
-      rciop.log("INFO","Hindcast:",nameOfSrcFile_PN)
-      rciop.log("INFO",hindcast.startDate,nameOfSrcFile_PN)
-      rciop.log("INFO",hindcast.endDate,nameOfSrcFile_PN)
-    #}
+    cmn.log("Hindcast:", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+    cmn.log(hindcast.startDate, logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+    cmn.log(hindcast.endDate, logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
 
     output <- list("hindcast.startDate"=hindcast.startDate,
                    "hindcast.endDate"=hindcast.endDate,
@@ -604,11 +612,11 @@ determine_interval_hydrogfdei <- function(hindcastStartDate,
           hydrogfdei.endDate <- as.Date(hydrogfdei.endDate)
           hydrogfdei.endDate <- as.POSIXlt(hydrogfdei.endDate)
           if (hydrogfdei.endDate < hydrogfdei.startDate) {
-              rciop.log("ERROR",paste("Aborting, the latest hydrogfdei netcdf file are too old: ",hydrogfdei.endDate),nameOfSrcFile_PN)
+              cmn.log(paste("Aborting, the latest hydrogfdei netcdf file date preceeds hydrogfdei start date: ",hydrogfdei.endDate), logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PF2)
               q(save="no", status = 3)
           }
       }else{
-          rciop.log("ERROR","Aborting, not able to locate the latest hydrogfdei netcdf file",nameOfSrcFile_PN)
+          cmn.log("Aborting, not able to locate the latest hydrogfdei netcdf file", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PF2)
           q(save="no", status = 3)
       }
 
@@ -654,11 +662,9 @@ determine_interval_hydrogfdei <- function(hindcastStartDate,
       hydrogfdei.endDate <- forecastIssueDate
     }
 
-    #if (verbose == TRUE) {
-      rciop.log("INFO","HydroGFDEI:",nameOfSrcFile_PN)
-      rciop.log("INFO",hydrogfdei.startDate,nameOfSrcFile_PN)
-      rciop.log("INFO",hydrogfdei.endDate,nameOfSrcFile_PN)
-    #}
+    cmn.log("HydroGFDEI:", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+    cmn.log(hydrogfdei.startDate, logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+    cmn.log(hydrogfdei.endDate, logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
 
     output <- list("hydrogfdei.startDate"=hydrogfdei.startDate,
                    "hydrogfdei.endDate"=hydrogfdei.endDate)
@@ -685,17 +691,17 @@ determine_interval_hydrogfdod <- function(hydrogfdeiEndDate,
           hydrogfdod.endDate <- as.Date(hydrogfdod.endDate)
           hydrogfdod.endDate <- as.POSIXlt(hydrogfdod.endDate)
           if (hydrogfdod.endDate < hydrogfdod.startDate) {
-              rciop.log("ERROR",paste("Aborting, the latest hydrogfdod netcdf file are too old: ",hydrogfdod.endDate),nameOfSrcFile_PN)
+              cmn.log(paste("Aborting, the latest hydrogfdod netcdf file date preceeds hydrogfdod start date: ",hydrogfdod.endDate), logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PF2)
               q(save="no", status = 3)
           }
       }else{
-          rciop.log("ERROR","Aborting, not able to locate the latest hydrogfdod netcdf file",nameOfSrcFile_PN)
+          cmn.log("Aborting, not able to locate the latest hydrogfdod netcdf file", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PF2)
           q(save="no", status = 3)
       }
 
       diffDays <- forecastIssueDate - hydrogfdod.endDate
       if (diffDays < 2){
-          rciop.log("ERROR","Aborting, the od daily hindcast period will be to short when using a historical forecast issue date",nameOfSrcFile_PN)
+          cmn.log("Aborting, the od daily hindcast period will be to short when using a historical forecast issue date", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PF2)
           q(save="no", status = 3)
       }
 
@@ -727,11 +733,9 @@ determine_interval_hydrogfdod <- function(hydrogfdeiEndDate,
       hydrogfdod.endDate$mday <- hydrogfdod.endDate$mday + (mday_last - hydrogfdod.endDate$mday)
     }
 
-    #if (verbose == TRUE) {
-      rciop.log("INFO","HydroGFDOD:",nameOfSrcFile_PN)
-      rciop.log("INFO",hydrogfdod.startDate,nameOfSrcFile_PN)
-      rciop.log("INFO",hydrogfdod.endDate,nameOfSrcFile_PN)
-    #}
+    cmn.log("HydroGFDOD:", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+    cmn.log(hydrogfdod.startDate, logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+    cmn.log(hydrogfdod.endDate, logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
 
     output <- list("hydrogfdod.startDate"=hydrogfdod.startDate,
                    "hydrogfdod.endDate"=hydrogfdod.endDate)
@@ -749,11 +753,9 @@ determine_interval_od_daily <- function(hydrogfdodEndDate,
 
     od.endDate        <- hindcastEndDate
 
-    #if (verbose == TRUE) {
-      rciop.log("INFO","OD:",nameOfSrcFile_PN)
-      rciop.log("INFO",od.startDate,nameOfSrcFile_PN)
-      rciop.log("INFO",od.endDate,nameOfSrcFile_PN)
-    #}
+    cmn.log("OD:", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+    cmn.log(od.startDate, logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+    cmn.log(od.endDate, logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
 
     output <- list("od.startDate"=od.startDate,
                    "od.endDate"=od.endDate)
@@ -770,11 +772,9 @@ determine_interval_ecoper <- function(forecastIssueDate)
     ecoper.endDate      <- forecastIssueDate
     ecoper.endDate$mday <- ecoper.endDate$mday + 9
 
-    #if (verbose == TRUE) {
-      rciop.log("INFO","ECOPER:",nameOfSrcFile_PN)
-      rciop.log("INFO",ecoper.startDate,nameOfSrcFile_PN)
-      rciop.log("INFO",ecoper.endDate,nameOfSrcFile_PN)
-    #}
+    cmn.log("ECOPER:", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+    cmn.log(ecoper.startDate, logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+    cmn.log(ecoper.endDate, logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
 
     output <- list("ecoper.startDate"=ecoper.startDate,
                    "ecoper.endDate"=ecoper.endDate)
@@ -787,7 +787,7 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
                                        in_forecastIssueDate, # character string with dashes
                                        in_reforecast = TRUE,
                                        in_stateFileCreation = FALSE,
-                                       in_metHCType, # Selected meteo hindcast type at run time, for locating state file
+                                       in_meteoHindcastType, # Selected meteo hindcast type at run time, for locating state file
                                        in_statefileHindcastDate, # Hindcast date in state file, for locating state file
                                        in_modelConfig, # url and query to locate netcdf files
                                        in_modelDataConfig) # paths to local dirs with state files etc.
@@ -806,8 +806,8 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
       print(in_reforecast)
       print('in_stateFileCreation:')
       print(in_stateFileCreation)
-      print('in_metHCType:')
-      print(in_metHCType)
+      print('in_meteoHindcastType:')
+      print(in_meteoHindcastType)
       print('in_statefileHindcastDate:')
       print(in_statefileHindcastDate)
       print('')
@@ -815,7 +815,7 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
 
     hindcast.Days <- as.numeric(in_hindcastDays)
     if (hindcast.Days < cLimitHindcastPeriodDays) {
-        if(app.sys=="tep"){rciop.log ("ERROR", "Hindcast period length to short",nameOfSrcFile_PN)}
+        cmn.log("Hindcast period length to short", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PF2)
         q(save="no", status=1)
     }
 
@@ -824,13 +824,13 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
     forecast.IssueDate <- as.POSIXlt(forecast.IssueDate)
 
     if (in_stateFileCreation) {
-      rciop.log("INFO","------------------------------------------------",nameOfSrcFile_PN)
-      rciop.log("INFO","Run type mode is 'state file creation'.",nameOfSrcFile_PN)
-      rciop.log("INFO","Only using HydroGFDEI as meteo forcing data",nameOfSrcFile_PN)
-      rciop.log("INFO","for the hindcast run.",nameOfSrcFile_PN)
-      rciop.log("INFO","Ignore time intervals for HydroGFDOD and OD.",nameOfSrcFile_PN)
-      rciop.log("INFO","Forecast run will not be performed.",nameOfSrcFile_PN)
-      rciop.log("INFO","------------------------------------------------",nameOfSrcFile_PN)
+      cmn.log("------------------------------------------------", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+      cmn.log("Run type mode is 'state file creation'.", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+      cmn.log("Only using HydroGFDEI as meteo forcing data", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+      cmn.log("for the hindcast run.", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+      cmn.log("Ignore time intervals for HydroGFDOD and OD.", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+      cmn.log("Forecast run will not be performed.", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+      cmn.log("------------------------------------------------", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
     }
 
     ## ------------------------------------------------------------------------------
@@ -838,7 +838,7 @@ prepare_hindcast_intervals <- function(in_hindcastDays, # positive integer
     intervalHindcast <- determine_interval_hindcast(forecast.IssueDate,
                                                     hindcast.Days,
                                                     in_stateFileCreation,
-                                                    in_metHCType,
+                                                    in_meteoHindcastType,
                                                     in_statefileHindcastDate,
                                                     pathStateFiles=paste0(in_modelDataConfig,"/statefiles"))
 
@@ -974,177 +974,175 @@ prepare_forecast_intervals <- function(in_forecastIssueDate) # character string 
 } # prepare_forecast_intervals
 
 
-# Common
-search_and_download <- function(url,
-                                query,
-                                rootDir,
-                                subDir)
-{
-  # Constants
-  osClientApp <- "opensearch-client"
+# # Common
+# search_and_download <- function(url,
+#                                 query,
+#                                 rootDir,
+#                                 subDir)
+# {
+#   # Constants
+#   osClientApp <- "opensearch-client"
 
-  local.dir <- paste(rootDir,subDir,sep="/")
-  if (! dir.exists(local.dir)){
-      dir.create(local.dir)
-  }
-  opensearchCmd=paste0(osClientApp," '",url,query,"'"," enclosure")
-  message(opensearchCmd)
-  res_enclosure <- system(command = opensearchCmd,intern = T)
-  if (length(res_enclosure >= 1)) {
-      for (xUrl in 1:length(res_enclosure)) {
-          res_file <- rciop.copy(res_enclosure[xUrl],local.dir)
-          if (res_file$exit.code == 0) {
-              path_plus_filename <- res_file$output
-              # Not used, future?
-          }else {
-              # file was already available in dir (re-downloaded) - $status = character(0)
-              if (length(res_file$output) == 0) {
-                  print(paste0("File with unknown name are already available in the local dir",local.netcdfDir))
-              }
-          }
-      }
-  }else {
-      print(paste("No search result for: ",opensearchCmd))
-  }
+#   local.dir <- paste(rootDir,subDir,sep="/")
+#   if (! dir.exists(local.dir)){
+#       dir.create(local.dir)
+#   }
+#   opensearchCmd=paste0(osClientApp," '",url,query,"'"," enclosure")
+#   message(opensearchCmd)
+#   res_enclosure <- system(command = opensearchCmd,intern = T)
+#   if (length(res_enclosure >= 1)) {
+#       for (xUrl in 1:length(res_enclosure)) {
+#           res_file <- rciop.copy(res_enclosure[xUrl],local.dir)
+#           if (res_file$exit.code == 0) {
+#               path_plus_filename <- res_file$output
+#               # Not used, future?
+#           }else {
+#               # file was already available in dir (re-downloaded) - $status = character(0)
+#               if (length(res_file$output) == 0) {
+#                   cmn.log(paste0("File with unknown name are already available in the local dir",local.netcdfDir), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+#               }
+#           }
+#       }
+#   }else {
+#       cmn.log(paste("No search result for: ",opensearchCmd), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+#   }
 
-} # search_and_download
+# } # search_and_download
 
 
-# Common
-search_and_download_netcdf <- function(urlNC,
-                                       query,
-                                       startDate,
-                                       stopDate,
-                                       ncRootDir,
-                                       ncSubDir)
-{
-  # Constants
-  osClientApp <- "opensearch-client"
-  secStartDay <- "T00:00:01"
-  secEndDay   <- "T23:59:59"
-  variables   <- c("pr","tas","tasmin","tasmax")
+# # Common
+# search_and_download_netcdf <- function(urlNC,
+#                                        query,
+#                                        startDate,
+#                                        stopDate,
+#                                        ncRootDir,
+#                                        ncSubDir)
+# {
+#   # Constants
+#   osClientApp <- "opensearch-client"
+#   secStartDay <- "T00:00:01"
+#   secEndDay   <- "T23:59:59"
+#   variables   <- c("pr","tas","tasmin","tasmax")
 
-  for (var in 1:length(variables)){
-      if (ncSubDir == TRUE){
-          local.netcdfDir <- paste(ncRootDir,variables[var],sep="/")
-          # Append query with variable
-          varQuery <- paste0(',',variables[var],']')
-          catQuery <- gsub(']',varQuery,query)
-      }else{
-          local.netcdfDir <- ncRootDir
-          # All files into one dir
-          catQuery <- query
-      }
-      if (! dir.exists(local.netcdfDir)) { dir.create(local.netcdfDir) }
-      opensearchCmd=paste0(osClientApp," '",urlNC,"'"," -p ","'count=unlimited'"," -p ","'cat=",catQuery,"'"," -p ","'start=",startDate,secStartDay,"'"," -p ","'stop=",stopDate,secEndDay,"'"," enclosure")
-      message(opensearchCmd)
-      res_enclosure <- system(command = opensearchCmd,intern = T)
-      if (length(res_enclosure >= 1)) {
-          for (xUrl in 1:length(res_enclosure)) {
-              res_file <- rciop.copy(res_enclosure[xUrl],local.netcdfDir)
-              if (res_file$exit.code == 0) {
-                  path_plus_filename <- res_file$output
-                  # Not used, future?
-              }else {
-                  # file was already available in dir (re-downloaded) - $status = character(0)
-                  if (length(res_file$output) == 0) {
-                      print(paste0("File with unknown name are already available in the local dir",local.netcdfDir))
-                  }
-              }
-          }
-      }else {
-          print(paste("No search result for: ",opensearchCmd))
-      }
+#   for (var in 1:length(variables)){
+#       if (ncSubDir == TRUE){
+#           local.netcdfDir <- paste(ncRootDir,variables[var],sep="/")
+#           # Append query with variable
+#           varQuery <- paste0(',',variables[var],']')
+#           catQuery <- gsub(']',varQuery,query)
+#       }else{
+#           local.netcdfDir <- ncRootDir
+#           # All files into one dir
+#           catQuery <- query
+#       }
+#       if (! dir.exists(local.netcdfDir)) { dir.create(local.netcdfDir) }
+#       opensearchCmd=paste0(osClientApp," '",urlNC,"'"," -p ","'count=unlimited'"," -p ","'cat=",catQuery,"'"," -p ","'start=",startDate,secStartDay,"'"," -p ","'stop=",stopDate,secEndDay,"'"," enclosure")
+#       message(opensearchCmd)
+#       res_enclosure <- system(command = opensearchCmd,intern = T)
+#       if (length(res_enclosure >= 1)) {
+#           for (xUrl in 1:length(res_enclosure)) {
+#               res_file <- rciop.copy(res_enclosure[xUrl],local.netcdfDir)
+#               if (res_file$exit.code == 0) {
+#                   path_plus_filename <- res_file$output
+#                   # Not used, future?
+#               }else {
+#                   # file was already available in dir (re-downloaded) - $status = character(0)
+#                   if (length(res_file$output) == 0) {
+#                       cmn.log(paste0("File with unknown name are already available in the local dir",local.netcdfDir), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+#                   }
+#               }
+#           }
+#       }else {
+#           cmn.log(paste("No search result for: ",opensearchCmd), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+#       }
       
-      if (ncSubDir == FALSE){
-          if (var == 1){
-            break # for loop
-          }
-      }
-  }
+#       if (ncSubDir == FALSE){
+#           if (var == 1){
+#             break # for loop
+#           }
+#       }
+#   }
 
-} # search_and_download_netcdf
+# } # search_and_download_netcdf
 
 
-# Common
-check_date_interval_netcdf <- function(startDate,
-                                       endDate,
-                                       ncRootDir,
-                                       ncSubDir,
-                                       filePrefix,
-                                       fileSuffix)
-{
-  #tasmin_hydrogfdei_201906_fanfar_SMHI.nc
-  #tasmin_hydrogfdod_201908_fanfar_SMHI.nc
-  #tas_od-daily_20190917_fanfar_SMHI.nc
-  #tasmin_ecoper_2019091800_fanfar_SMHI.nc # 00_fanfar_SMHI.nc
+# # Common
+# check_date_interval_netcdf <- function(startDate,
+#                                        endDate,
+#                                        ncRootDir,
+#                                        ncSubDir,
+#                                        filePrefix,
+#                                        fileSuffix)
+# {
+#   #tasmin_hydrogfdei_201906_fanfar_SMHI.nc
+#   #tasmin_hydrogfdod_201908_fanfar_SMHI.nc
+#   #tas_od-daily_20190917_fanfar_SMHI.nc
+#   #tasmin_ecoper_2019091800_fanfar_SMHI.nc # 00_fanfar_SMHI.nc
 
-  # Constants
-  variables <- c("pr","tas","tasmin","tasmax")
+#   # Constants
+#   variables <- c("pr","tas","tasmin","tasmax")
   
-  # Outputs
-  nMissingFiles <- 0
+#   # Outputs
+#   nMissingFiles <- 0
 
-  interval <- NULL
-  dateFormat <- NULL
-  if (grepl("hydrogfdei",filePrefix,fixed=TRUE)) {
-      interval <- "month"
-      dateFormat <- "%Y%m"
-  } else if (grepl("hydrogfdod",filePrefix,fixed=TRUE)) {
-      interval <- "month"
-      dateFormat <- "%Y%m"
-  } else if (grepl("od-daily",filePrefix,fixed=TRUE)) {
-      interval <- "day"
-      dateFormat <- "%Y%m%d"
-  } else if (grepl("ecoper",filePrefix,fixed=TRUE)) {
-      interval <- "day"
-      dateFormat <- "%Y%m%d"
-  }
+#   interval <- NULL
+#   dateFormat <- NULL
+#   if (grepl("hydrogfdei",filePrefix,fixed=TRUE)) {
+#       interval <- "month"
+#       dateFormat <- "%Y%m"
+#   } else if (grepl("hydrogfdod",filePrefix,fixed=TRUE)) {
+#       interval <- "month"
+#       dateFormat <- "%Y%m"
+#   } else if (grepl("od-daily",filePrefix,fixed=TRUE)) {
+#       interval <- "day"
+#       dateFormat <- "%Y%m%d"
+#   } else if (grepl("ecoper",filePrefix,fixed=TRUE)) {
+#       interval <- "day"
+#       dateFormat <- "%Y%m%d"
+#   }
 
-  sDate <- as.Date(startDate)
-  eDate <- as.Date(endDate)
+#   sDate <- as.Date(startDate)
+#   eDate <- as.Date(endDate)
 
-  # List of date objects. Assumes end date later than start date
-  seqTimeStamps <- seq.Date(from=sDate,to=eDate,by=interval)
+#   # List of date objects. Assumes end date later than start date
+#   seqTimeStamps <- seq.Date(from=sDate,to=eDate,by=interval)
 
-  for (month_or_day in 1:length(seqTimeStamps)){
-      fileDate <- strftime(seqTimeStamps[month_or_day],format=dateFormat)
-      for (var in 1:length(variables)){
-          if (ncSubDir == TRUE){
-              local.netcdfDir <- paste(ncRootDir,variables[var],sep="/")
-          }else{
-              # All files into one dir
-              local.netcdfDir <- ncRootDir
-          }
+#   for (month_or_day in 1:length(seqTimeStamps)){
+#       fileDate <- strftime(seqTimeStamps[month_or_day],format=dateFormat)
+#       for (var in 1:length(variables)){
+#           if (ncSubDir == TRUE){
+#               local.netcdfDir <- paste(ncRootDir,variables[var],sep="/")
+#           }else{
+#               # All files into one dir
+#               local.netcdfDir <- ncRootDir
+#           }
 
-          expFilename <- paste0(variables[var],filePrefix,fileDate,fileSuffix)
-          #print(expFilename)
-          localPath <- paste(local.netcdfDir,expFilename,sep="/")
-          if (! file.exists(localPath)){
-              nMissingFiles <- nMissingFiles + 1
-              #print(paste0("File missing: ",expFilename))
-              print(paste0("File missing: ",localPath))
-          }
+#           expFilename <- paste0(variables[var],filePrefix,fileDate,fileSuffix)
+#           localPath   <- paste(local.netcdfDir,expFilename,sep="/")
+#           if (! file.exists(localPath)){
+#               nMissingFiles <- nMissingFiles + 1
+#               cmn.log(paste0("File missing: ",localPath), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+#           }
 
-          test_nc_open_file <- FALSE #TRUE
-          if (test_nc_open_file == TRUE){
-              if (expFilename == "pr_hydrogfdei_201906_fanfar_SMHI.nc"){
-                print("Trying to nc_open file: pr_hydrogfdei_201906_fanfar_SMHI.nc")
-                print(localPath)
-                ncfh = nc_open(localPath)
-                print("after nc_open")
-                print(ncfh)
+#           test_nc_open_file <- FALSE #TRUE
+#           if (test_nc_open_file == TRUE){
+#               if (expFilename == "pr_hydrogfdei_201906_fanfar_SMHI.nc"){
+#                 print("Trying to nc_open file: pr_hydrogfdei_201906_fanfar_SMHI.nc")
+#                 print(localPath)
+#                 ncfh = nc_open(localPath)
+#                 print("after nc_open")
+#                 print(ncfh)
 
-                print("Trying to close file")
-                nc_close(ncfh)
-                print("after nc_close")
-              }
-          }
-      }
-  }
+#                 print("Trying to close file")
+#                 nc_close(ncfh)
+#                 print("after nc_close")
+#               }
+#           }
+#       }
+#   }
 
-  return (nMissingFiles)
-} # check_date_interval_netcdf
+#   return (nMissingFiles)
+# } # check_date_interval_netcdf
 
 
 # Common
@@ -1153,15 +1151,15 @@ check_date_interval_netcdf <- function(startDate,
 # Configurable option to download all files into one dir or individual sub-dirs
 # for pr, tas, tasmin and tasmax.
 # Returns the number of missing files
-download_netcdf <- function(modelConfig,    # sub-dir to use for local download dir, url, query pattern etc
-                            xCastsInterval, # dates for search start/stop, expected date in filename to check against
-                            netcdfDir,      # base dir to download files too
-                            ncSubDir,       # False-one dir, True-separate dir for each variable
-                            xCast=NULL,     # hindcast, forecast, elevation
-                            stateFileCreation=FALSE) # for hindcast
+download_netcdf_hgfd2 <- function(modelConfig,    # sub-dir to use for local download dir, url, query pattern etc
+                                  xCastsInterval, # dates for search start/stop, expected date in filename to check against
+                                  netcdfDir,      # base dir to download files too
+                                  ncSubDir,       # False-one dir, True-separate dir for each variable
+                                  xCast=NULL,     # hindcast, forecast, elevation
+                                  stateFileCreation=FALSE) # for hindcast
 {
   if (verboseVerbose == TRUE) {
-    print("download_netcdf:")
+    print("download_netcdf_hgfd2:")
     print(modelConfig)
     print(xCastsInterval)
     print(xCast)
@@ -1169,7 +1167,6 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
   }
 
   # Constants
-  variables   <- c("pr","tas","tasmin","tasmax")
   fileSuffix <- "_fanfar_SMHI.nc"
 
   # Outputs
@@ -1188,12 +1185,11 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
       startDate <- xCastsInterval$hydrogfdeiStartDateSearch
       stopDate  <- xCastsInterval$hydrogfdeiEndDateSearch
 
-      search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-      nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
-                                            "_hydrogfdei_",fileSuffix)
+      process_search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
+      nMissing <- process_check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
+                                                     "_hydrogfdei_",fileSuffix)
       if (nMissing > 0){
-          print(paste0(nMissing," file(s) missing for hydrogfdei"))
-          rciop.log("INFO",paste0(nMissing," file(s) missing for hydrogfdei"),nameOfSrcFile_PN)
+          cmn.log(paste0(nMissing," file(s) missing for hydrogfdei"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
       }
       nMissingFiles <- nMissingFiles + nMissing
 
@@ -1205,13 +1201,12 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
             startDate <- xCastsInterval$hydrogfdodStartDateSearch
             stopDate  <- xCastsInterval$hydrogfdodEndDateSearch
 
-            search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
+            process_search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
             # Check retrieved filenames
-            nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
-                                                   "_hydrogfdod_",fileSuffix)
+            nMissing <- process_check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
+                                                           "_hydrogfdod_",fileSuffix)
             if (nMissing > 0){
-                print(paste0(nMissing," file(s) missing for hydrogfdod"))
-                rciop.log("INFO",paste0(nMissing," file(s) missing for hydrogfdod"),nameOfSrcFile_PN)
+                cmn.log(paste0(nMissing," file(s) missing for hydrogfdod"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
             }
             nMissingFiles <- nMissingFiles + nMissing
 
@@ -1222,12 +1217,11 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
             startDate <- xCastsInterval$odStartDateSearch
             stopDate  <- xCastsInterval$odEndDateSearch
 
-            search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-            nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
-                                                   "_od-daily_",fileSuffix)
+            process_search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
+            nMissing <- process_check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
+                                                           "_od-daily_",fileSuffix)
             if (nMissing > 0){
-                print(paste0(nMissing," file(s) missing for od-daily"))
-                rciop.log("INFO",paste0(nMissing," file(s) missing for od-daily"),nameOfSrcFile_PN)
+                cmn.log(paste0(nMissing," file(s) missing for od-daily"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
             }
             nMissingFiles <- nMissingFiles + nMissing
       } # stateFileCreation
@@ -1240,12 +1234,11 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
       startDate <- xCastsInterval$ecoperStartDateSearch
       stopDate  <- xCastsInterval$ecoperStartDateSearch # 1 file
 
-      search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-      nMissing <- check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
-                                            "_ecoper_",paste0("00",fileSuffix))
+      process_search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
+      nMissing <- process_check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
+                                                     "_ecoper_",paste0("00",fileSuffix))
       if (nMissing > 0){
-          print(paste0(nMissing," file(s) missing for ecoper"))
-          rciop.log("INFO",paste0(nMissing," file(s) missing for ecoper"),nameOfSrcFile_PN)
+          cmn.log(paste0(nMissing," file(s) missing for ecoper"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
       }
       nMissingFiles <- nMissingFiles + nMissing
   } # forecast
@@ -1258,11 +1251,11 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
       #startDate <- xCastsInterval$ecoperStartDateSearch
       #stopDate  <- xCastsInterval$ecoperEndDateSearch
 
-      search_and_download(url,query,netcdfDir,subDir)
+      process_search_and_download(url,query,netcdfDir,subDir)
       expFilename <- paste(netcdfDir,subDir,"HydroGFD2elevation.nc",sep="/")
       if (! file.exists(expFilename)){
           nMissing <- 1
-          rciop.log("INFO",paste0("Missing file: ",expFilename),nameOfSrcFile_PN)
+          cmn.log(paste0("Missing file: ",expFilename), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
       }
       nMissingFiles <- nMissingFiles + nMissing
   } # elevation
@@ -1275,11 +1268,11 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
       #startDate <- xCastsInterval$ecoperStartDateSearch
       #stopDate  <- xCastsInterval$ecoperEndDateSearch
 
-      search_and_download(url,query,netcdfDir,subDir) # In dir for netcdf?
+      process_search_and_download(url,query,netcdfDir,subDir) # In dir for netcdf?
       #expFilename <- paste(netcdfDir,subDir,"HydroGFD2elevation.nc",sep="/")
       #if (! file.exists(expFilename)){
       #    nMissing <- 1
-      #    rciop.log("INFO",paste0("Missing file: ",expFilename),nameOfSrcFile_PN)
+      #    cmn.log(paste0("Missing file: ",expFilename), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
       #}
       #nMissingFiles <- nMissingFiles + nMissing
   } # elevation
@@ -1287,24 +1280,25 @@ download_netcdf <- function(modelConfig,    # sub-dir to use for local download 
   # All meterological gfd parts downloaded to local tmp dir
 
   return (nMissingFiles)
-} # download_netcdf
+} # download_netcdf_hgfd2
 
 
 # External function
 # Wrapper for netcdf2obs sequence
 process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, urls to search for hydrogfd data etc.
-                                               modelDataConfig, # Misc model config data, paths to state files, forcing, shape files
+                                               modelFiles, # Misc model config data, paths to state files, forcing, shape files
                                                forecastIssueDate, # yyyy-mm-dd
                                                hindcastPeriodLength, # Days
                                                reforecast, # True - run mode reforecast, False - run mode operational
                                                stateFileCreation, # True - run mode 'Statefile creation'
-                                               metHCType, # Selected meteo hindcast type at run time, for locating state file
+                                               meteoHindcastType, # Selected meteo hindcast type at run time, for locating state file
                                                statefileHindcastDate, # Hindcast date in state file, for locating state file
                                                configGridLinkFilename, # Name of grid link file from configuration
                                                netcdfDir, # Input dir with hydrogfd netcdf files
                                                ncSubDir, # False-one dir, True-separate dir for each variable
                                                modelFilesRunDir, # HYPE model data files dir
                                                obsDir, # Output dir for obs files
+                                               dirNetcdfToObsTmp, # Temporary work dir for netcdf_to_obs
                                                debugPublishFiles=FALSE) # Condition to publish files during development
 {
   # Prepare hindcast and forecast intervals, start and end dates
@@ -1312,44 +1306,44 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
                                                      forecastIssueDate,
                                                      reforecast,
                                                      stateFileCreation,
-                                                     metHCType,
+                                                     meteoHindcastType,
                                                      statefileHindcastDate,
                                                      modelConfig,
-                                                     modelDataConfig)
+                                                     modelFiles)
 
   # Download grid meta shape files for point and polygon
-  nMissingFiles <- download_netcdf(modelConfig,
-                                   xCastsInterval = prepHindcastInterval,
-                                   netcdfDir,
-                                   ncSubDir,
-                                   xCast="grid.meta",
-                                   stateFileCreation=FALSE)
+  nMissingFiles <- download_netcdf_hgfd2(modelConfig,
+                                         xCastsInterval = prepHindcastInterval,
+                                         netcdfDir,
+                                         ncSubDir,
+                                         xCast="grid.meta",
+                                         stateFileCreation=FALSE)
   if (nMissingFiles > 0) {
-      rciop.log("ERROR","Aborting due to missing HydroGFD 2 netcdf file(s)",nameOfSrcFile_PN)
+      cmn.log("Aborting due to missing HydroGFD 2 netcdf file(s)", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PF2)
       q(save="no", status = 2)
   }
 
   # Download hydrogfd elevation netcdf file
-  nMissingFiles <- download_netcdf(modelConfig,
-                                   xCastsInterval = prepHindcastInterval,
-                                   netcdfDir,
-                                   ncSubDir,
-                                   xCast="elevation",
-                                   stateFileCreation=FALSE)
+  nMissingFiles <- download_netcdf_hgfd2(modelConfig,
+                                         xCastsInterval = prepHindcastInterval,
+                                         netcdfDir,
+                                         ncSubDir,
+                                         xCast="elevation",
+                                         stateFileCreation=FALSE)
   if (nMissingFiles > 0) {
-      rciop.log("ERROR","Aborting due to missing HydroGFD 2 netcdf file(s)",nameOfSrcFile_PN)
+      cmn.log("Aborting due to missing HydroGFD 2 netcdf file(s)", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PF2)
       q(save="no", status = 2)
   }
 
   # For the calculated time interval, search and download hydrogfd netcdf files
-  nMissingFiles <- download_netcdf(modelConfig,
-                                   xCastsInterval = prepHindcastInterval,
-                                   netcdfDir,
-                                   ncSubDir,
-                                   xCast="hindcast",
-                                   stateFileCreation)
+  nMissingFiles <- download_netcdf_hgfd2(modelConfig,
+                                         xCastsInterval = prepHindcastInterval,
+                                         netcdfDir,
+                                         ncSubDir,
+                                         xCast="hindcast",
+                                         stateFileCreation)
   if (nMissingFiles > 0) {
-      rciop.log("ERROR","Aborting due to missing HydroGFD 2 netcdf file(s)",nameOfSrcFile_PN)
+      cmn.log("Aborting due to missing HydroGFD 2 netcdf file(s)", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PF2)
       q(save="no", status = 2)
   }
 
@@ -1357,12 +1351,10 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
   startDate <- prepHindcastInterval$hindcastStartDateSearch
   endDate   <- prepHindcastInterval$hindcastEndDateSearch
 
-  netcdf_to_obs_wd <- paste0(TMPDIR,"/netcdf_to_obs")
-
   gridLinkFile       <- paste0(obsDir,"/gridLink.Rdata") # Used by netcdf_to_obs functions
   configGridLinkFile <- "no-filename"
   if (! is.null(configGridLinkFilename)) {
-      configGridLinkFile <- paste0(modelDataConfig,"/shapefiles/",configGridLinkFilename)
+      configGridLinkFile <- paste0(modelFiles,"/shapefiles/",configGridLinkFilename)
   }
 
   if (file.exists(configGridLinkFile)) {
@@ -1370,16 +1362,16 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
           dir.create(obsDir)
       }
       file.copy(from=configGridLinkFile,to=gridLinkFile,overwrite=TRUE)
-      rciop.log ("INFO", paste0("cp ",configGridLinkFile," to ",gridLinkFile,"/"),nameOfSrcFile_PN)
+      cmn.log(paste0("cp ",configGridLinkFile," to ",gridLinkFile,"/"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
   }
 
   if (! file.exists(gridLinkFile)) {
-      res <- run_netcdf_to_obs_gridLinkPreparation(workDir=netcdf_to_obs_wd,
+      res <- run_netcdf_to_obs_gridLinkPreparation(workDir=dirNetcdfToObsTmp,
                                                    ncRootDir=netcdfDir,
                                                    ncSubDir=ncSubDir,
                                                    resourceDir=paste(netcdfDir,modelConfig$gfdGridSubDir,"grid.meta","grid.meta",sep="/"),
                                                    gridElevPath=paste(netcdfDir,modelConfig$gfdElevationSubDir,"HydroGFD2elevation.nc",sep="/"),
-                                                   shapeFilePath=paste(modelDataConfig,"subidshapefile","SUBID_shapefile.shp", sep="/"),
+                                                   shapeFilePath=paste(modelFiles,"subidshapefile","SUBID_shapefile.shp", sep="/"),
                                                    outPath=obsDir, # Should maybe be a temporary dir for next step, but need to be available for the corresponding functional call during forecast
                                                    startDate,
                                                    endDate)
@@ -1389,18 +1381,18 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
       }
 
       if (res > 0){
-          rciop.log("INFO",paste0("run_netcdf_to_obs_gridLinkPreparation, exit code=",res),nameOfSrcFile_PN)
+          cmn.log(paste0("run_netcdf_to_obs_gridLinkPreparation, exit code=",res), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
       }
   }
 
-  res <- prepare_and_run_netcdf_to_obs(workDir=netcdf_to_obs_wd,
+  res <- prepare_and_run_netcdf_to_obs(workDir=dirNetcdfToObsTmp,
                                        ncRootDir=netcdfDir,
                                        ncSubDir=ncSubDir,
                                        outPath=obsDir,
                                        startDate,
                                        endDate)
   if (res > 0){
-      rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs, exit code=",res),nameOfSrcFile_PN)
+      cmn.log(paste0("prepare_and_run_netcdf_to_obs, exit code=",res), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
   }
 
   if (verboseVerbose == TRUE) {
@@ -1412,103 +1404,48 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
   bdate <- as.Date(startDate)
   edate <- as.Date(endDate)
 
-  # cdate = edate - 130 days:
-  calc.date <- as.POSIXlt(edate)
-  calc.date$mday <- calc.date$mday - cLimitHindcastPeriodDays
-  cdate <- as.Date(calc.date)
+  if (! stateFileCreation){
+    # Standard
+    # cdate = edate - 130 days:
+    calc.date <- as.POSIXlt(edate)
+    calc.date$mday <- calc.date$mday - cLimitHindcastPeriodDays
+    cdate <- as.Date(calc.date)
+  }else{
+    # State file creation
+    cdate <- bdate
+  }
   # Limit, minimum
   if (cdate < bdate) {
       cdate <- bdate
   }
+  cmn.log(paste0("bdate: ",bdate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+  cmn.log(paste0("cdate: ",cdate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+  cmn.log(paste0("edate: ",edate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
 
-  # Produced files to copy to run dir
-  pobs    <- paste(obsDir,"Pobs.txt",sep="/")
-  tobs    <- paste(obsDir,"Tobs.txt",sep="/")
-  tminobs <- paste(obsDir,"TMINobs.txt",sep="/")
-  tmaxobs <- paste(obsDir,"TMAXobs.txt",sep="/")
-  forckey <- paste(obsDir,"ForcKey.txt",sep="/")
-  nFiles  <- 0
-
-  publishFiles <- debugPublishFiles
-  dstDir <- modelFilesRunDir
-  if (file.exists(pobs)) {
-      nFiles <- nFiles + 1
-      file.copy(from=pobs,to=dstDir,overwrite=TRUE)
-      rciop.log ("INFO", paste0("cp ",pobs," to ",dstDir,"/"),nameOfSrcFile_PN)
-      if (publishFiles) {
-        toFile = paste(obsDir,"Pobs-netcdf-to-obs-hindcast.txt",sep="/")
-        file.copy(from=pobs,to=toFile)
-        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
-      }
-  }
-
-  if (file.exists(tobs)) {
-      nFiles <- nFiles + 1
-      file.copy(from=tobs,to=dstDir,overwrite=TRUE)
-      rciop.log ("INFO", paste0("cp ",tobs," to ",dstDir,"/"),nameOfSrcFile_PN)
-      if (publishFiles) {
-        toFile = paste(obsDir,"Tobs-netcdf-to-obs-hindcast.txt",sep="/")
-        file.copy(from=tobs,to=toFile)
-        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
-      }
-  }
-
-  if (file.exists(tminobs)) {
-      nFiles <- nFiles + 1
-      file.copy(from=tminobs,to=dstDir,overwrite=TRUE)
-      rciop.log ("INFO", paste0("cp ",tminobs," to ",dstDir,"/"),nameOfSrcFile_PN)
-      if (publishFiles) {
-        toFile = paste(obsDir,"TMINobs-netcdf-to-obs-hindcast.txt",sep="/")
-        file.copy(from=tminobs,to=toFile)
-        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
-      }
-  }
-
-  if (file.exists(tmaxobs)) {
-      nFiles <- nFiles + 1
-      file.copy(from=tmaxobs,to=dstDir,overwrite=TRUE)
-      rciop.log ("INFO", paste0("cp ",tmaxobs," to ",dstDir,"/"),nameOfSrcFile_PN)
-      if (publishFiles) {
-        toFile = paste(obsDir,"TMAXobs-netcdf-to-obs-hindcast.txt",sep="/")
-        file.copy(from=tmaxobs,to=toFile)
-        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
-      }
-  }
-
-  if (file.exists(forckey)) {
-      nFiles <- nFiles + 1
-      file.copy(from=forckey,to=dstDir,overwrite=TRUE)
-      rciop.log ("INFO", paste0("cp ",forckey," to ",dstDir,"/"),nameOfSrcFile_PN)
-      if (publishFiles) {
-        toFile = paste(obsDir,"ForcKey-netcdf-to-obs-hindcast.txt",sep="/")
-        file.copy(from=forckey,to=toFile)
-        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
-      }
-  }
-
-  if (nFiles < 5) {
-    rciop.log ("ERROR","process_hindcast_netcdf2obs(): too few files produced",nameOfSrcFile_PN)
-  }
-
+  # Copy produced files to HYPE run dir
+  process_copy_obs_files(fromDir=obsDir,
+                         toDir=modelFilesRunDir,
+                         publishFiles=debugPublishFiles,
+                         textFilename='netcdf-to-obs-hgfd2-hindcast')
   # Copy state file to run dir
   dstFile <- NULL
   if(! is.null(prepHindcastInterval$stateFile)) {
-      requestedFileNameSuffix <- process_forcing_get_requested_statefile_suffix(metHCType,
-                                                                                NULL,
-                                                                                statefileHindcastDate)
+      requestedFileNameSuffix <- get_requested_statefile_suffix(meteoHindcastType,
+                                                                NULL,
+                                                                statefileHindcastDate)
 
       stateFileWithoutSuffix <- gsub(pattern=requestedFileNameSuffix,replacement="",prepHindcastInterval$stateFile)
 
-      srcFile <- paste0(modelDataConfig,"/statefiles/",prepHindcastInterval$stateFile)
+      srcFile <- paste0(modelFiles,"/statefiles/",prepHindcastInterval$stateFile)
       dstFile <- paste0(modelFilesRunDir,"/",stateFileWithoutSuffix)
 
       if(file.exists(srcFile)) {
           file.copy(from=srcFile,to=dstFile,overwrite=TRUE)
-          rciop.log ("INFO", paste0("cp ",srcFile," to ",dstFile),nameOfSrcFile_PN)
+          cmn.log(paste0("cp ",srcFile," to ",dstFile), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
           #print(list.files(modelFilesRunDir))
       }else{
           dstFile <- NULL
-          print("ERROR, problem copying state file for upcoming hindcast run")
+          cmn.log("problem copying state file for upcoming hindcast run", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PF2)
       }
   }
 
@@ -1525,26 +1462,27 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
 # External function
 # Wrapper for netcdf2obs sequence
 process_forcing_hydrogfd2_forecast <- function(modelConfig, # Misc config data, now
-                                               #modelDataConfig, # Misc model config data, paths to state files, forcing, shape files
+                                               #modelFiles, # Misc model config data, paths to state files, forcing, shape files
                                                forecastIssueDate, # yyyy-mm-dd
                                                netcdfDir, # Input dir with hydrogfd netcdf files
                                                ncSubDir, # False-one dir, True-separate dir for each variable
                                                modelFilesRunDir = NULL, # HYPE model data files
                                                obsDir, # Output dir for obs files
+                                               dirNetcdfToObsTmp, # Temporary work dir for netcdf_to_obs
                                                debugPublishFiles=FALSE) # Condition to publish files during development
 {
   # Prepare hindcast and forecast intervals, start and end dates
   prepForecastInterval <- prepare_forecast_intervals(forecastIssueDate)
 
   # For the calculated time interval, search and download hydrogfd netcdf files
-  nMissingFiles <- download_netcdf(modelConfig,
-                                   xCastsInterval = prepForecastInterval, # Now different types... either have one type only...
-                                   netcdfDir,
-                                   ncSubDir,
-                                   xCast="forecast",
-                                   stateFileCreation=FALSE)
+  nMissingFiles <- download_netcdf_hgfd2(modelConfig,
+                                         xCastsInterval = prepForecastInterval, # Now different types... either have one type only...
+                                         netcdfDir,
+                                         ncSubDir,
+                                         xCast="forecast",
+                                         stateFileCreation=FALSE)
   if (nMissingFiles > 0) {
-      rciop.log("ERROR","Aborting due to missing HydroGFD 2 netcdf file(s)",nameOfSrcFile_PN)
+      cmn.log("Aborting due to missing HydroGFD 2 netcdf file(s)", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PF2)
       q(save="no", status = 2)
   }
 
@@ -1552,15 +1490,14 @@ process_forcing_hydrogfd2_forecast <- function(modelConfig, # Misc config data, 
   startDate <- prepForecastInterval$ecoperStartDateSearch
   endDate   <- prepForecastInterval$ecoperEndDateSearch
 
-  netcdf_to_obs_wd <- paste0(TMPDIR,"/netcdf_to_obs")
-  res <- prepare_and_run_netcdf_to_obs(workDir=netcdf_to_obs_wd,
+  res <- prepare_and_run_netcdf_to_obs(workDir=dirNetcdfToObsTmp,
                                        ncRootDir=netcdfDir,
                                        ncSubDir=ncSubDir,
                                        outPath=obsDir,
                                        startDate,
                                        endDate)
   if (res > 0){
-      rciop.log("INFO",paste0("prepare_and_run_netcdf_to_obs, exit code=",res),nameOfSrcFile_PN)
+      cmn.log(paste0("prepare_and_run_netcdf_to_obs, exit code=",res), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
   }
 
   if (verboseVerbose == TRUE) {
@@ -1572,74 +1509,16 @@ process_forcing_hydrogfd2_forecast <- function(modelConfig, # Misc config data, 
   bdate <- as.Date(startDate)
   cdate <- as.Date(startDate)
   edate <- as.Date(endDate)
+  cmn.log(paste0("bdate: ",bdate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+  cmn.log(paste0("cdate: ",cdate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+  cmn.log(paste0("edate: ",edate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
 
-  pobs    <- paste(obsDir,"Pobs.txt",sep="/")
-  tobs    <- paste(obsDir,"Tobs.txt",sep="/")
-  tminobs <- paste(obsDir,"TMINobs.txt",sep="/")
-  tmaxobs <- paste(obsDir,"TMAXobs.txt",sep="/")
-  forckey <- paste(obsDir,"ForcKey.txt",sep="/")
-  nFiles  <- 0
+  # Copy produced files to HYPE run dir
+  process_copy_obs_files(fromDir=obsDir,
+                         toDir=modelFilesRunDir,
+                         publishFiles=debugPublishFiles,
+                         textFilename='netcdf-to-obs-hgfd2-forecast')
 
-  publishFiles <- debugPublishFiles
-  dstDir <- modelFilesRunDir
-  if (file.exists(pobs)) {
-      nFiles <- nFiles + 1
-      file.copy(from=pobs,to=dstDir,overwrite=TRUE)
-      rciop.log ("INFO", paste0("cp ",pobs," to ",dstDir,"/"),nameOfSrcFile_PN)
-      if (publishFiles) {
-        toFile = paste(obsDir,"Pobs-netcdf-to-obs-forecast.txt",sep="/")
-        file.copy(from=pobs,to=toFile)
-        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
-      }
-  }
-
-  if (file.exists(tobs)) {
-      nFiles <- nFiles + 1
-      file.copy(from=tobs,to=dstDir,overwrite=TRUE)
-      rciop.log ("INFO", paste0("cp ",tobs," to ",dstDir,"/"),nameOfSrcFile_PN)
-      if (publishFiles) {
-        toFile = paste(obsDir,"Tobs-netcdf-to-obs-forecast.txt",sep="/")
-        file.copy(from=tobs,to=toFile)
-        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
-      }
-  }
-
-  if (file.exists(tminobs)) {
-      nFiles <- nFiles + 1
-      file.copy(from=tminobs,to=dstDir,overwrite=TRUE)
-      rciop.log ("INFO", paste0("cp ",tminobs," to ",dstDir,"/"),nameOfSrcFile_PN)
-      if (publishFiles) {
-        toFile = paste(obsDir,"TMINobs-netcdf-to-obs-forecast.txt",sep="/")
-        file.copy(from=tminobs,to=toFile)
-        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
-      }
-  }
-
-  if (file.exists(tmaxobs)) {
-      nFiles <- nFiles + 1
-      file.copy(from=tmaxobs,to=dstDir,overwrite=TRUE)
-      rciop.log ("INFO", paste0("cp ",tmaxobs," to ",dstDir,"/"),nameOfSrcFile_PN)
-      if (publishFiles) {
-        toFile = paste(obsDir,"TMAXobs-netcdf-to-obs-forecast.txt",sep="/")
-        file.copy(from=tmaxobs,to=toFile)
-        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
-      }
-  }
-
-  if (file.exists(forckey)) {
-      nFiles <- nFiles + 1
-      file.copy(from=forckey,to=dstDir,overwrite=TRUE)
-      rciop.log ("INFO", paste0("cp ",forckey," to ",dstDir,"/"),nameOfSrcFile_PN)
-      if (publishFiles) {
-        toFile = paste(obsDir,"ForcKey-netcdf-to-obs-forecast.txt",sep="/")
-        file.copy(from=forckey,to=toFile)
-        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
-      }
-  }
-
-  if (nFiles < 5) {
-    rciop.log ("ERROR","process_hindcast_netcdf2obs(): too few files produced",nameOfSrcFile_PN)
-  }
   forecast.forcing <- list("bdate"=bdate,
                            "cdate"=cdate,
                            "edate"=edate)
