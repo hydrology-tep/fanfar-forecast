@@ -54,6 +54,7 @@
                     <require>libgfortran</require>
                     <require>hdf5</require>
                     <require>netcdf</require>
+                    <require>nco</require>
                   </requires>
                   <postinstallScriptlet combine.self="override">
                     <scriptFile>${basedir}/src/main/app-resources/scripts/postinstall.sh</scriptFile>

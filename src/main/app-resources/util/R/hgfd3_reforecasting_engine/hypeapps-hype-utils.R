@@ -87,8 +87,6 @@ readInfo<-function(filenm = "Info.txt"){
   info$isBasinoutput_variable=F
   info$isTimeoutput_variable=F
   info$isMapoutput_variable=F
-  info$updateqar_variable=F
-  info$updatequseobs_variable=F
   
   #loop over lines and identify some relevant data
   noutstate = 0
@@ -144,18 +142,6 @@ readInfo<-function(filenm = "Info.txt"){
     if(substr(thisline,1,12)=="assimilation"){
       info$assimilation=readInfoLine(thisline,12)
       info$assimilation.lineNr=i
-    }
-    #update qar # assimilation with auto-regressive updating method
-    if(substr(thisline,1,10)=="update qar"){
-      info$updateqar=readInfoLine(thisline,10)
-      info$updateqar.lineNr=i
-      info$updateqar_variable=T
-    }
-    #update quseobs # assimilation with auto-regressive updating method
-    if(substr(thisline,1,14)=="update quseobs"){
-      info$updatequseobs=readInfoLine(thisline,14)
-      info$updatequseobs.lineNr=i
-      info$updatequseobs_variable=T
     }
     # basinoutput variable
     if(substr(thisline,1,20)=="basinoutput variable"){
