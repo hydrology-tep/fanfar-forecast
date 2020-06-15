@@ -256,6 +256,13 @@ process_forcing_hydrogfd3_hindcast <- function(modelConfig, # Misc config data, 
     #statefile_instate_date = intervals$statefile_instate_date # NULL or date
     statefile_instate      = intervals$statefile_instate # NULL or filename (not path+filename since renaming file)
     intervals              = intervals$intervals
+
+    cmn.log(paste0("hindcast interval: ",intervals$hindcastStartDate," -> ",intervals$hindcastEndDate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
+    cmn.log(paste0("he5:               ",intervals$he5StartDate," -> ",intervals$he5EndDate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
+    cmn.log(paste0("he5tm:             ",intervals$he5tmStartDate," -> ",intervals$he5tmEndDate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
+    cmn.log(paste0("he5td:             ",intervals$he5tdStartDate," -> ",intervals$he5tdEndDate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
+    cmn.log(paste0("od:                ",intervals$odStartDate," -> ",intervals$odEndDate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
+
     cmn.log(paste0("bdate: ",intervals$bdate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
     cmn.log(paste0("cdate: ",intervals$cdate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
     cmn.log(paste0("edate: ",intervals$edate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
@@ -431,6 +438,8 @@ process_forcing_hydrogfd3_forecast <- function(modelConfig, # Misc config data, 
                     output_hype_dates_to_csv_file=NULL
                     )
 
+    cmn.log(paste0("forecast interval: ",intervals$forecastStartDate," -> ",intervals$forecastEndDate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
+ 
     cmn.log(paste0("bdate: ",intervals$bdate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
     cmn.log(paste0("cdate: ",intervals$cdate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
     cmn.log(paste0("edate: ",intervals$edate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
