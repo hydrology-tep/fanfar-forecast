@@ -163,6 +163,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/hypeapps-environment.R",sep="/"))
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/hypeapps-utils.R", sep="/"))
+        source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-eo.R",sep="/"))
 
     }else if(app.sys=="win"){
         if (modelConfigData$meteoHindcast == cMeteoHindcastVariant2) {
@@ -176,6 +177,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
         source("application/util/R/hypeapps-environment.R")
         source("application/util/R/hypeapps-utils.R")
+        source("application/util/R/process-eo.R")
     }
     cmn.log("Libraries loaded and common utilities sourced", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
 
@@ -279,6 +281,20 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     #################################################################################
     ## 4 - Hindcast input data
     ## ------------------------------------------------------------------------------
+    ## eo data
+    qobs_file = paste0(app.setup$runDir,"/Qobs.txt")
+    if (file.exists(qobs_file)) {
+        process_eo_data(app_sys=app.sys,
+                        qobsFile=qobs_file,
+                        shapefileDbf=paste0(modelConfigData$modelFiles,"/subidshapefile/SUBID-StationID-linkage.dbf"),
+                        geodataFile=paste0(app.setup$runDir,"/GeoData.txt"),
+                        modelFilesRunDir=app.setup$runDir,
+                        tmpDir=paste0(TMPDIR,"/eo"),
+                        debugPublishFiles=T, #debugPublish,
+                        verbose=T) # verbose)
+        cmn.log("Hindcast eo data downloaded and prepared", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
+    }
+
     ## forcing data
     if (modelConfigData$meteoHindcast == cMeteoHindcastVariant1) { # ToDo: Use hydrologicalModel instead when certain that value is always set
         cmn.log("Forcing data: GFD1.3", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
