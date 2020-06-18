@@ -185,6 +185,13 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## Handle application input parameters, rciop.get_param(), for internal hypeapps functionality
     app.input <- getHypeAppInput(appName = app.name)
 
+    if(app.input$assimOn != "off"){
+        cmn.log("Assimilation on", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
+    }
+    if(app.input$assimOnAR != "off"){
+        cmn.log("Assimilation on with auto-regressive updating", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
+    }
+
     cmn.log("Inputs and parameters read", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
 
     #################################################################################
@@ -290,8 +297,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                         geodataFile=paste0(app.setup$runDir,"/GeoData.txt"),
                         modelFilesRunDir=app.setup$runDir,
                         tmpDir=paste0(TMPDIR,"/eo"),
-                        debugPublishFiles=T, #debugPublish,
-                        verbose=T) # verbose)
+                        debugPublishFiles=publishHindcastForcingFiles,
+                        verbose=verbose)
+
         cmn.log("Hindcast eo data downloaded and prepared", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
     }
 

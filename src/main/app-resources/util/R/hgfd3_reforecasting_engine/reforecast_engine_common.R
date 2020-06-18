@@ -354,7 +354,7 @@ determine_hindcast_intervals<-function(idate=NULL, # Forecast issue date (htep)
             hindcastStartDate = inputDateStatefile
             useStatefile      = T
         }else{
-            print(paste0('Info: Not using state file with date: ',date_statefile,' upper limit: ',limitDateUseStatefile))
+            print(paste0('Info: Not using state file with date: ',date_statefile,' Requires either a longer hindcast period or forecast issue date > ',limitDateUseStatefile))
         }
     }
 

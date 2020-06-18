@@ -248,7 +248,7 @@ run_hindcast_netcdf_to_obs<-function(
         endDate=dateobj_hindcast_enddate,
         outputDir=output_dir,
         debugPublishFiles=run_mode_state_file_creation,
-        verbose=T)
+        verbose=F)
 
     return (status_netcdf_2_obs)
 
@@ -336,7 +336,7 @@ run_forecast_netcdf_to_obs<-function(
         endDate=dateobj_forecast_enddate,
         outputDir=output_dir,
         debugPublishFiles=F,
-        verbose=T)
+        verbose=F)
 
     return (status_netcdf_2_obs)
 

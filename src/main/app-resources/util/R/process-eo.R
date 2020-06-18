@@ -436,7 +436,7 @@ process_eo_data <- function(app_sys,             # Reduce global configuration s
       
     # TODO: either return with qobs.new, or continue to print the new Qobs.txt file here using qobs.new
     init_qobs_file = paste0(modelFilesRunDir,"/Qobs.txt")
-    new_qobs_file  = paste0(modelFilesRunDir,"/Qobs.txt-physical")
+    new_qobs_file  = paste0(modelFilesRunDir,"/Qobs.txt-local-obs")
     
     WritePTQobs(x=qobs.new,filename=new_qobs_file) # hypeapps-hype-utils.R
 
