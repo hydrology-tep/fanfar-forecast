@@ -297,9 +297,8 @@ getHypeAppInput<-function(appName){
       assimOn     <- rciop.getparam("assimOn")     # Assimilation on/off
       assimOnAR   <- "off"
       if(assimOn=="on with auto-regressive updating"){
-        print("on with auto-regressive updating")
-        assimOn="off" # ToDo: Need work
-        assimOnAR="on"
+        #assimOn   = "off" # ToDo
+        assimOnAR = "on"
       }
 
       assimVarIN  <- rciop.getparam("assimVars")   # Assimilation variables
@@ -408,7 +407,7 @@ getHypeAppInput<-function(appName){
       }
       
       # parse the AssimVarIn input
-      if(assimOn=="on"){
+      if(assimOn!="off"){
         # <option>Lake Water Level - altimetry AOWL WCOM</option>
         assimVarSplit = trimws(strsplit(assimVarIN,split = ",")[[1]])
         nOut=length(assimVarSplit)
@@ -788,7 +787,7 @@ getHypeAppSetup<-function(modelName,
     }
     
     if(appName=="historical"|appName=="forecast"){
-      if(appInput$assimOn=="on"){
+      if(appInput$assimOn!="off"){
         fileNames=c(fileNames,"info-hindcast-assimilation.txt","info-historical-assimilation.txt","AssimInfo-AOWL.txt","AssimInfo-Openloop.txt","AssimInfo-Openloop-inibin.txt")
       }
     }
@@ -801,13 +800,15 @@ getHypeAppSetup<-function(modelName,
       #if(app.sys=="tep"){
         #res <- rciop.copy(paste(modelFilesURL,fileNames[i],sep="/"), modelFilesRunDir, uncompress=TRUE) # Downloading files to modelFilesRunDir
       #}else{
-      file.copy(from=paste(modelFilesPath,fileNames[i],sep="/"),  # or copying files from the corresponding download dir whe not on TEP?
-                to=paste(modelFilesRunDir,fileNames[i],sep="/"),
-                overwrite=T)
-      if(app.sys=="tep"){
-        rciop.log ("DEBUG", paste0("cp ",modelFilesPath,"/",fileNames[i]," to ",modelFilesRunDir,"/",fileNames[i]),"/util/R/hypeapps-utils.R")
-        if(debugPublishFiles){
-          rciop.publish(path=paste(modelFilesPath,fileNames[i],sep="/"),recursive=FALSE,metalink=TRUE)
+      if (file.exists(paste(modelFilesPath,fileNames[i],sep="/"))){
+        file.copy(from=paste(modelFilesPath,fileNames[i],sep="/"),  # or copying files from the corresponding download dir whe not on TEP?
+                  to=paste(modelFilesRunDir,fileNames[i],sep="/"),
+                  overwrite=T)
+        if(app.sys=="tep"){
+          rciop.log ("DEBUG", paste0("cp ",modelFilesPath,"/",fileNames[i]," to ",modelFilesRunDir,"/",fileNames[i]),"/util/R/hypeapps-utils.R")
+          if(debugPublishFiles){
+            rciop.publish(path=paste(modelFilesPath,fileNames[i],sep="/"),recursive=FALSE,metalink=TRUE)
+          }
         }
       }
     }
@@ -2064,7 +2065,7 @@ getModelForcing<-function(appSetup,appInput,dataSource="local",hindcast=T){
         cdate.Str = as.character(cdate.Num)
         
         # BDATE: start of warmup period - specific if assimilation or not
-        if(appInput$assimOn=="on"){
+        if(appInput$assimOn!="off"){
           ##   Assimilation run
           ## 
           ##   make sure BDATE is before the start of the previous rainy season
@@ -2343,12 +2344,13 @@ updateModelInput<-function(appSetup=NULL,appInput=NULL,hindcast=NULL,modelForcin
         }
       }
     }
-    if(appInput$assimOn=="on"){                                   # from assimVar
+    if(appInput$assimOn!="off"){                                   # from assimVar
       for(i in 1:length(appInput$assimVar)){
         if(appInput$assimVar[i]!="9999,9999" & 
            appInput$assimVar[i]!="OPEN,LOOP" & 
            nchar(appInput$assimVar[i])==9){
-          assimVariables=strsplit(appInput$assimVar[i],split = ",")
+          assimVariables=strsplit(appInput$assimVar[i],split = ",")[[1]]
+          assimVariables = assimVariables[assimVariables!="AOWL"] # AOWL - no longer supported
           outputVariables = c(outputVariables,assimVariables)
         }
       }
@@ -2398,7 +2400,7 @@ updateModelInput<-function(appSetup=NULL,appInput=NULL,hindcast=NULL,modelForcin
     if(length(outputVariables)>1){
       outVariables=outputVariables[1]
       for(i in 2:length(outputVariables)){
-        outVariables=paste(outVariables,outputVariables[i],sep=",")
+        outVariables=paste(outVariables,outputVariables[i],sep=",") # sep=" "
       }
     }else{
       outVariables=outputVariables
@@ -2452,15 +2454,13 @@ updateModelInput<-function(appSetup=NULL,appInput=NULL,hindcast=NULL,modelForcin
       info$info.lines[info$outstatedate.lineNr]=paste('outstatedate',DATE2INFODATE(modelForcing$issueDate),sep=" ")
     }
     
-    # ar update - disable lines when not assimiliation
+    # ar update - disable lines, enabled by default in info template
     if(appInput$assimOnAR=="off"){
       if (info$updateqar_variable){
         info$info.lines[info$updateqar.lineNr]=paste('!! update qar',sep=" ")
-        print("disable updateqar in info.txt")
       }
       if (info$updatequseobs_variable){
         info$info.lines[info$updatequseobs.lineNr]=paste('!! update quseobs',sep=" ")
-        print("disable updatequseobs in info.txt")
       }
     }
     
@@ -2931,10 +2931,14 @@ prepareHypeAppsOutput<-function(appSetup=NULL,appInput=NULL,modelInput=NULL,mode
       # transform basinoutput files to csv format
       if(length(basinFiles)>0){
         if(hype2csvExists){
+          tmp_assimOn=appInput$assimOn
+          if (appInput$assimOn!="off"){
+            tmp_assimOn="on"
+          }
           for(i in 1:length(basinFiles)){
             resCsv = basinfiles2csv(hypeFile=paste(appSetup$resDir[k],basinFiles[i],sep="/"),
                                     csvFile=paste(outDir[k],paste(prefix.csv,"_",prodTag,"_",substr(basinFiles[i],1,nchar(basinFiles[i])-3),"csv",sep=""),sep="/"),
-                                    hype2csvFile=hype2csvFile,assimOn=appInput$assimOn)
+                                    hype2csvFile=hype2csvFile,assimOn=tmp_assimOn)
           }
         }
       }

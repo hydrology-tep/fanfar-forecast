@@ -511,8 +511,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         ## 6 - Forecast input data
         ## ------------------------------------------------------------------------------
         ## forcing data
-        if (modelConfigData$meteoHindcast == cMeteoHindcastVariant1 &&
-            modelConfigData$meteoForecast == cMeteoForecastVariant1) {
+        if (modelConfigData$meteoHindcast == cMeteoHindcastVariant1) {
             # Niger-HYPE
             cmn.log("Forcing data: GFD 1.3, ECOPER", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
             forecast.forcing <- getModelForcing(appSetup   = app.setup,
@@ -529,7 +528,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             dirNCFiles        <- paste(TMPDIR,"netcdf_files_tmp",sep="/")  # Temporary download dir, common for hindcast and forecast (thereby only some files are downloaded for hindcast)
             dirObsFiles       <- paste(TMPDIR,"netcdf_to_obs",sep="/")     # Output dir of produced P/Tobs files, common for hindcast and forecast (thereby gridLink only copied for hindcast)
 
-            if (modelConfigData$meteoForecast == cMeteoForecastVariant1) {
+            if (modelConfigData$meteoHindcast == cMeteoHindcastVariant2) {
                 cmn.log("Forcing data: HydroGFD 2, ECOPER", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
                 forecastForcing <- process_forcing_hydrogfd2_forecast(
                                         modelConfigData$meteoConfig,
@@ -542,8 +541,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                         debugPublish)
             }
 
-            if (modelConfigData$meteoForecast == cMeteoForecastVariant2) {
-                cmn.log("Forcing data: HydroGFD 3, ODF", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
+            if (modelConfigData$meteoHindcast == cMeteoHindcastVariant3) {
+                cmn.log("Forcing data: HydroGFD 3, ECOPER (ODF)", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
                 forecastForcing <- process_forcing_hydrogfd3_forecast(
                                         modelConfigData$meteoConfig,
                                         modelConfigData$modelFiles,
