@@ -163,6 +163,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/hypeapps-environment.R",sep="/"))
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/hypeapps-utils.R", sep="/"))
+        source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-eo.R",sep="/"))
 
     }else if(app.sys=="win"){
         if (modelConfigData$meteoHindcast == cMeteoHindcastVariant2) {
@@ -176,12 +177,20 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
         source("application/util/R/hypeapps-environment.R")
         source("application/util/R/hypeapps-utils.R")
+        source("application/util/R/process-eo.R")
     }
     cmn.log("Libraries loaded and common utilities sourced", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
 
     ## ------------------------------------------------------------------------------
     ## Handle application input parameters, rciop.get_param(), for internal hypeapps functionality
     app.input <- getHypeAppInput(appName = app.name)
+
+    if(app.input$assimOn != "off"){
+        cmn.log("Assimilation on", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
+    }
+    if(app.input$assimOnAR != "off"){
+        cmn.log("Assimilation on with auto-regressive updating", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
+    }
 
     cmn.log("Inputs and parameters read", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
 
@@ -279,6 +288,21 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     #################################################################################
     ## 4 - Hindcast input data
     ## ------------------------------------------------------------------------------
+    ## eo data
+    qobs_file = paste0(app.setup$runDir,"/Qobs.txt")
+    if (file.exists(qobs_file)) {
+        process_eo_data(app_sys=app.sys,
+                        qobsFile=qobs_file,
+                        shapefileDbf=paste0(modelConfigData$modelFiles,"/subidshapefile/SUBID-StationID-linkage.dbf"),
+                        geodataFile=paste0(app.setup$runDir,"/GeoData.txt"),
+                        modelFilesRunDir=app.setup$runDir,
+                        tmpDir=paste0(TMPDIR,"/eo"),
+                        debugPublishFiles=publishHindcastForcingFiles,
+                        verbose=verbose)
+
+        cmn.log("Hindcast eo data downloaded and prepared", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
+    }
+
     ## forcing data
     if (modelConfigData$meteoHindcast == cMeteoHindcastVariant1) { # ToDo: Use hydrologicalModel instead when certain that value is always set
         cmn.log("Forcing data: GFD1.3", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
@@ -487,8 +511,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         ## 6 - Forecast input data
         ## ------------------------------------------------------------------------------
         ## forcing data
-        if (modelConfigData$meteoHindcast == cMeteoHindcastVariant1 &&
-            modelConfigData$meteoForecast == cMeteoForecastVariant1) {
+        if (modelConfigData$meteoHindcast == cMeteoHindcastVariant1) {
             # Niger-HYPE
             cmn.log("Forcing data: GFD 1.3, ECOPER", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
             forecast.forcing <- getModelForcing(appSetup   = app.setup,
@@ -505,7 +528,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             dirNCFiles        <- paste(TMPDIR,"netcdf_files_tmp",sep="/")  # Temporary download dir, common for hindcast and forecast (thereby only some files are downloaded for hindcast)
             dirObsFiles       <- paste(TMPDIR,"netcdf_to_obs",sep="/")     # Output dir of produced P/Tobs files, common for hindcast and forecast (thereby gridLink only copied for hindcast)
 
-            if (modelConfigData$meteoForecast == cMeteoForecastVariant1) {
+            if (modelConfigData$meteoHindcast == cMeteoHindcastVariant2) {
                 cmn.log("Forcing data: HydroGFD 2, ECOPER", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
                 forecastForcing <- process_forcing_hydrogfd2_forecast(
                                         modelConfigData$meteoConfig,
@@ -518,8 +541,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                         debugPublish)
             }
 
-            if (modelConfigData$meteoForecast == cMeteoForecastVariant2) {
-                cmn.log("Forcing data: HydroGFD 3, ODF", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
+            if (modelConfigData$meteoHindcast == cMeteoHindcastVariant3) {
+                cmn.log("Forcing data: HydroGFD 3, ECOPER (ODF)", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
                 forecastForcing <- process_forcing_hydrogfd3_forecast(
                                         modelConfigData$meteoConfig,
                                         modelConfigData$modelFiles,

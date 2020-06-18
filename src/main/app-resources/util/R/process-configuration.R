@@ -32,6 +32,7 @@ process_configuration_application_runtime_options <- function(applInput=NULL) # 
         modelConfigIn <- "No value"
 
         # It's up to the user to specify a correct url, so skip any checks of a valid url.
+        # Check available configurations: https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid&format=json
         urlModelConfigFile <- rciop.getparam("model_config_file")
         if ( (length(urlModelConfigFile) > 0) && ! is.null(urlModelConfigFile) ) {
             if (nchar(urlModelConfigFile) > nchar("https://recast.terradue.com")) {
@@ -49,6 +50,12 @@ process_configuration_application_runtime_options <- function(applInput=NULL) # 
             # Use the user selected configuration from the drop down field
             modelConfigIn <- rciop.getparam("model_config")
 
+            tmpAssimOn    <- rciop.getparam("assimOn")     # Assimilation on/off
+            assimOnARUpd  <- FALSE
+            if(tmpAssimOn == "on with auto-regressive updating"){
+                assimOnARUpd <- TRUE
+            }
+
             if (modelConfigIn == cModelConfigVariant1) {
                 prelModelConfig <- cModelConfigVariant1
                 urlAndQuery <- paste0("No model config URL for ",cModelConfigVariant1)
@@ -61,15 +68,29 @@ process_configuration_application_runtime_options <- function(applInput=NULL) # 
                 opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
                 urlSelected <- TRUE
 
-            }else if (modelConfigIn == cModelConfigVariant3) {
+            }else if ((modelConfigIn == cModelConfigVariant3) & (assimOnARUpd == FALSE)) {
                 prelModelConfig <- cModelConfigVariant3
                 urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=956373199977FBE1A7FFAD708379E7B3ABA108A5"
                 opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
                 urlSelected <- TRUE
 
-            }else if (modelConfigIn == cModelConfigVariant4) {
+            }else if ((modelConfigIn == cModelConfigVariant3) & (assimOnARUpd == TRUE)) {
+                # Configuration with a state file supporting AR update
+                prelModelConfig <- cModelConfigVariant3
+                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=41C4191C145B1730C28313B1D6AC80A7A29DC172"
+                opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
+                urlSelected <- TRUE
+
+            }else if ((modelConfigIn == cModelConfigVariant4) & (assimOnARUpd == FALSE)) {
                 prelModelConfig <- cModelConfigVariant4
                 urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=8936FADB1602786E7178B389A854F224BA4A552F"
+                opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
+                urlSelected <- TRUE
+
+            }else if ((modelConfigIn == cModelConfigVariant4) & (assimOnARUpd == TRUE)) {
+                # Configuration with a state file supporting AR update
+                prelModelConfig <- cModelConfigVariant4
+                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=77D99AC80CEB0F94B4711967D7D37A4C73AB283A"
                 opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
                 urlSelected <- TRUE
             }
@@ -384,7 +405,7 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
     modelConfigName        <- NULL
     hydrologicalModel      <- NULL
     meteoHindcast          <- NULL
-    meteoForecast          <- NULL
+    #meteoForecast          <- NULL
     modelFiles             <- NULL
     meteoConfigSearch      <- NULL
     statefileHindcastDate  <- "1800-01-01"
@@ -488,20 +509,22 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
                 meteoHindcast = cMeteoHindcastVariant3
             }
 
-            if (grepl(cMeteoForecastVariant1,local.modelConfigName,fixed=TRUE)) {
-                meteoForecast = cMeteoForecastVariant1
-            }else if (grepl(cMeteoForecastVariant2,local.modelConfigName,fixed=TRUE)) {
-                meteoForecast = cMeteoForecastVariant2
-            }
+            # if (grepl(cMeteoForecastVariant1,local.modelConfigName,fixed=TRUE)) {
+            #     meteoForecast = cMeteoForecastVariant1
+            # }else if (grepl(cMeteoForecastVariant2,local.modelConfigName,fixed=TRUE)) {
+            #     meteoForecast = cMeteoForecastVariant2
+            # }
 
-            if (! is.null(meteoHindcast) && ! is.null(meteoForecast)){
+            #if (! is.null(meteoHindcast) && ! is.null(meteoForecast)){
+            if (! is.null(meteoHindcast)){
                 # Still an unsupported configuration and hydrologicalModel may be unknown/incorrect, but
                 # at least meteo forcing for hindcast and forecast is known
                 resConfigName = local.modelConfigName
                 cmn.log("Not fully supported configuration from 'model_config_file', attempt to run with the following settings:", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PC)
                 cmn.log(paste0("hydrological model:      ",hydrologicalModel), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
-                cmn.log(paste0("meteo forcing hindcast:  ",meteoHindcast), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
-                cmn.log(paste0("meteo forcing forecast:  ",meteoForecast), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+                # cmn.log(paste0("meteo forcing hindcast:  ",meteoHindcast), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+                # cmn.log(paste0("meteo forcing forecast:  ",meteoForecast), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+                cmn.log(paste0("meteo forcing:           ",meteoHindcast), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
             }
         }
 
@@ -535,22 +558,22 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
     if (modelConfigName == cModelConfigVariant1) {
         hydrologicalModel = cHydrologicalModelVariant1
         meteoHindcast     = cMeteoHindcastVariant1
-        meteoForecast     = cMeteoForecastVariant1
+        #meteoForecast     = cMeteoForecastVariant1
 
     }else if (modelConfigName == cModelConfigVariant2) {
         hydrologicalModel = cHydrologicalModelVariant2
         meteoHindcast     = cMeteoHindcastVariant2
-        meteoForecast     = cMeteoForecastVariant1
+        #meteoForecast     = cMeteoForecastVariant1
 
     }else if (modelConfigName == cModelConfigVariant3) {
         hydrologicalModel = cHydrologicalModelVariant3
         meteoHindcast     = cMeteoHindcastVariant2
-        meteoForecast     = cMeteoForecastVariant1
+        #meteoForecast     = cMeteoForecastVariant1
 
     }else if (modelConfigName == cModelConfigVariant4) {
         hydrologicalModel = cHydrologicalModelVariant3
         meteoHindcast     = cMeteoHindcastVariant3
-        meteoForecast     = cMeteoForecastVariant2
+        #meteoForecast     = cMeteoForecastVariant2
     }
 
     # HYPE model
@@ -565,8 +588,9 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
     cmn.log("-------Model configuration options:-------", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
     cmn.log(modelConfigName, logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
     cmn.log(paste0("hydrological model:      ",hydrologicalModel), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
-    cmn.log(paste0("meteo forcing hindcast:  ",meteoHindcast), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
-    cmn.log(paste0("meteo forcing forecast:  ",meteoForecast), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+    # cmn.log(paste0("meteo forcing hindcast:  ",meteoHindcast), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+    # cmn.log(paste0("meteo forcing forecast:  ",meteoForecast), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+    cmn.log(paste0("meteo forcing:           ",meteoHindcast), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
     if (! is.null(reforecastingMethod)){
         cmn.log(paste0("reforcasting method:     ",reforecastingMethod), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
     }
@@ -578,7 +602,7 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
     output <- list("modelConfigName"=modelConfigName, # Do not use for if statements etc. Rather use the individual parts meteoHindcast etc.
                    "hydrologicalModel"=hydrologicalModel,  # Do not use for if statements etc. at this time, for now treat more as info
                    "meteoHindcast"=meteoHindcast,
-                   "meteoForecast"=meteoForecast,
+                   #"meteoForecast"=meteoForecast,
                    "modelFiles"=modelFiles,
                    "meteoConfig"=meteoConfigSearch,
                    "statefileHindcastDate"=statefileHindcastDate,
