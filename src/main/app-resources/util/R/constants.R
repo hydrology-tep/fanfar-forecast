@@ -9,7 +9,7 @@
     cModelConfigVariant1 <- "Niger-HYPE 1.23 + GFD 1.3 + ECOPER"
     cModelConfigVariant2 <- "WorldWide-HYPE 1.3.6 + HydroGFD 2.0 + ECOPER"
     cModelConfigVariant3 <- "WestAfrica-HYPE 0.5 + HydroGFD 2.0 + ECOPER"
-    cModelConfigVariant4 <- "WestAfrica-HYPE 1.0 + HydroGFD 3.0 + ODF"
+    cModelConfigVariant4 <- "WestAfrica-HYPE 1.0 + HydroGFD 3.0 + ECOPER"
     cModelConfigVariants <- c(cModelConfigVariant1,cModelConfigVariant2,cModelConfigVariant3,cModelConfigVariant4)
 
     # Global constants not part of application.xml that
@@ -25,7 +25,7 @@
     cMeteoHindcastVariants <- c(cMeteoHindcastVariant1,cMeteoHindcastVariant2,cMeteoHindcastVariant3)
 
     cMeteoForecastVariant1 <- "ECOPER"
-    cMeteoForecastVariant2 <- "ODF"
+    #cMeteoForecastVariant2 <- "ODF"
     #Not used cMeteoForecastVariants <- c(cMeteoForecastVariant1,cMeteoForecastVariant2)
 
     cRunTypeVariantOperational <- "Operational"

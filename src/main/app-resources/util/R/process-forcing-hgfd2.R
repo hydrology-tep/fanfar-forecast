@@ -1319,7 +1319,7 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
                                          xCast="grid.meta",
                                          stateFileCreation=FALSE)
   if (nMissingFiles > 0) {
-      cmn.log("Aborting due to missing HydroGFD 2 netcdf file(s)", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PF2)
+      cmn.log("Aborting due to missing HydroGFD v2 netcdf file(s)", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PF2)
       q(save="no", status = 2)
   }
 
@@ -1331,7 +1331,7 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
                                          xCast="elevation",
                                          stateFileCreation=FALSE)
   if (nMissingFiles > 0) {
-      cmn.log("Aborting due to missing HydroGFD 2 netcdf file(s)", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PF2)
+      cmn.log("Aborting due to missing HydroGFD v2 netcdf file(s)", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PF2)
       q(save="no", status = 2)
   }
 
@@ -1343,7 +1343,7 @@ process_forcing_hydrogfd2_hindcast <- function(modelConfig, # Misc config data, 
                                          xCast="hindcast",
                                          stateFileCreation)
   if (nMissingFiles > 0) {
-      cmn.log("Aborting due to missing HydroGFD 2 netcdf file(s)", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PF2)
+      cmn.log("Aborting due to missing HydroGFD v2 netcdf file(s)", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PF2)
       q(save="no", status = 2)
   }
 
@@ -1482,7 +1482,7 @@ process_forcing_hydrogfd2_forecast <- function(modelConfig, # Misc config data, 
                                          xCast="forecast",
                                          stateFileCreation=FALSE)
   if (nMissingFiles > 0) {
-      cmn.log("Aborting due to missing HydroGFD 2 netcdf file(s)", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PF2)
+      cmn.log("Aborting due to missing HydroGFD v2 netcdf file(s)", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PF2)
       q(save="no", status = 2)
   }
 
