@@ -8,7 +8,7 @@
 r-rciop
 r-data.table
 r-sp
-r-rgdal=1.4
+r-rgdal>1.2
 r-rgeos
 r-ncdf4
 r-raster
