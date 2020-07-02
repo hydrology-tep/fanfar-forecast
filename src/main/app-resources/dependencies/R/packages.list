@@ -8,7 +8,8 @@
 r-rciop
 r-data.table
 r-sp
-r-rgdal=1.4_4
+r-rgdal
+gdal=2.1.0=py27_5
 r-rgeos
 r-ncdf4
 r-raster
