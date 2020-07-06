@@ -5,6 +5,7 @@
 # Used R libraries/packages in current source code
 # (Hopefully a later version of R to reduce any dependency problems that may arise
 # when adding additional R packages)
+libnetcdf=4.4.1
 libiconv=1.14
 r-rciop
 r-data.table
