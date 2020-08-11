@@ -93,6 +93,13 @@ process_configuration_application_runtime_options <- function(applInput=NULL) # 
                 urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=77D99AC80CEB0F94B4711967D7D37A4C73AB283A"
                 opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
                 urlSelected <- TRUE
+
+            }else if (modelConfigIn == cModelConfigVariant5) {
+                prelModelConfig <- cModelConfigVariant5
+                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=278E284C83C4301BA86312B75536A73B7B8F3A9F"
+                opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
+                urlSelected <- TRUE
+
             }
             if (! urlSelected) {
                 cmn.log(paste0("Unsupported configuration via parameter 'model_config': ",modelConfigIn), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
@@ -490,11 +497,11 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
 
         if (is.null(resConfigName)){
             # Unknown variant, try to extract meteo variants at least for hindcast and forecast
-            if (grepl('Niger',local.modelConfigName,fixed=TRUE)) {
+            if (grepl(tolower('Niger'),tolower(local.modelConfigName),fixed=TRUE)) {
                 hydrologicalModel = cHydrologicalModelVariant1
-            }else if (grepl('World',local.modelConfigName,fixed=TRUE)) {
+            }else if (grepl(tolower('World'),tolower(local.modelConfigName),fixed=TRUE)) {
                 hydrologicalModel = cHydrologicalModelVariant2
-            }else if (grepl('West',local.modelConfigName,fixed=TRUE)) {
+            }else if (grepl(tolower('West'),tolower(local.modelConfigName),fixed=TRUE)) {
                 hydrologicalModel = cHydrologicalModelVariant3
             }else{
                 # Not found, use complete name
@@ -572,6 +579,11 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
 
     }else if (modelConfigName == cModelConfigVariant4) {
         hydrologicalModel = cHydrologicalModelVariant3
+        meteoHindcast     = cMeteoHindcastVariant3
+        #meteoForecast     = cMeteoForecastVariant2
+
+    }else if (modelConfigName == cModelConfigVariant5) {
+        hydrologicalModel = cHydrologicalModelVariant1
         meteoHindcast     = cMeteoHindcastVariant3
         #meteoForecast     = cMeteoForecastVariant2
     }

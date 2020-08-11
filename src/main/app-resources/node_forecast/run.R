@@ -221,24 +221,25 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
     ## ------------------------------------------------------------------------------
 
-    if (modelConfigData$hydrologicalModel == cHydrologicalModelVariant1) {
-        # Niger-HYPE
+    if (modelConfigData$hydrologicalModel == cHydrologicalModelVariant1 &&
+        modelConfigData$meteoHindcast == cMeteoHindcastVariant1) {
+        # Niger-HYPE 2.23
         # Name of local subdir (run-dir/subdir), prefix in some filenames
         modelName <- model.name # hypeapps-model-settings.R
         modelBin  <- model.bin  # hypeapps-model-settings.R
 
-    }else if (modelConfigData$hydrologicalModel == cHydrologicalModelVariant2 ||
+    }else if (modelConfigData$hydrologicalModel == cHydrologicalModelVariant1 ||
+              modelConfigData$hydrologicalModel == cHydrologicalModelVariant2 ||
               modelConfigData$hydrologicalModel == cHydrologicalModelVariant3) {
 
         # HYPE 5.8.0 required newer gfortran than part of gcc-4.4.7 during build.
         Sys.setenv(LD_LIBRARY_PATH=paste0("/opt/anaconda/pkgs/gcc-4.8.5-7/lib"))
         #print(Sys.getenv('LD_LIBRARY_PATH'))
 
+        modelName <- tolower(modelConfigData$hydrologicalModel)
         if (modelConfigData$hydrologicalModel == cHydrologicalModelVariant2) {
-            modelName <- tolower(cHydrologicalModelVariant2)
             modelBin  <- "hype-5.8.0.exe"
         }else{
-            modelName <- tolower(cHydrologicalModelVariant3)
             #modelBin  <- "hype-5.11.1.exe"
             modelBin  <- "hype_assimilation-5.11.1.exe"
         }
