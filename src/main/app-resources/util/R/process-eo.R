@@ -122,14 +122,23 @@ read_qobs <- function(csv_file)
 
 # Read GeoData  (note if needed it can be moved to the other script with functions)
 read_geodata <- function(gdf) { # gfd<-geodataFile
+  status = 0 # OK
+
   gd<-read.table(gdf,header=T,sep = "\t")  # can be optimized if it is slow to read everything...
   colnames(gd)<-toupper(colnames(gd))  # convert to uppercase to simplify stuff later
-  gd[which(gd[,"MRRATCK_NOI"]==0),"MRRATCK_NOI"] <- NA  # set zero to missing, possibly adapt if it changes to -9999 or whatever...
-  gd[which(gd[,"MRRATCP_NOI"]==0),"MRRATCP_NOI"] <- NA  # set zero to missing, possibly adapt if it changes to -9999 or whatever...
-  gd[which(gd[,"MRRATCW0"]==0),"MRRATCW0"] <- NA  # set zero to missing, possibly adapt if it changes to -9999 or whatever...    
-  
+
+  if (! "MRRATCK_NOI" %in% colnames(gd)){
+    status = 1
+    cmn.log('GeoData.txt does not contain the columns MRRATCK_NOI, MRRATCP_NOI or MRRATCW0', logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+  }else{
+    gd[which(gd[,"MRRATCK_NOI"]==0),"MRRATCK_NOI"] <- NA  # set zero to missing, possibly adapt if it changes to -9999 or whatever...
+    gd[which(gd[,"MRRATCP_NOI"]==0),"MRRATCP_NOI"] <- NA  # set zero to missing, possibly adapt if it changes to -9999 or whatever...
+    gd[which(gd[,"MRRATCW0"]==0),"MRRATCW0"] <- NA  # set zero to missing, possibly adapt if it changes to -9999 or whatever...    
+  }
+
   #gd[1:10,1:10]
-  return(gd)
+  #return(gd)
+  return(list("status"=status,"gd"=gd))
 }
 
 
@@ -258,15 +267,16 @@ rating.curve<-function(h=NULL,c,e,b,Q=NULL,opt="forward",listout=F){
 # External function
 # Wrapper for updating Qobs with discharge data from physical stations
 # Output: When successful, file 'Qobs.txt' updated in dir modelFilesRunDir
-process_eo_data <- function(app_sys,             # Reduce global configuration settings (variable app.sys) if needed
-                            qobsFile,            # Path + filename
-                            shapefileDbf,        # Path + filename of shapefile with station id
-                            geodataFile,         # Path + filename of geodata
-                            modelFilesRunDir,    # HYPE model data files dir, output dir
-                            tmpDir,              # For app.sys=="tep", temporary dir to use for download of csv files, created by ciop-copy
-                            localCSVDir=NULL,    # For app.sys!="tep", dir with csv files
-                            debugPublishFiles=F, # Condition to publish files during development
-                            verbose=F)           # More output
+process_eo_data_physical <- function(app_sys,             # Reduce global configuration settings (variable app.sys) if needed
+                                     # assimilationOn,      # True - use this functionality (GeoData.txt contains additional columns to use for WL->Q)
+                                     qobsFile,            # Path + filename
+                                     shapefileDbf,        # Path + filename of shapefile with station id
+                                     geodataFile,         # Path + filename of geodata
+                                     modelFilesRunDir,    # HYPE model data files dir, output dir
+                                     tmpDir,              # For app.sys=="tep", temporary dir to use for download of csv files, created by ciop-copy
+                                     localCSVDir=NULL,    # For app.sys!="tep", dir with csv files
+                                     debugPublishFiles=F, # Condition to publish files during development
+                                     verbose=F)           # More output
 {
     if (verbose){
         print(paste0('qobsFile: ',qobsFile))
@@ -282,6 +292,11 @@ process_eo_data <- function(app_sys,             # Reduce global configuration s
 
 
     # Check inputs, otherwise return and continue without EO
+    # if (assimilationOn == FALSE){
+    #     cmn.log('Setting assimilation off, continuing without EO', logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+    #     return ()
+    # }
+
     if (! file.exists(qobsFile)){
         cmn.log('Qobs.txt missing, continuing without EO', logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
         return ()
@@ -311,7 +326,12 @@ process_eo_data <- function(app_sys,             # Reduce global configuration s
     dbf_df = read_stations_from_dbf(shapefile_dbf=shapefileDbf)
     
     # read geodata file
-    geodata <- read_geodata(geodataFile)  #geodata[1:10,1:10]; colnames(geodata)
+    tmp_geodata <- read_geodata(geodataFile)  #geodata[1:10,1:10]; colnames(geodata)
+    if (tmp_geodata$status != 0){
+        cmn.log('GeoData.txt is missing column data, continuing without EO', logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+        return ()
+    }
+    geodata = tmp_geodata$gd
 
     # Search and download data for physical stations
     if(app_sys == 'tep'){

@@ -291,15 +291,17 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## ------------------------------------------------------------------------------
     ## eo data
     qobs_file = paste0(app.setup$runDir,"/Qobs.txt")
-    if (file.exists(qobs_file)) {
-        process_eo_data(app_sys=app.sys,
-                        qobsFile=qobs_file,
-                        shapefileDbf=paste0(modelConfigData$modelFiles,"/subidshapefile/SUBID-StationID-linkage.dbf"),
-                        geodataFile=paste0(app.setup$runDir,"/GeoData.txt"),
-                        modelFilesRunDir=app.setup$runDir,
-                        tmpDir=paste0(TMPDIR,"/eo"),
-                        debugPublishFiles=publishHindcastForcingFiles,
-                        verbose=verbose)
+    if (app.input$assimOn != "off") {
+        process_eo_data_physical(
+            app_sys=app.sys,
+            #assimilationOn=app.input$assimOn != "off",
+            qobsFile=qobs_file,
+            shapefileDbf=paste0(modelConfigData$modelFiles,"/subidshapefile/SUBID-StationID-linkage.dbf"),
+            geodataFile=paste0(app.setup$runDir,"/GeoData.txt"),
+            modelFilesRunDir=app.setup$runDir,
+            tmpDir=paste0(TMPDIR,"/eo"),
+            debugPublishFiles=publishHindcastForcingFiles,
+            verbose=verbose)
 
         cmn.log("Hindcast eo data downloaded and prepared", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
     }
