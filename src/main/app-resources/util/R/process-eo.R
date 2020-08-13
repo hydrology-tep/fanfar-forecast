@@ -49,7 +49,7 @@ read.htep.csv.file<-function(csvfile){ # csvfile<-"./physical/GN-P002-FARANAH-M.
 }
 
 # TODO: avoid the hard-coded aspects in csvcomp
-read.csv.batch<-function(path){ #path<-tmpDir
+read.csv.batch<-function(path,debugPublish=F){ #path<-tmpDir
   # list files
   files = dir(path = path,pattern = ".csv")
   
@@ -64,6 +64,11 @@ read.csv.batch<-function(path){ #path<-tmpDir
     # read files 
     for(i in 1:length(files)) { #i<-1
       fname = paste(path,"/",files[i],sep="")
+
+      if (debugPublish) {
+        rciop.publish(path=fname, recursive=FALSE, metalink=TRUE)
+      }
+
       mycsv<-read.htep.csv.file(csvfile = fname)
       #mycsv[[1]];head(mycsv[[2]])
       
@@ -268,7 +273,6 @@ rating.curve<-function(h=NULL,c,e,b,Q=NULL,opt="forward",listout=F){
 # Wrapper for updating Qobs with discharge data from physical stations
 # Output: When successful, file 'Qobs.txt' updated in dir modelFilesRunDir
 process_eo_data_physical <- function(app_sys,             # Reduce global configuration settings (variable app.sys) if needed
-                                     # assimilationOn,      # True - use this functionality (GeoData.txt contains additional columns to use for WL->Q)
                                      qobsFile,            # Path + filename
                                      shapefileDbf,        # Path + filename of shapefile with station id
                                      geodataFile,         # Path + filename of geodata
@@ -292,11 +296,6 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
 
 
     # Check inputs, otherwise return and continue without EO
-    # if (assimilationOn == FALSE){
-    #     cmn.log('Setting assimilation off, continuing without EO', logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
-    #     return ()
-    # }
-
     if (! file.exists(qobsFile)){
         cmn.log('Qobs.txt missing, continuing without EO', logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
         return ()
@@ -342,15 +341,15 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
                         filename_save=paste0(dbf_df$StationId[id_idx],'.csv'),
                         verbose=F)
             if (status == 0){
-                cmn.log(paste0('Successful download of CSV data for station: ',dbf_df$StationId[id_idx]), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+                cmn.log(paste0(dbf_df$StationId[id_idx],' - Successful download of CSV data'), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
             }else if (status == 1){
-                cmn.log(paste0('No data available for station: ',dbf_df$StationId[id_idx]), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+                cmn.log(paste0(dbf_df$StationId[id_idx],' - No data available'), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
             }else if (status == 2){
-                cmn.log(paste0('Failed to download CSV data for station: ',dbf_df$StationId[id_idx]), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+                cmn.log(paste0(dbf_df$StationId[id_idx],' - Failed to download CSV data'), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
             }else if (status == 3){
-                cmn.log(paste0('CSV file not available for station: ',dbf_df$StationId[id_idx]), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+                cmn.log(paste0(dbf_df$StationId[id_idx],' - CSV file not available'), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
             }else{
-                cmn.log(paste0('Other error for station: ',dbf_df$StationId[id_idx]), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+                cmn.log(paste0(dbf_df$StationId[id_idx],' - Other error'), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
             }
         }
         dir_cvs = tmpDir
@@ -359,11 +358,8 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
         dir_cvs = localCSVDir
     }
 
-    # Search and download data for virtual stations
-    # ToDo
-
     # Read all downloaded csv files + aggregate to daily resolution
-      physical_data<-read.csv.batch(path=tmpDir)
+      physical_data<-read.csv.batch(path=tmpDir,debugPublishFiles)
     
     # Combine data
       # initiate temporary df to store data after qobs.init last date and identify stations to process
