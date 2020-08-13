@@ -24,6 +24,7 @@ read.htep.csv.file<-function(csvfile){ # csvfile<-"./physical/GN-P002-FARANAH-M.
   #head(csvdata)
   
   # check on units
+  if(any(csvdata$Type=="DerivedWaterLevel")) {if(!unique(csvdata[which(csvdata$Type=="DerivedWaterLevel"),"Uom"])=="cm") stop("DerivedWaterLevel units are not in cm in CSV files")}
   if(any(csvdata$Type=="WaterLevel")) {if(!unique(csvdata[which(csvdata$Type=="WaterLevel"),"Uom"])=="cm") stop("Water Level units are not in cm in CSV files")}
   if(any(csvdata$Type=="DerivedDischarge")) {if(!unique(csvdata[which(csvdata$Type=="DerivedDischarge"),"Uom"])=="m3/s") stop("DerivedDischarge units are not in m3/s in CSV files")}
   if(any(csvdata$Type=="Discharge")) {if(!unique(csvdata[which(csvdata$Type=="Discharge"),"Uom"])=="m3/s") stop("Discharge units are not in m3/s in CSV files")}  
@@ -56,7 +57,7 @@ read.csv.batch<-function(path,debugPublish=F){ #path<-tmpDir
   # create object to store in
   files_htepids<-sapply(strsplit(files,split="\\."),"[",1)
 
-  csvcomp<-array(NA,c(11323,length(files),4),dimnames=list("Date"=as.character(seq(as.Date("2000-01-01"),as.Date("2030-12-31"),by=1)),"Stn"=files_htepids,"Var"=c("WaterLevel","DerivedDischarge","Discharge","BatteryLevel")))
+  csvcomp<-array(NA,c(11323,length(files),5),dimnames=list("Date"=as.character(seq(as.Date("2000-01-01"),as.Date("2030-12-31"),by=1)),"Stn"=files_htepids,"Var"=c("WaterLevel","DerivedDischarge","Discharge","BatteryLevel","DerivedWaterLevel")))
     # note we hardcoded the dates here, can be a bug if the dates fall outside this range, in that case fix it
     # note we also hardcoded the variables to be 4 and specifically these names, change if it is needed
 
