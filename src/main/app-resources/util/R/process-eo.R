@@ -24,6 +24,7 @@ read.htep.csv.file<-function(csvfile){ # csvfile<-"./physical/GN-P002-FARANAH-M.
   #head(csvdata)
   
   # check on units
+  if(any(csvdata$Type=="DerivedWaterLevel")) {if(!unique(csvdata[which(csvdata$Type=="DerivedWaterLevel"),"Uom"])=="cm") stop("DerivedWaterLevel units are not in cm in CSV files")}
   if(any(csvdata$Type=="WaterLevel")) {if(!unique(csvdata[which(csvdata$Type=="WaterLevel"),"Uom"])=="cm") stop("Water Level units are not in cm in CSV files")}
   if(any(csvdata$Type=="DerivedDischarge")) {if(!unique(csvdata[which(csvdata$Type=="DerivedDischarge"),"Uom"])=="m3/s") stop("DerivedDischarge units are not in m3/s in CSV files")}
   if(any(csvdata$Type=="Discharge")) {if(!unique(csvdata[which(csvdata$Type=="Discharge"),"Uom"])=="m3/s") stop("Discharge units are not in m3/s in CSV files")}  
@@ -49,14 +50,14 @@ read.htep.csv.file<-function(csvfile){ # csvfile<-"./physical/GN-P002-FARANAH-M.
 }
 
 # TODO: avoid the hard-coded aspects in csvcomp
-read.csv.batch<-function(path){ #path<-tmpDir
+read.csv.batch<-function(path,debugPublish=F){ #path<-tmpDir
   # list files
   files = dir(path = path,pattern = ".csv")
   
   # create object to store in
   files_htepids<-sapply(strsplit(files,split="\\."),"[",1)
 
-  csvcomp<-array(NA,c(11323,length(files),4),dimnames=list("Date"=as.character(seq(as.Date("2000-01-01"),as.Date("2030-12-31"),by=1)),"Stn"=files_htepids,"Var"=c("WaterLevel","DerivedDischarge","Discharge","BatteryLevel")))
+  csvcomp<-array(NA,c(11323,length(files),5),dimnames=list("Date"=as.character(seq(as.Date("2000-01-01"),as.Date("2030-12-31"),by=1)),"Stn"=files_htepids,"Var"=c("WaterLevel","DerivedDischarge","Discharge","BatteryLevel","DerivedWaterLevel")))
     # note we hardcoded the dates here, can be a bug if the dates fall outside this range, in that case fix it
     # note we also hardcoded the variables to be 4 and specifically these names, change if it is needed
 
@@ -64,6 +65,11 @@ read.csv.batch<-function(path){ #path<-tmpDir
     # read files 
     for(i in 1:length(files)) { #i<-1
       fname = paste(path,"/",files[i],sep="")
+
+      if (debugPublish) {
+        rciop.publish(path=fname, recursive=FALSE, metalink=TRUE)
+      }
+
       mycsv<-read.htep.csv.file(csvfile = fname)
       #mycsv[[1]];head(mycsv[[2]])
       
@@ -122,14 +128,23 @@ read_qobs <- function(csv_file)
 
 # Read GeoData  (note if needed it can be moved to the other script with functions)
 read_geodata <- function(gdf) { # gfd<-geodataFile
+  status = 0 # OK
+
   gd<-read.table(gdf,header=T,sep = "\t")  # can be optimized if it is slow to read everything...
   colnames(gd)<-toupper(colnames(gd))  # convert to uppercase to simplify stuff later
-  gd[which(gd[,"MRRATCK_NOI"]==0),"MRRATCK_NOI"] <- NA  # set zero to missing, possibly adapt if it changes to -9999 or whatever...
-  gd[which(gd[,"MRRATCP_NOI"]==0),"MRRATCP_NOI"] <- NA  # set zero to missing, possibly adapt if it changes to -9999 or whatever...
-  gd[which(gd[,"MRRATCW0"]==0),"MRRATCW0"] <- NA  # set zero to missing, possibly adapt if it changes to -9999 or whatever...    
-  
+
+  if (! "MRRATCK_NOI" %in% colnames(gd)){
+    status = 1
+    cmn.log('GeoData.txt does not contain the columns MRRATCK_NOI, MRRATCP_NOI or MRRATCW0', logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+  }else{
+    gd[which(gd[,"MRRATCK_NOI"]==0),"MRRATCK_NOI"] <- NA  # set zero to missing, possibly adapt if it changes to -9999 or whatever...
+    gd[which(gd[,"MRRATCP_NOI"]==0),"MRRATCP_NOI"] <- NA  # set zero to missing, possibly adapt if it changes to -9999 or whatever...
+    gd[which(gd[,"MRRATCW0"]==0),"MRRATCW0"] <- NA  # set zero to missing, possibly adapt if it changes to -9999 or whatever...    
+  }
+
   #gd[1:10,1:10]
-  return(gd)
+  #return(gd)
+  return(list("status"=status,"gd"=gd))
 }
 
 
@@ -258,15 +273,15 @@ rating.curve<-function(h=NULL,c,e,b,Q=NULL,opt="forward",listout=F){
 # External function
 # Wrapper for updating Qobs with discharge data from physical stations
 # Output: When successful, file 'Qobs.txt' updated in dir modelFilesRunDir
-process_eo_data <- function(app_sys,             # Reduce global configuration settings (variable app.sys) if needed
-                            qobsFile,            # Path + filename
-                            shapefileDbf,        # Path + filename of shapefile with station id
-                            geodataFile,         # Path + filename of geodata
-                            modelFilesRunDir,    # HYPE model data files dir, output dir
-                            tmpDir,              # For app.sys=="tep", temporary dir to use for download of csv files, created by ciop-copy
-                            localCSVDir=NULL,    # For app.sys!="tep", dir with csv files
-                            debugPublishFiles=F, # Condition to publish files during development
-                            verbose=F)           # More output
+process_eo_data_physical <- function(app_sys,             # Reduce global configuration settings (variable app.sys) if needed
+                                     qobsFile,            # Path + filename
+                                     shapefileDbf,        # Path + filename of shapefile with station id
+                                     geodataFile,         # Path + filename of geodata
+                                     modelFilesRunDir,    # HYPE model data files dir, output dir
+                                     tmpDir,              # For app.sys=="tep", temporary dir to use for download of csv files, created by ciop-copy
+                                     localCSVDir=NULL,    # For app.sys!="tep", dir with csv files
+                                     debugPublishFiles=F, # Condition to publish files during development
+                                     verbose=F)           # More output
 {
     if (verbose){
         print(paste0('qobsFile: ',qobsFile))
@@ -311,7 +326,12 @@ process_eo_data <- function(app_sys,             # Reduce global configuration s
     dbf_df = read_stations_from_dbf(shapefile_dbf=shapefileDbf)
     
     # read geodata file
-    geodata <- read_geodata(geodataFile)  #geodata[1:10,1:10]; colnames(geodata)
+    tmp_geodata <- read_geodata(geodataFile)  #geodata[1:10,1:10]; colnames(geodata)
+    if (tmp_geodata$status != 0){
+        cmn.log('GeoData.txt is missing column data, continuing without EO', logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+        return ()
+    }
+    geodata = tmp_geodata$gd
 
     # Search and download data for physical stations
     if(app_sys == 'tep'){
@@ -322,15 +342,15 @@ process_eo_data <- function(app_sys,             # Reduce global configuration s
                         filename_save=paste0(dbf_df$StationId[id_idx],'.csv'),
                         verbose=F)
             if (status == 0){
-                cmn.log(paste0('Successful download of CSV data for station: ',dbf_df$StationId[id_idx]), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+                cmn.log(paste0(dbf_df$StationId[id_idx],' - Successful download of CSV data'), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
             }else if (status == 1){
-                cmn.log(paste0('No data available for station: ',dbf_df$StationId[id_idx]), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+                cmn.log(paste0(dbf_df$StationId[id_idx],' - No data available'), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
             }else if (status == 2){
-                cmn.log(paste0('Failed to download CSV data for station: ',dbf_df$StationId[id_idx]), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+                cmn.log(paste0(dbf_df$StationId[id_idx],' - Failed to download CSV data'), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
             }else if (status == 3){
-                cmn.log(paste0('CSV file not available for station: ',dbf_df$StationId[id_idx]), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+                cmn.log(paste0(dbf_df$StationId[id_idx],' - CSV file not available'), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
             }else{
-                cmn.log(paste0('Other error for station: ',dbf_df$StationId[id_idx]), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+                cmn.log(paste0(dbf_df$StationId[id_idx],' - Other error'), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
             }
         }
         dir_cvs = tmpDir
@@ -339,11 +359,8 @@ process_eo_data <- function(app_sys,             # Reduce global configuration s
         dir_cvs = localCSVDir
     }
 
-    # Search and download data for virtual stations
-    # ToDo
-
     # Read all downloaded csv files + aggregate to daily resolution
-      physical_data<-read.csv.batch(path=tmpDir)
+      physical_data<-read.csv.batch(path=tmpDir,debugPublishFiles)
     
     # Combine data
       # initiate temporary df to store data after qobs.init last date and identify stations to process

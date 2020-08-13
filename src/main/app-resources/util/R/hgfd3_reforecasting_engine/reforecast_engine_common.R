@@ -98,6 +98,8 @@ determine_interval_part1<-function(hindcastStartDate,
         print(reforecastingMethod)
     }
 
+    status = 0 # OK
+
     if (! is.null(monthlybreakday)){
         monthDay = as.numeric(monthlybreakday)
     }else{
@@ -111,8 +113,8 @@ determine_interval_part1<-function(hindcastStartDate,
         # Use date for the latest available monthly file
         endDate = operationalEndDate
         if (endDate < startDate){
-            print(paste('Error: determine_interval_part1(), End date < Start date',endDate,startDate,sep=' '))
-            q(save='no',status=1)
+            print(paste('Error: determine_interval_part1(). Not possible to determine a correct interval end date. Check forecast issue date (idate), use a more recent date.','Start:',startDate,'End:',endDate,sep=' '))
+            status = 1 # NOK
         }
     }
     
@@ -135,7 +137,8 @@ determine_interval_part1<-function(hindcastStartDate,
         endDate = hindcastEndDate
     }
 
-    return (list('startDate'=startDate,
+    return (list('status'=status,
+                 'startDate'=startDate,
                  'endDate'=endDate))
 }
 
@@ -159,6 +162,8 @@ determine_interval_part2<-function(part1EndDate,
         print(monthlybreakday)
     }
 
+    status = 0 # OK
+
     if (! is.null(monthlybreakday)){
         monthDay = as.numeric(monthlybreakday)
     }else{
@@ -171,8 +176,8 @@ determine_interval_part2<-function(part1EndDate,
     if (runModeOperational){
         endDate = operationalEndDate
         if (endDate < startDate){
-            print(paste('Error: determine_interval_part2(), End date < Start date',endDate,startDate,sep=' '))
-            q(save='no',status=1)
+            print(paste('Error: determine_interval_part2(). Not possible to determine a correct interval end date. Check forecast issue date (idate), use a more recent date.','Start:',startDate,'End:',endDate,sep=' '))
+            status = 2 # NOK
         }
     }
     
@@ -185,7 +190,8 @@ determine_interval_part2<-function(part1EndDate,
         }
     }
     
-    return (list('startDate'=startDate,
+    return (list('status'=status,
+                 'startDate'=startDate,
                  'endDate'=endDate))
 }
 
@@ -200,16 +206,19 @@ determine_interval_part3<-function(part2EndDate,
         print(hindcastEndDate)
     }
 
+    status = 0 # OK
+
     startDate = dateobj_add_days(part2EndDate,1) # Should be day 1 in next month
     endDate   = dateobj_subtract_days(hindcastEndDate,5)
 
     if (endDate < startDate){
         # Operational
-        print(paste('Error: determine_interval_part3(), End date < Start date',endDate,startDate,sep=' '))
-        q(save='no',status=1)
+        print(paste('Error: determine_interval_part3(). Not possible to determine a correct interval end date. Check forecast issue date (idate), use a more recent date.','Start:',startDate,'End:',endDate,sep=' '))
+        status = 3 # NOK
     }
  
-    return (list('startDate'=startDate,
+    return (list('status'=status,
+                 'startDate'=startDate,
                  'endDate'=endDate))
 }
 
@@ -224,16 +233,19 @@ determine_interval_part4<-function(part3EndDate,
         print(hindcastEndDate)
     }
 
+    status = 0 # OK
+
     startDate = dateobj_add_days(part3EndDate,1)
     endDate   = hindcastEndDate
 
     if (endDate < startDate){
         # Operational
-        print(paste('Error: determine_interval_part4(), End date < Start date',endDate,startDate,sep=' '))
-        q(save='no',status=1)
+        print(paste('Error: determine_interval_part4(). Not possible to determine a correct interval end date. Check forecast issue date (idate), use a more recent date.','Start:',startDate,'End:',endDate,sep=' '))
+        status = 4 # NOK
     }
     
-    return (list('startDate'=startDate,
+    return (list('status'=status,
+                 'startDate'=startDate,
                  'endDate'=endDate))
 }
 
@@ -354,7 +366,7 @@ determine_hindcast_intervals<-function(idate=NULL, # Forecast issue date (htep)
             hindcastStartDate = inputDateStatefile
             useStatefile      = T
         }else{
-            print(paste0('Info: Not using state file with date: ',date_statefile,' Requires either a longer hindcast period or forecast issue date > ',limitDateUseStatefile))
+            print(paste0('Info: Not using available state file with date: ',date_statefile,' Requires either a longer hindcast period or a forecast issue date > ',limitDateUseStatefile))
         }
     }
 
@@ -370,6 +382,7 @@ determine_hindcast_intervals<-function(idate=NULL, # Forecast issue date (htep)
     #
     # Determine internal hindcast intervals for the different data types
     #
+    status_dates = 0 # OK, Overall status, instead of quiting in sub-functions
 
     output = determine_interval_part1(hindcastStartDate,
                                       hindcastEndDate,
@@ -379,6 +392,7 @@ determine_hindcast_intervals<-function(idate=NULL, # Forecast issue date (htep)
                                       runModeStatefileCreation,
                                       monthlybreakday,
                                       reforecasting_method)
+    status_dates = status_dates + output$status
     he5StartDate = output$startDate
     he5EndDate   = output$endDate
 
@@ -390,26 +404,30 @@ determine_hindcast_intervals<-function(idate=NULL, # Forecast issue date (htep)
                                                   operationalEndDatePart2,
                                                   runModeReforecast,
                                                   monthlybreakday)
+                status_dates   = status_dates + output$status
                 he5tmStartDate = output$startDate
                 he5tmEndDate   = output$endDate
 
 
                 output = determine_interval_part3(he5tmEndDate,
                                                   hindcastEndDate)
+                status_dates   = status_dates + output$status
                 he5tdStartDate = output$startDate
                 he5tdEndDate   = output$endDate
 
 
                 output = determine_interval_part4(he5tdEndDate,
                                                   hindcastEndDate)
-                odStartDate = output$startDate
-                odEndDate   = output$endDate
+                status_dates = status_dates + output$status
+                odStartDate  = output$startDate
+                odEndDate    = output$endDate
         }else{
             # Variant 2
             output = determine_interval_part4(he5EndDate,
                                               hindcastEndDate)
-            odStartDate = output$startDate
-            odEndDate   = output$endDate
+            status_dates = status_dates + output$status
+            odStartDate  = output$startDate
+            odEndDate    = output$endDate
         }
     } # ! runModeStatefileCreation
 
@@ -447,12 +465,18 @@ determine_hindcast_intervals<-function(idate=NULL, # Forecast issue date (htep)
                                   csvFile=output_hype_dates_to_csv_file)
     }
 
-    if (verbose){
+    if (verbose || status_dates != 0){
         print(paste('hindcast interval:',hindcastStartDate,'->',hindcastEndDate,sep=' '))
         print(paste('he5:              ',he5StartDate,'->',he5EndDate,sep=' '))
         print(paste('he5tm:            ',he5tmStartDate,'->',he5tmEndDate,sep=' '))
         print(paste('he5td:            ',he5tdStartDate,'->',he5tdEndDate,sep=' '))
         print(paste('od:               ',odStartDate,'->',odEndDate,sep=' '))
+    }
+
+    if (status_dates != 0){
+        print(paste('Error: determine_hindcast_intervals(), error code:',status_dates,'Aborting, not possible to determine correct hindcast intervals. For run mode Operational, use a more recent forecast issue date (idate).',sep=' '))
+        print('Info: For run mode Operational, the latest available monthly file(s) determines end date for the hindcast period.')
+        q(save='no',status=1)
     }
 
     return (list('hindcastStartDate'=hindcastStartDate,'hindcastEndDate'=hindcastEndDate,
