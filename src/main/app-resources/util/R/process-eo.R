@@ -17,20 +17,25 @@ nameOfSrcFile_EOP = '/util/R/process-eo.R'
 # FUNCTION DEFINITIONS
 
 # read HTEP csv files 
-read.htep.csv.file<-function(csvfile){ # csvfile<-"./physical/GN-P002-FARANAH-M.wl.csv" #rm(csvfile)
+read.htep.csv.file<-function(csvfile,supp_vars){ # csvfile<-"./physical/GN-P002-FARANAH-M.wl.csv" #rm(csvfile)
   # read file and convert date
   csvdata = read.csv(file = csvfile,header = T,stringsAsFactors = F)  # tail(csvdata)
   csvdata$date=as.POSIXct(as.character(csvdata$Timestamp),tz = "GMT")
   #head(csvdata)
   
   # check on units
-  if(any(csvdata$Type=="DerivedWaterLevel")) {if(!unique(csvdata[which(csvdata$Type=="DerivedWaterLevel"),"Uom"])=="cm") stop("DerivedWaterLevel units are not in cm in CSV files")}
+  #todo  if(any(csvdata$Type=="DerivedWaterLevel")) {if(!unique(csvdata[which(csvdata$Type=="DerivedWaterLevel"),"Uom"])=="cm") stop("DerivedWaterLevel units are not in cm in CSV files")}
   if(any(csvdata$Type=="WaterLevel")) {if(!unique(csvdata[which(csvdata$Type=="WaterLevel"),"Uom"])=="cm") stop("Water Level units are not in cm in CSV files")}
   if(any(csvdata$Type=="DerivedDischarge")) {if(!unique(csvdata[which(csvdata$Type=="DerivedDischarge"),"Uom"])=="m3/s") stop("DerivedDischarge units are not in m3/s in CSV files")}
   if(any(csvdata$Type=="Discharge")) {if(!unique(csvdata[which(csvdata$Type=="Discharge"),"Uom"])=="m3/s") stop("Discharge units are not in m3/s in CSV files")}  
-  
+
   # aggregate to daily resolution
   types<-unique(csvdata$Type)
+
+  # remove unknowns
+  valid_idx<-(types %in% supp_vars)
+  types<-types[valid_idx]
+
   csvdata2<-as.data.frame(matrix(nrow=length(unique(csvdata$date)),ncol=1+length(types)))
   colnames(csvdata2)<-c("Date",types)
     #head(csvdata2)
@@ -57,7 +62,8 @@ read.csv.batch<-function(path,debugPublish=F){ #path<-tmpDir
   # create object to store in
   files_htepids<-sapply(strsplit(files,split="\\."),"[",1)
 
-  csvcomp<-array(NA,c(11323,length(files),5),dimnames=list("Date"=as.character(seq(as.Date("2000-01-01"),as.Date("2030-12-31"),by=1)),"Stn"=files_htepids,"Var"=c("WaterLevel","DerivedDischarge","Discharge","BatteryLevel","DerivedWaterLevel")))
+  supported_vars<-c("WaterLevel","DerivedDischarge","Discharge")
+  csvcomp<-array(NA,c(11323,length(files),length(supported_vars)),dimnames=list("Date"=as.character(seq(as.Date("2000-01-01"),as.Date("2030-12-31"),by=1)),"Stn"=files_htepids,"Var"=supported_vars))
     # note we hardcoded the dates here, can be a bug if the dates fall outside this range, in that case fix it
     # note we also hardcoded the variables to be 4 and specifically these names, change if it is needed
 
@@ -70,7 +76,7 @@ read.csv.batch<-function(path,debugPublish=F){ #path<-tmpDir
         rciop.publish(path=fname, recursive=FALSE, metalink=TRUE)
       }
 
-      mycsv<-read.htep.csv.file(csvfile = fname)
+      mycsv<-read.htep.csv.file(csvfile = fname,supported_vars)
       #mycsv[[1]];head(mycsv[[2]])
       
       mm<-match(as.Date(mycsv[[2]]$Date),as.Date(dimnames(csvcomp)$Date))
@@ -353,14 +359,14 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
                 cmn.log(paste0(dbf_df$StationId[id_idx],' - Other error'), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
             }
         }
-        dir_cvs = tmpDir
+        dir_csv = tmpDir
     }else{
         # Local dir with csv files
-        dir_cvs = localCSVDir
+        dir_csv = localCSVDir
     }
 
     # Read all downloaded csv files + aggregate to daily resolution
-      physical_data<-read.csv.batch(path=tmpDir,debugPublishFiles)
+      physical_data<-read.csv.batch(path=dir_csv,debugPublishFiles)
     
     # Combine data
       # initiate temporary df to store data after qobs.init last date and identify stations to process
