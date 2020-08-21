@@ -290,12 +290,10 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## 4 - Hindcast input data
     ## ------------------------------------------------------------------------------
     ## eo data
-    qobs_file = paste0(app.setup$runDir,"/Qobs.txt")
     if (app.input$assimOn != "off") {
         process_eo_data_physical(
             app_sys=app.sys,
-            #assimilationOn=app.input$assimOn != "off",
-            qobsFile=qobs_file,
+            qobsFile=paste0(app.setup$runDir,"/Qobs.txt"),
             shapefileDbf=paste0(modelConfigData$modelFiles,"/subidshapefile/SUBID-StationID-linkage.dbf"),
             geodataFile=paste0(app.setup$runDir,"/GeoData.txt"),
             modelFilesRunDir=app.setup$runDir,
