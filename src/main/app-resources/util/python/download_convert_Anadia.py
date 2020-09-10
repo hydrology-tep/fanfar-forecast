@@ -5,7 +5,7 @@ import os
 import os.path
 import sys
 import urllib.request
-from dbfread import DBF
+#from dbfread import DBF
 import subprocess
 from datetime import datetime
 import time
@@ -128,6 +128,7 @@ if __name__ == "__main__":
     run_env = os.getenv('_CIOP_APPLICATION_PATH',default='local')
     print(run_env)
     if run_env == 'local':
+        from dbfread import DBF
         subid_stationid_linkage_file = "/data/proj9/Fouh/Global/Projekt/FANFAR/Model/WestAfricaHYPE_v1.0/Gauges&Subids/SUBID-StationID-linkage_WWH_1.3.7_20200617.dbf"
         output_dir                   = "/data/proj9/Fouh/Global/Projekt/FANFAR/Data/Sirba-Anadia/dataFROMAnadia/auto_down"
         #output_dir                   = "/var/tmp/Data/Sirba-Anadia/dataFROMAnadia/auto_down"
@@ -135,12 +136,15 @@ if __name__ == "__main__":
     else:
         # H-TEP
         import argparse
+
         parser = argparse.ArgumentParser()
         parser.add_argument("-i", "--input-file", help="Path+filename to file containing linkage between subid and stationid")
         parser.add_argument("-o", "--output-dir", help="Path+dirname to put csv files")
+        parser.add_argument("-d", "--dbfread-path", help="Path to module dbfread")
 
         subid_stationid_linkage_file = None
         output_dir = None
+        module_dbfread_path = None
         args = parser.parse_args()
         if args.input_file:
             subid_stationid_linkage_file = args.input_file
@@ -148,9 +152,18 @@ if __name__ == "__main__":
         if args.output_dir:
             output_dir = args.output_dir
 
-        if subid_stationid_linkage_file == None or output_dir == None:
-            print("Path to subid stationid linkage file missing or output dir not defined")
+        if args.dbfread_path:
+            module_dbfread_path = args.dbfread_path
+
+        if subid_stationid_linkage_file == None or output_dir == None or module_dbfread_path == None:
+            print("Path to subid stationid linkage file missing or output dir or module dbfread not defined")
             print("./download_convert_Anadia.py -i <path+filename> -o <path + name of output dir>")
             exit(1)
+
+        #print('INFO: Using python3 with module dbfread from appended path: /opt/anaconda/pkgs/dbfread-2.0.7-py_0/site-packages')
+        #sys.path.append('/opt/anaconda/pkgs/dbfread-2.0.7-py_0/site-packages')
+        print('INFO: Using python3 with module dbfread from appended path: ',module_dbfread_path)
+        sys.path.append(module_dbfread_path)
+        from dbfread import DBF
 
     main(subid_stationid_linkage_file,output_dir)

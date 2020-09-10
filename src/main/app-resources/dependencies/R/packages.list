@@ -25,6 +25,5 @@ geos=3.5.0
 # Added due to HYPE 5.8.0, to build executable in sandbox and newer version of libgfortran3.so during run-time
 gcc=4.8.5
 
-#This shouldn't be necessary
-# r-essentials
-
+# Used by python 3
+dbfread=2.0.7

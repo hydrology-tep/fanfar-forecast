@@ -371,7 +371,9 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
                 # Call external script
                 tmpOutputDir=paste(tmpDir,'anadia',sep='/')
                 tmpOutputCSVDir=paste(tmpOutputDir,'htep_format',sep='/') # Path to CSV files
-                args = paste0('--input-file',' ',shapefileDbf,' ','--output-dir',' ',tmpOutputDir)
+                module_dbfread_path='/opt/anaconda/pkgs/dbfread-2.0.7-py_0/site-packages'
+                #args = paste0('--input-file',' ',shapefileDbf,' ','--output-dir',' ',tmpOutputDir)
+                args = paste0('--input-file',' ',shapefileDbf,' ','--output-dir',' ',tmpOutputDir,' ','--dbfread-path',' ',module_dbfread_path)
                 status = system2(command=command,args=args)
                 if (status == 0){
                     print("List files in tmp work dir")
