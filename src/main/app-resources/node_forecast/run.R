@@ -295,6 +295,18 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## ------------------------------------------------------------------------------
     ## eo data
     if (app.input$assimOn != "off") {
+        # From configuration file
+        enableAnadia = TRUE
+        if (! is.null(modelConfigData$enableAnadia)){
+            enableAnadia = modelConfigData$enableAnadia
+            print(paste0('enableAnadia from configuration file ',enableAnadia))
+        }
+        moduleDbfreadPath = '/opt/anaconda/pkgs/dbfread-2.0.7-py_0/site-packages'
+        if (! is.null(modelConfigData$python3Dbfread)){
+            moduleDbfreadPath = modelConfigData$python3Dbfread
+            print(paste0('python3Dbfread from configuration file ',moduleDbfreadPath))
+        }
+
         process_eo_data_physical(
             app_sys=app.sys,
             qobsFile=paste0(app.setup$runDir,"/Qobs.txt"),
@@ -302,6 +314,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             geodataFile=paste0(app.setup$runDir,"/GeoData.txt"),
             modelFilesRunDir=app.setup$runDir,
             tmpDir=paste0(TMPDIR,"/eo"),
+            localCSVDir=NULL,
+            enableAnadia,
+            moduleDbfreadPath=moduleDbfreadPath,
             #outputFileSubidUpdated=paste0(TMPDIR,"/updated_subids.txt"),
             debugPublishFiles=publishHindcastForcingFiles,
             verbose=verbose)

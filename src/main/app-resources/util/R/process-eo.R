@@ -358,6 +358,8 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
                                      modelFilesRunDir,    # HYPE model data files dir, output dir
                                      tmpDir,              # For app.sys=="tep", temporary dir to use for download of csv files, created by ciop-copy
                                      localCSVDir=NULL,    # For app.sys!="tep", dir with csv files
+                                     enableAnadia=F,      # Enable download of local observations from Anadia and convert to H-TEP format
+                                     moduleDbfreadPath=NULL, # Path to python module dbfread
                                      #outputFileSubidUpdated=NULL, # Path + filename of csv file to contain recently updated SUBIDs
                                      debugPublishFiles=F, # Condition to publish files during development
                                      verbose=F)           # More output
@@ -432,6 +434,34 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
                 cmn.log(paste0(dbf_df$StationId[id_idx],' - Other error'), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
             }
         }
+
+        if (enableAnadia){
+            app_path = Sys.getenv("_CIOP_APPLICATION_PATH")
+            command = paste(app_path,'util/python','download_convert_Anadia.py',sep="/")
+
+            if (! file.exists(command)){
+                cmn.log(paste0(command,' - file do not exist'), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+            }else{
+                # Call external script
+                tmpOutputDir=paste(tmpDir,'anadia',sep='/')
+                tmpOutputCSVDir=paste(tmpOutputDir,'htep_format',sep='/') # Path to CSV files
+                args = paste0('--input-file',' ',shapefileDbf,' ','--output-dir',' ',tmpOutputDir,' ','--dbfread-path',' ',moduleDbfreadPath)
+                status = system2(command=command,args=args)
+                if (status == 0){
+                    # Move csv files from local download dir to common download dir
+                    csvFiles = dir(path=tmpOutputCSVDir,pattern=".csv")
+                    if (length(csvFiles) > 0){
+                        for (f in 1:length(csvFiles)) {
+                            file.copy(from=paste(tmpOutputCSVDir,csvFiles[f],sep='/'),to=tmpDir,overwrite=TRUE)
+                            cmn.log(paste0("cp ",paste(tmpOutputCSVDir,csvFiles[f],sep='/')," to ",tmpDir,"/"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_EOP)
+                        }
+                    }
+                }else{
+                    cmn.log(paste0('exit status',status), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+                }
+            }
+        } # enableAnadia
+
         dir_csv = tmpDir
     }else{
         # Local dir with csv files
