@@ -298,6 +298,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             geodataFile=paste0(app.setup$runDir,"/GeoData.txt"),
             modelFilesRunDir=app.setup$runDir,
             tmpDir=paste0(TMPDIR,"/eo"),
+            localCSVDir=NULL,
+            enable_anadia=T,
             debugPublishFiles=publishHindcastForcingFiles,
             verbose=verbose)
 
