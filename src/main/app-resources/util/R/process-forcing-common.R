@@ -56,7 +56,7 @@ process_search_and_download <- function(url,
                                         query,
                                         rootDir,
                                         subDir,
-                                        noSearch=F)
+                                        search=T)
 {
   # Constants
   osClientApp <- "opensearch-client"
@@ -66,7 +66,7 @@ process_search_and_download <- function(url,
       dir.create(local.dir)
   }
 
-  if (! noSearch){
+  if (search){
     opensearchCmd=paste0(osClientApp," '",url,query,"'"," enclosure")
     message(opensearchCmd)
     res_enclosure <- system(command = opensearchCmd,intern = T)
@@ -90,12 +90,7 @@ process_search_and_download <- function(url,
   }else{
       # No search, download file directly
       fileURL=paste0(url,query)
-      print('fileURL')
-      print(fileURL)
-
       res_file <- rciop.copy(fileURL,local.dir)
-      print('res_file')
-      print(res_file)
       if (res_file$exit.code == 0) {
           path_plus_filename <- res_file$output
           # Not used, future?
@@ -105,9 +100,6 @@ process_search_and_download <- function(url,
               cmn.log(paste0("File with unknown name are already available in the local dir",local.netcdfDir), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PFC)
           }
       }
-      print('Files in local dir')
-      print(local.dir)
-      print(list.files(local.dir))
   }
 
 } # process_search_and_download

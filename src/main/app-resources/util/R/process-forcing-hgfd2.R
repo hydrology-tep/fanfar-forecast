@@ -1250,8 +1250,12 @@ download_netcdf_hgfd2 <- function(modelConfig,    # sub-dir to use for local dow
       subDir    <- modelConfig$gfdElevationSubDir
       #startDate <- xCastsInterval$ecoperStartDateSearch
       #stopDate  <- xCastsInterval$ecoperEndDateSearch
+      search    <- TRUE
+      if (! is.null(modelConfig$gfdElevationDoSearch)){
+          search <- modelConfig$gfdElevationDoSearch
+      }
 
-      process_search_and_download(url,query,netcdfDir,subDir,noSearch=T)
+      process_search_and_download(url,query,netcdfDir,subDir,search)
       expFilename <- paste(netcdfDir,subDir,"HydroGFD2elevation.nc",sep="/")
       if (! file.exists(expFilename)){
           nMissing <- 1
@@ -1267,8 +1271,12 @@ download_netcdf_hgfd2 <- function(modelConfig,    # sub-dir to use for local dow
       subDir    <- modelConfig$gfdGridSubDir
       #startDate <- xCastsInterval$ecoperStartDateSearch
       #stopDate  <- xCastsInterval$ecoperEndDateSearch
+      search    <- TRUE
+      if (! is.null(modelConfig$gfdGridDoSearch)){
+          search <- modelConfig$gfdGridDoSearch
+      }
 
-      process_search_and_download(url,query,netcdfDir,subDir,noSearch=T) # In dir for netcdf?
+      process_search_and_download(url,query,netcdfDir,subDir,search)
       #expFilename <- paste(netcdfDir,subDir,"HydroGFD2elevation.nc",sep="/")
       #if (! file.exists(expFilename)){
       #    nMissing <- 1
