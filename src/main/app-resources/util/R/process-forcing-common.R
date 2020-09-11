@@ -55,7 +55,8 @@ nameOfSrcFile_PFC <- "/util/R/process-forcing-common.R"
 process_search_and_download <- function(url,
                                         query,
                                         rootDir,
-                                        subDir)
+                                        subDir,
+                                        noSearch=F)
 {
   # Constants
   osClientApp <- "opensearch-client"
@@ -64,24 +65,49 @@ process_search_and_download <- function(url,
   if (! dir.exists(local.dir)){
       dir.create(local.dir)
   }
-  opensearchCmd=paste0(osClientApp," '",url,query,"'"," enclosure")
-  message(opensearchCmd)
-  res_enclosure <- system(command = opensearchCmd,intern = T)
-  if (length(res_enclosure >= 1)) {
-      for (xUrl in 1:length(res_enclosure)) {
-          res_file <- rciop.copy(res_enclosure[xUrl],local.dir)
-          if (res_file$exit.code == 0) {
-              path_plus_filename <- res_file$output
-              # Not used, future?
-          }else {
-              # file was already available in dir (re-downloaded) - $status = character(0)
-              if (length(res_file$output) == 0) {
-                  cmn.log(paste0("File with unknown name are already available in the local dir",local.netcdfDir), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PFC)
-              }
+
+  if (! noSearch){
+    opensearchCmd=paste0(osClientApp," '",url,query,"'"," enclosure")
+    message(opensearchCmd)
+    res_enclosure <- system(command = opensearchCmd,intern = T)
+    if (length(res_enclosure >= 1)) {
+        for (xUrl in 1:length(res_enclosure)) {
+            res_file <- rciop.copy(res_enclosure[xUrl],local.dir)
+            if (res_file$exit.code == 0) {
+                path_plus_filename <- res_file$output
+                # Not used, future?
+            }else {
+                # file was already available in dir (re-downloaded) - $status = character(0)
+                if (length(res_file$output) == 0) {
+                    cmn.log(paste0("File with unknown name are already available in the local dir",local.netcdfDir), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PFC)
+                }
+            }
+        }
+    }else {
+        cmn.log(paste("No search result for: ",opensearchCmd), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PFC)
+    }
+
+  }else{
+      # No search, download file directly
+      fileURL=paste0(url,query)
+      print('fileURL')
+      print(fileURL)
+
+      res_file <- rciop.copy(fileURL,local.dir)
+      print('res_file')
+      print(res_file)
+      if (res_file$exit.code == 0) {
+          path_plus_filename <- res_file$output
+          # Not used, future?
+      }else {
+          # file was already available in dir (re-downloaded) - $status = character(0)
+          if (length(res_file$output) == 0) {
+              cmn.log(paste0("File with unknown name are already available in the local dir",local.netcdfDir), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PFC)
           }
       }
-  }else {
-      cmn.log(paste("No search result for: ",opensearchCmd), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PFC)
+      print('Files in local dir')
+      print(local.dir)
+      print(list.files(local.dir))
   }
 
 } # process_search_and_download

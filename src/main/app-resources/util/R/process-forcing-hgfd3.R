@@ -153,7 +153,7 @@ download_netcdf_hgfd3 <- function(modelConfig,    # sub-dir to use for local dow
         query     <- modelConfig$gfdElevationQuery
         subDir    <- modelConfig$gfdElevationSubDir
 
-        process_search_and_download(url,query,netcdfDir,subDir)
+        process_search_and_download(url,query,netcdfDir,subDir,noSearch=T)
         expFilename <- paste(netcdfDir,subDir,"hgfd_orography.nc",sep="/")
         if (! file.exists(expFilename)){
             nMissing <- 1
@@ -168,7 +168,7 @@ download_netcdf_hgfd3 <- function(modelConfig,    # sub-dir to use for local dow
         query     <- modelConfig$gfdGridQuery
         subDir    <- modelConfig$gfdGridSubDir
 
-        process_search_and_download(url,query,netcdfDir,subDir) # In dir for netcdf?
+        process_search_and_download(url,query,netcdfDir,subDir,noSearch=T) # In dir for netcdf?
     } # elevation
     ## ------------------------------------------------------------------------------
 
