@@ -100,10 +100,33 @@ download_netcdf_hgfd3 <- function(modelConfig,    # sub-dir to use for local dow
                 startDate <- he5tdStartDate
                 stopDate  <- he5tdEndDate
 
-                process_search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-                # Check retrieved filenames
-                nMissing <- process_check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
-                                                               "_he5td_",fileSuffix)
+                # nMissing = 0
+                # n_attempts = 5
+                # while(n_attempts > 0){
+                #     process_search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
+                #     # Check retrieved filenames
+                #     nMissing <- process_check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
+                #                                                 "_he5td_",fileSuffix)
+                #     if (nMissing > 0){
+                #         n_attempts = n_attempts -1
+                #         cmn.log(paste0(nMissing," file(s) missing for he5td"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
+                #         Sys.sleep(5)
+                #     }else{
+                #         n_attempts = 0
+                #         cmn.log(paste0(nMissing," file(s) missing NOT for he5td"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
+                #     }
+                # }
+                # nMissingFiles <- nMissingFiles + nMissing
+
+                nMissing <- process_search_download_check_wrapper(
+                                url=urlNC,
+                                query,
+                                startDate,
+                                stopDate,
+                                rootDir=netcdfDir,
+                                subDir=ncSubDir,
+                                filePrefix="_he5td_",
+                                fileSuffix)
                 if (nMissing > 0){
                     cmn.log(paste0(nMissing," file(s) missing for he5td"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
                 }
@@ -157,12 +180,28 @@ download_netcdf_hgfd3 <- function(modelConfig,    # sub-dir to use for local dow
             search <- modelConfig$gfdElevationDoSearch
         }
 
-        process_search_and_download(url,query,netcdfDir,subDir,search)
+        # process_search_and_download(url,query,netcdfDir,subDir,search)
+        # expFilename <- paste(netcdfDir,subDir,"hgfd_orography.nc",sep="/")
+        # if (! file.exists(expFilename)){
+        #     nMissing <- 1
+        #     cmn.log(paste0("Missing file: ",expFilename), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
+        # }
+
         expFilename <- paste(netcdfDir,subDir,"hgfd_orography.nc",sep="/")
-        if (! file.exists(expFilename)){
-            nMissing <- 1
-            cmn.log(paste0("Missing file: ",expFilename), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
-        }
+        nMissing <- process_search_download_check_wrapper(
+                        url=url,
+                        query,
+                        startDate=NULL,
+                        stopDate=NULL,
+                        rootDir=netcdfDir,
+                        subDir=subDir,
+                        filePrefix=NULL,
+                        fileSuffix=NULL,
+                        filename=expFilename,
+                        search)
+            if (nMissing > 0){
+                cmn.log(paste0("Missing file: ",expFilename), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
+            }
         nMissingFiles <- nMissingFiles + nMissing
     } # elevation
     if (xCast == "grid.meta"){
@@ -274,7 +313,7 @@ process_forcing_hydrogfd3_hindcast <- function(modelConfig, # Misc config data, 
     cmn.log(paste0("bdate: ",intervals$bdate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
     cmn.log(paste0("cdate: ",intervals$cdate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
     cmn.log(paste0("edate: ",intervals$edate), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
-
+q(save="no", status = 0)
     # Download netcdf files
 
     # Download grid meta shape files for point and polygon
