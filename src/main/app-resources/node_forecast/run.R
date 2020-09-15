@@ -284,6 +284,10 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         rciop.publish(path=toFile, recursive=FALSE, metalink=TRUE)
     }
 
+    # Set initial status to NOK
+    hindcast.run <- 1
+    forecast.run <- 1
+
     cmn.log("HypeApp setup read", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
 
     #################################################################################
@@ -464,13 +468,23 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         if (hindcast.run != 0){
             cmn.log(paste0("Hindcast.run exit code: ",hindcast.run), logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_Run)
 
-            # Publish hindcast log file(s) in case prepareHypeAppsOutput() is not called
+            ## Close and publish logfile
+            status <- cmn.logClose(logHandle)
+            if(app.sys=="tep"){
+                if (file.exists(logHandle$file)) {
+                    rciop.publish(path=logHandle$file, recursive=FALSE, metalink=TRUE)
+                }
+            }
+
+            # Publish log file(s)
             hyssLogFiles = dir(path=app.setup$runDir,pattern=".log")
             if (length(hyssLogFiles) > 0){
                 for (i in 1:length(hyssLogFiles)) {
                     rciop.publish(path=paste(app.setup$runDir,hyssLogFiles[i],sep="/"),recursive=FALSE,metalink=TRUE)
                 }
             }
+            q(save="no", status = hindcast.run)
+
         }else{
             cmn.log(paste0("Hindcast.run exit code: ",hindcast.run), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
         }
@@ -505,7 +519,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
     ## ------------------------------------------------------------------------------
     # Check if forecast sequence shall be run
-    doForecastSequence <- (applRuntimeOptions$runTypeStateFileCreation != cRunTypeVariantStatefile)
+    doForecastSequence <- (applRuntimeOptions$runTypeStateFileCreation != cRunTypeVariantStatefile &&
+                           hindcast.run == 0)
     if (doForecastSequence) {
 
         #################################################################################
@@ -717,6 +732,19 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         # }
     }
 
+    # Summarize run status for end of workflow, q()
+    run.status <- 0 # OK
+    hindcast.nok <- (hindcast.run != 0)
+    forecast.nok <- (applRuntimeOptions$runTypeStateFileCreation != cRunTypeVariantStatefile && forecast.run != 0)
+    if (hindcast.nok){
+        run.status <- run.status + 1 # NOK
+        cmn.log("HypeApp workflow status, error hindcast", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_Run)
+    }
+    if (forecast.nok){
+        run.status <- run.status + 2 # NOK
+        cmn.log("HypeApp workflow status, error forecast", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_Run)
+    }
+
     ## close and publish the logfile
     status <- cmn.logClose(logHandle)
     # if (status != 0) {
@@ -747,5 +775,5 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## 9 - End of workflow
     ## ------------------------------------------------------------------------------
     ## exit with appropriate status code
-    q(save="no", status = 0)
+    q(save="no", status = run.status)
 } # while(length(input
