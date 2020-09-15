@@ -35,6 +35,9 @@ read.htep.csv.file<-function(csvfile,supp_vars){ # csvfile<-"./physical/GN-P002-
   # remove unknowns
   valid_idx<-(types %in% supp_vars)
   types<-types[valid_idx]
+  print("--------------------")
+  print(csvfile)
+  print(types)
 
   csvdata2<-as.data.frame(matrix(nrow=length(unique(csvdata$date)),ncol=1+length(types)))
   colnames(csvdata2)<-c("Date",types)
@@ -50,6 +53,7 @@ read.htep.csv.file<-function(csvfile,supp_vars){ # csvfile<-"./physical/GN-P002-
     csvdata2[match(myag[,1],csvdata2[,"Date"]),mytype]<-myag[,2]
   }
   #csvdata2
+  print(csvdata2)
   myname<-unique(csvdata$Name)
   return(list(myname,csvdata2))
 }
@@ -286,7 +290,7 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
                                      modelFilesRunDir,    # HYPE model data files dir, output dir
                                      tmpDir,              # For app.sys=="tep", temporary dir to use for download of csv files, created by ciop-copy
                                      localCSVDir=NULL,    # For app.sys!="tep", dir with csv files
-                                     enable_anadia=F,     # Enable download of local observations from Anadia and convert to H-TEP format
+                                     enableAnadia=F,      # Enable download of local observations from Anadia and convert to H-TEP format
                                      debugPublishFiles=F, # Condition to publish files during development
                                      verbose=F)           # More output
 {
@@ -360,8 +364,10 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
                 cmn.log(paste0(dbf_df$StationId[id_idx],' - Other error'), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
             }
         }
+        print("List files in tmpDir")
+        print(list.files(tmpDir))
 
-        if (enable_anadia){
+        if (enableAnadia){
             app_path = Sys.getenv("_CIOP_APPLICATION_PATH")
             command = paste(app_path,'util/python','download_convert_Anadia.py',sep="/")
 
@@ -382,12 +388,21 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
                     print(list.files(tmpOutputCSVDir))
                     # Move csv files from local download dir to tmpDir
                     # mv tmpOutputCSVDir to tmpDir, # Rename files? else will be overwritten
+                    csvFiles = dir(path=tmpOutputCSVDir,pattern=".csv")
+                    if (length(csvFiles) > 0){
+                        for (f in 1:length(csvFiles)) {
+                            file.copy(from=paste(tmpOutputCSVDir,csvFiles[f],sep='/'),to=tmpDir,overwrite=TRUE)
+                            cmn.log(paste0("cp ",paste(tmpOutputCSVDir,csvFiles[f],sep='/')," to ",tmpDir,"/"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_EOP)
+                        }
+                    }
                 }else{
                     cmn.log(paste0('exit status',status), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
                 }
             }
-        } # enable_anadia
+        } # enableAnadia
 
+        print("List files in tmpDir")
+        print(list.files(tmpDir))
         dir_csv = tmpDir
     }else{
         # Local dir with csv files

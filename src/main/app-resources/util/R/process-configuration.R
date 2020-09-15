@@ -419,6 +419,7 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
     configGridLinkFilename <- NULL
     reforecastingMethod    <- NULL
     modelBin               <- NULL
+    enableAnadia           <- NULL
     
 
     # Read model configuration
@@ -468,6 +469,10 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
         if (subdir == 'model-bin') {
             # Filename of HYPE binary/executable file
             modelBin <- as.character(main_config_data[r,'searchquery'])
+        }
+        if (subdir == 'enable-anadia') {
+            # Physical data, enable TRUE/FALSE
+            enableAnadia <- main_config_data[r,'searchquery']
         }
     }
 
@@ -620,7 +625,8 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
                    "statefileHindcastDate"=statefileHindcastDate,
                    "configGridLinkFilename"=configGridLinkFilename,
                    "reforecastingMethod"=reforecastingMethod,
-                   "modelBin"=modelBin)
+                   "modelBin"=modelBin,
+                   "enableAnadia"=enableAnadia)
 
     return (output)
 } # process_configuration_application_inputs

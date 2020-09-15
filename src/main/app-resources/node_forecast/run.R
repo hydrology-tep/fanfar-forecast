@@ -295,6 +295,13 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## ------------------------------------------------------------------------------
     ## eo data
     if (app.input$assimOn != "off") {
+        # From configuration file
+        enableAnadia = TRUE
+        if (! is.null(modelConfigData$enableAnadia)){
+            enableAnadia = modelConfigData$enableAnadia
+            print('enableAnadia from configuration file')
+        }
+
         process_eo_data_physical(
             app_sys=app.sys,
             qobsFile=paste0(app.setup$runDir,"/Qobs.txt"),
@@ -303,7 +310,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             modelFilesRunDir=app.setup$runDir,
             tmpDir=paste0(TMPDIR,"/eo"),
             localCSVDir=NULL,
-            enable_anadia=T,
+            enableAnadia,
             debugPublishFiles=publishHindcastForcingFiles,
             verbose=verbose)
 
