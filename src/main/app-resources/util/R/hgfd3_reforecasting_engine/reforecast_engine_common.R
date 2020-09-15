@@ -198,6 +198,7 @@ determine_interval_part2<-function(part1EndDate,
 
 determine_interval_part3<-function(part2EndDate,
                                    hindcastEndDate,
+                                   runModeOperational,
                                    verbose=F)
 {
     if (verbose){
@@ -212,9 +213,16 @@ determine_interval_part3<-function(part2EndDate,
     endDate   = dateobj_subtract_days(hindcastEndDate,5)
 
     if (endDate < startDate){
-        # Operational
-        print(paste('Error: determine_interval_part3(). Not possible to determine a correct interval end date. Check forecast issue date (idate), use a more recent date.','Start:',startDate,'End:',endDate,sep=' '))
-        status = 3 # NOK
+        if (runModeOperational){
+            # Continue without part3.
+            print(paste('Info: determine_interval_part3(). Not possible to determine a correct interval end date. Check forecast issue date (idate), use a more recent date.','Start:',startDate,'End:',endDate,sep=' '))
+            startDate = NULL
+            endDate   = NULL
+            status = 0 # OK
+        }else{
+            print(paste('Error: determine_interval_part3(). Not possible to determine a correct interval end date. Check forecast issue date (idate), use a more recent date.','Start:',startDate,'End:',endDate,sep=' '))
+            status = 3 # NOK
+        }
     }
  
     return (list('status'=status,
@@ -225,6 +233,7 @@ determine_interval_part3<-function(part2EndDate,
 
 determine_interval_part4<-function(part3EndDate,
                                    hindcastEndDate,
+                                   runModeOperational,
                                    verbose=F)
 {
     if (verbose){
@@ -239,9 +248,17 @@ determine_interval_part4<-function(part3EndDate,
     endDate   = hindcastEndDate
 
     if (endDate < startDate){
-        # Operational
-        print(paste('Error: determine_interval_part4(). Not possible to determine a correct interval end date. Check forecast issue date (idate), use a more recent date.','Start:',startDate,'End:',endDate,sep=' '))
-        status = 4 # NOK
+        tmpEndDate = dateobj_add_days(endDate,1)
+        if (runModeOperational && (tmpEndDate == startDate)){
+            # Continue without part4. idate first day in month.
+            print(paste('Info: determine_interval_part4(). Not possible to determine a correct interval end date. Check forecast issue date (idate), use a more recent date.','Start:',startDate,'End:',endDate,sep=' '))
+            startDate = NULL
+            endDate   = NULL
+            status = 0 # OK
+        }else{
+            print(paste('Error: determine_interval_part4(). Not possible to determine a correct interval end date. Check forecast issue date (idate), use a more recent date.','Start:',startDate,'End:',endDate,sep=' '))
+            status = 4 # NOK
+        }
     }
     
     return (list('status'=status,
@@ -410,14 +427,24 @@ determine_hindcast_intervals<-function(idate=NULL, # Forecast issue date (htep)
 
 
                 output = determine_interval_part3(he5tmEndDate,
-                                                  hindcastEndDate)
+                                                  hindcastEndDate,
+                                                  runModeOperational)
                 status_dates   = status_dates + output$status
                 he5tdStartDate = output$startDate
                 he5tdEndDate   = output$endDate
 
 
-                output = determine_interval_part4(he5tdEndDate,
-                                                  hindcastEndDate)
+                if (runModeOperational && is.null(he5tdEndDate)){
+                    # Use three intervals, monthly produced < 7th
+                    output = determine_interval_part4(he5tmEndDate,
+                                                      hindcastEndDate,
+                                                      runModeOperational)
+                }else{
+                    # Standard
+                    output = determine_interval_part4(he5tdEndDate,
+                                                      hindcastEndDate,
+                                                      runModeOperational)
+                }
                 status_dates = status_dates + output$status
                 odStartDate  = output$startDate
                 odEndDate    = output$endDate
