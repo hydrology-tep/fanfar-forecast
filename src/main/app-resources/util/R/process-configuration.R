@@ -420,6 +420,7 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
     reforecastingMethod    <- NULL
     modelBin               <- NULL
     enableAnadia           <- NULL
+    python3Dbfread         <- NULL
     
 
     # Read model configuration
@@ -471,8 +472,12 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
             modelBin <- as.character(main_config_data[r,'searchquery'])
         }
         if (subdir == 'enable-anadia') {
-            # Physical data, enable TRUE/FALSE
-            enableAnadia <- main_config_data[r,'searchquery']
+            # Enable alternative data source TRUE/FALSE
+            enableAnadia <- as.logical(main_config_data[r,'searchquery'])
+        }
+        if (subdir == 'python3-dbfread') {
+            # Optional path to python module dbfread. Used by python3 script.
+            python3Dbfread <- main_config_data[r,'searchquery']
         }
     }
 
@@ -626,7 +631,8 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
                    "configGridLinkFilename"=configGridLinkFilename,
                    "reforecastingMethod"=reforecastingMethod,
                    "modelBin"=modelBin,
-                   "enableAnadia"=enableAnadia)
+                   "enableAnadia"=enableAnadia,
+                   "python3Dbfread"=python3Dbfread)
 
     return (output)
 } # process_configuration_application_inputs

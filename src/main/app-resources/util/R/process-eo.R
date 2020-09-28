@@ -35,9 +35,6 @@ read.htep.csv.file<-function(csvfile,supp_vars){ # csvfile<-"./physical/GN-P002-
   # remove unknowns
   valid_idx<-(types %in% supp_vars)
   types<-types[valid_idx]
-  print("--------------------")
-  print(csvfile)
-  print(types)
 
   csvdata2<-as.data.frame(matrix(nrow=length(unique(csvdata$date)),ncol=1+length(types)))
   colnames(csvdata2)<-c("Date",types)
@@ -53,7 +50,6 @@ read.htep.csv.file<-function(csvfile,supp_vars){ # csvfile<-"./physical/GN-P002-
     csvdata2[match(myag[,1],csvdata2[,"Date"]),mytype]<-myag[,2]
   }
   #csvdata2
-  print(csvdata2)
   myname<-unique(csvdata$Name)
   return(list(myname,csvdata2))
 }
@@ -291,6 +287,7 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
                                      tmpDir,              # For app.sys=="tep", temporary dir to use for download of csv files, created by ciop-copy
                                      localCSVDir=NULL,    # For app.sys!="tep", dir with csv files
                                      enableAnadia=F,      # Enable download of local observations from Anadia and convert to H-TEP format
+                                     moduleDbfreadPath=NULL, # Path to python module dbfread
                                      debugPublishFiles=F, # Condition to publish files during development
                                      verbose=F)           # More output
 {
@@ -364,8 +361,6 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
                 cmn.log(paste0(dbf_df$StationId[id_idx],' - Other error'), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
             }
         }
-        print("List files in tmpDir")
-        print(list.files(tmpDir))
 
         if (enableAnadia){
             app_path = Sys.getenv("_CIOP_APPLICATION_PATH")
@@ -377,17 +372,10 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
                 # Call external script
                 tmpOutputDir=paste(tmpDir,'anadia',sep='/')
                 tmpOutputCSVDir=paste(tmpOutputDir,'htep_format',sep='/') # Path to CSV files
-                module_dbfread_path='/opt/anaconda/pkgs/dbfread-2.0.7-py_0/site-packages'
-                #args = paste0('--input-file',' ',shapefileDbf,' ','--output-dir',' ',tmpOutputDir)
-                args = paste0('--input-file',' ',shapefileDbf,' ','--output-dir',' ',tmpOutputDir,' ','--dbfread-path',' ',module_dbfread_path)
+                args = paste0('--input-file',' ',shapefileDbf,' ','--output-dir',' ',tmpOutputDir,' ','--dbfread-path',' ',moduleDbfreadPath)
                 status = system2(command=command,args=args)
                 if (status == 0){
-                    print("List files in tmp work dir")
-                    print(list.files(tmpOutputDir))
-                    print("List files after download and formatting")
-                    print(list.files(tmpOutputCSVDir))
-                    # Move csv files from local download dir to tmpDir
-                    # mv tmpOutputCSVDir to tmpDir, # Rename files? else will be overwritten
+                    # Move csv files from local download dir to common download dir
                     csvFiles = dir(path=tmpOutputCSVDir,pattern=".csv")
                     if (length(csvFiles) > 0){
                         for (f in 1:length(csvFiles)) {
@@ -401,8 +389,6 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
             }
         } # enableAnadia
 
-        print("List files in tmpDir")
-        print(list.files(tmpDir))
         dir_csv = tmpDir
     }else{
         # Local dir with csv files

@@ -299,7 +299,12 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         enableAnadia = TRUE
         if (! is.null(modelConfigData$enableAnadia)){
             enableAnadia = modelConfigData$enableAnadia
-            print('enableAnadia from configuration file')
+            print(paste0('enableAnadia from configuration file ',enableAnadia))
+        }
+        moduleDbfreadPath = '/opt/anaconda/pkgs/dbfread-2.0.7-py_0/site-packages'
+        if (! is.null(modelConfigData$python3Dbfread)){
+            moduleDbfreadPath = modelConfigData$python3Dbfread
+            print(paste0('python3Dbfread from configuration file ',moduleDbfreadPath))
         }
 
         process_eo_data_physical(
@@ -311,6 +316,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             tmpDir=paste0(TMPDIR,"/eo"),
             localCSVDir=NULL,
             enableAnadia,
+            moduleDbfreadPath=moduleDbfreadPath,
             debugPublishFiles=publishHindcastForcingFiles,
             verbose=verbose)
 
