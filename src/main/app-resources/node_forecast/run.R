@@ -302,10 +302,23 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             geodataFile=paste0(app.setup$runDir,"/GeoData.txt"),
             modelFilesRunDir=app.setup$runDir,
             tmpDir=paste0(TMPDIR,"/eo"),
+            #outputFileSubidUpdated=paste0(TMPDIR,"/updated_subids.txt"),
             debugPublishFiles=publishHindcastForcingFiles,
             verbose=verbose)
 
         cmn.log("Hindcast eo data downloaded and prepared", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
+    }
+
+    # Check recently updated subids'
+    output_subid_file=paste0(TMPDIR,"/updated_subids.txt")
+    st = subids_updated(in_file=paste0(app.setup$runDir,"/Qobs.txt"),
+                        out_file=output_subid_file,
+                        n_days=30,
+                        variant=2)
+    if(app.sys == "tep"){
+        if (file.exists(output_subid_file)){
+            rciop.publish(path=output_subid_file,recursive=FALSE,metalink=TRUE)
+        }
     }
 
     ## forcing data
