@@ -187,6 +187,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
     if(app.input$assimOn != "off"){
         cmn.log("Assimilation on", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
+    }else{
+        cmn.log("Assimilation off", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
     }
     if(app.input$assimOnAR != "off"){
         cmn.log("Assimilation on with auto-regressive updating", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
@@ -240,8 +242,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         if (modelConfigData$hydrologicalModel == cHydrologicalModelVariant2) {
             modelBin  <- "hype-5.8.0.exe"
         }else{
-            #modelBin  <- "hype-5.11.1.exe"
-            modelBin  <- "hype_assimilation-5.11.1.exe"
+            modelBin  <- "hype-5.11.3.exe"
         }
 
     }else{
