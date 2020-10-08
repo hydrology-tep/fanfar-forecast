@@ -59,50 +59,62 @@ process_configuration_application_runtime_options <- function(applInput=NULL) # 
             if (modelConfigIn == cModelConfigVariant1) {
                 prelModelConfig <- cModelConfigVariant1
                 urlAndQuery <- paste0("No model config URL for ",cModelConfigVariant1)
-                opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
                 #urlSelected <- TRUE
 
             }else if (modelConfigIn == cModelConfigVariant2) {
                 prelModelConfig <- cModelConfigVariant2
                 urlAndQuery <- urlDefault
-                opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
                 urlSelected <- TRUE
 
             }else if ((modelConfigIn == cModelConfigVariant3) & (assimOnARUpd == FALSE)) {
                 prelModelConfig <- cModelConfigVariant3
                 urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=956373199977FBE1A7FFAD708379E7B3ABA108A5"
-                opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
                 urlSelected <- TRUE
 
             }else if ((modelConfigIn == cModelConfigVariant3) & (assimOnARUpd == TRUE)) {
                 # Configuration with a state file supporting AR update
                 prelModelConfig <- cModelConfigVariant3
                 urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=41C4191C145B1730C28313B1D6AC80A7A29DC172"
-                opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
                 urlSelected <- TRUE
 
             }else if ((modelConfigIn == cModelConfigVariant4) & (assimOnARUpd == FALSE)) {
                 prelModelConfig <- cModelConfigVariant4
                 urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=8936FADB1602786E7178B389A854F224BA4A552F"
-                opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
                 urlSelected <- TRUE
 
             }else if ((modelConfigIn == cModelConfigVariant4) & (assimOnARUpd == TRUE)) {
                 # Configuration with a state file supporting AR update
                 prelModelConfig <- cModelConfigVariant4
                 urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=77D99AC80CEB0F94B4711967D7D37A4C73AB283A"
-                opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
                 urlSelected <- TRUE
 
-            }else if (modelConfigIn == cModelConfigVariant5) {
+            }else if ((modelConfigIn == cModelConfigVariant5) & (assimOnARUpd == FALSE)) {
                 prelModelConfig <- cModelConfigVariant5
-                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=278E284C83C4301BA86312B75536A73B7B8F3A9F"
-                opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
+                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=3EF24C77C347F6591BD9AB6CFDF1F0BA4D20DB9F"
+                urlSelected <- TRUE
+
+            }else if ((modelConfigIn == cModelConfigVariant5) & (assimOnARUpd == TRUE)) {
+                # Configuration with a state file supporting AR update
+                prelModelConfig <- cModelConfigVariant5
+                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=E99144FB1343B9589D500CC2360E2A59F6E57212"
+                urlSelected <- TRUE
+
+            }else if ((modelConfigIn == cModelConfigVariant6) & (assimOnARUpd == FALSE)) {
+                prelModelConfig <- cModelConfigVariant6
+                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=9300B348874866513F405D46E94EBF2E8841BE52"
+                urlSelected <- TRUE
+
+            }else if ((modelConfigIn == cModelConfigVariant6) & (assimOnARUpd == TRUE)) {
+                # Configuration with a state file supporting AR update
+                prelModelConfig <- cModelConfigVariant6
+                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=CBA9FE3F0A2352C886A7B538E6F7A847390C06B7"
                 urlSelected <- TRUE
 
             }
             if (! urlSelected) {
                 cmn.log(paste0("Unsupported configuration via parameter 'model_config': ",modelConfigIn), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+            }else{
+                opensearchCmd=paste0("opensearch-client '",urlAndQuery,"' enclosure")
             }
         }
 
@@ -584,6 +596,11 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
 
     }else if (modelConfigName == cModelConfigVariant5) {
         hydrologicalModel = cHydrologicalModelVariant1
+        meteoHindcast     = cMeteoHindcastVariant3
+        #meteoForecast     = cMeteoForecastVariant2
+
+    }else if (modelConfigName == cModelConfigVariant6) {
+        hydrologicalModel = cHydrologicalModelVariant3
         meteoHindcast     = cMeteoHindcastVariant3
         #meteoForecast     = cMeteoForecastVariant2
     }
