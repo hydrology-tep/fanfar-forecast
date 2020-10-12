@@ -31,7 +31,7 @@ def search_subid_stationid_linkage_file(subid_stationid_file,name_or_id):
     print ("Could not find StationNam or StationId for " + name_or_id)
     return None
     
-def parse_data(url, name, subid_stationid_file):
+def parse_data(url, name, subid_stationid_file, year):
 
     row = search_subid_stationid_linkage_file(subid_stationid_file,name)
     name = row["StationId"]
@@ -40,33 +40,73 @@ def parse_data(url, name, subid_stationid_file):
 
     lat = str(row["Latitude"])
     lon = str(row["Longitude"])
-    UoM = "cm"
-    datatype = "WaterLevel" #"Depth"
+    UoM = ["cm", "m3/s"]
+    datatype = ["WaterLevel", "Discharge"] #"Depth"
 
-    outfile = open("./htep_format/" + name + ".csv", "w")
-    outfile.write("Id,Name,Timestamp,Latitude,Longitude,Uom,Value,Type\n")
-    with urllib.request.urlopen(url) as response:
-        data = response.read().decode('utf-8')
+    counter = 0
+    
+    if year == 2019:
+        outfile_J = open("./htep_format/" + name + ".csv_J", "w")
+        outfile_Q = open("./htep_format/" + name + ".csv_Q", "w")
+        outfile = [outfile_J, outfile_Q]
+        outfile_J.write("Id,Name,Timestamp,Latitude,Longitude,Uom,Value,Type\n")
+    else:
+        with open("./htep_format/" + name + ".csv_J", "r") as f:
+            for line in f:
+                counter += 1
+        counter -= 1
+        outfile_J = open("./htep_format/" + name + ".csv_J", "a")
+        outfile_Q = open("./htep_format/" + name + ".csv_Q", "a")
+        outfile = [outfile_J, outfile_Q]
+
         
-        counter = 0
-        for line in data.split("\n"):
+    for x in range(0, len(datatype)):
+        with urllib.request.urlopen(url) as response:
+            data = response.read().decode('utf-8')
+        
+            for line in reversed(data.split("\n")):
 
-            if len(line) < 5:
-                continue
+                if len(line) < 5:
+                    continue
                 
-            if "date" in line or "Date" in line:
-                continue
+                if "date" in line or "Date" in line:
+                    continue
 
-            #Id,Name,Timestamp,Latitude,Longitude,Uom,Value,Type
-            # date, hour, depth, battery 
-            date = line.split(",")[0]
-            hour = line.split(",")[1]
-            value = line.split(",")[2]            
+                #Id,Name,Timestamp,Latitude,Longitude,Uom,Value,Type
+                # date, hour, depth, battery 
+                date = line.split(",")[0]
+                hour = line.split(",")[1]
+                value = line.split(",")[2+x]
 
-            outfile.write(str(counter) + "," + name + "," + date + "T" + hour + ":00.0000000+02:00" + "," + lat + "," + lon + "," + UoM + "," + value + "," + datatype + "\n")
-            
-            counter += 1
+                if int(float(value)) == -999:
+                    continue
+
+                outfile[x].write(str(counter) + "," + name + "," + date + "T" + hour + ":00.0000000+01:00" + "," + lat + "," + lon + "," + UoM[x] + "," + value + "," + datatype[x] + "\n")
+                
+                counter += 1
     return 0
+
+def combine_datatypes(subid_stationid_linkage_file, url):
+    row = search_subid_stationid_linkage_file(subid_stationid_linkage_file,url)
+    name = row["StationId"]
+
+    counter = -1
+    with open("./htep_format/" + name + ".csv_J") as f:
+        for line in f:
+            counter += 1
+    
+    with open("./htep_format/" + name + ".csv_Q") as f:
+        with open("./htep_format/" + name + ".csv_Q2", "w") as w:
+            for line in f:
+                line = line.strip()
+                w.write(str(counter) + line[line.find(","):] + "\n")
+                counter += 1
+            
+    subprocess.call("mv " + "./htep_format/" + name + ".csv_J " + "./htep_format/" + name + ".csv", shell=True)
+    subprocess.call("cat " + "./htep_format/" + name + ".csv_Q2 >> " + "./htep_format/" + name + ".csv", shell=True)
+    subprocess.call("rm -rf " + "./htep_format/" + name + ".csv_Q", shell=True)
+    subprocess.call("rm -rf " + "./htep_format/" + name + ".csv_Q2", shell=True)
+
 
 def clean():
     now = time.time()
@@ -75,7 +115,6 @@ def clean():
         if os.stat("./original/" + f).st_mtime < now - 7 * 86400:
             if "01.tar" not in f:
                 os.remove(os.path.join("./original/", f))
-
 
 def main(subid_stationid_linkage_file,output_dir):
     # Main function
@@ -101,19 +140,25 @@ def main(subid_stationid_linkage_file,output_dir):
     subprocess.check_call("rm -rf htep_format/*", shell=True)
 
     urls = {}
-    urls["Garbey Kourou"] = "http://slapis.fi.ibimet.cnr.it:8080/slapisws/api/data/j_get_stations_alldata_csv/1"
-    urls["Bossey Bangou"] = "http://slapis.fi.ibimet.cnr.it:8080/slapisws/api/data/j_get_stations_alldata_csv/2"
+    urls["Garbey Kourou"] = "http://slapis.fi.ibimet.cnr.it:8080/SlapisWS/api/data/j_get_stations_data/csv/1/GarbeyKourou/"
+    urls["Bossey Bangou"] = "http://slapis.fi.ibimet.cnr.it:8080/SlapisWS/api/data/j_get_stations_data/csv/2/BosseyBangou/"
 
     # + datetime.today().strftime('%Y-%m-%d') 
 
     failed_input_files = []
     for url in urls:
-        subprocess.call("curl " + "'" + urls[url] + "' > original/" + urls[url].split("/")[-1] + ".txt", shell=True) 
-        ret = parse_data(urls[url], url, subid_stationid_linkage_file)
+        subprocess.check_call("rm -rf original/" + urls[url].split("/")[-2] + ".txt", shell=True)
+        for year in range(2019, (datetime.now().year)+1):
+            subprocess.call("curl " + "'" + urls[url] + str(year) + "' >> original/" + urls[url].split("/")[-2] + ".txt", shell=True) 
+            ret = parse_data(urls[url] + str(year), url, subid_stationid_linkage_file, year)
+            time.sleep(2)
+            
+            if ret != 0:
+                failed_input_files.append(urls[url])
+                break
 
-        if ret != 0:
-            failed_input_files.append(urls[url])
-
+        combine_datatypes(subid_stationid_linkage_file, url)
+                         
     subprocess.check_call("tar cf original/data_" + datetime.today().strftime('%Y-%m-%d') + ".tar original/*.txt", shell=True)
 
     if len(failed_input_files) > 0:
@@ -129,7 +174,7 @@ if __name__ == "__main__":
     print(run_env)
     if run_env == 'local':
         from dbfread import DBF
-        subid_stationid_linkage_file = "/data/proj9/Fouh/Global/Projekt/FANFAR/Model/WestAfricaHYPE_v1.0/Gauges&Subids/SUBID-StationID-linkage_WWH_1.3.7_20200617.dbf"
+        subid_stationid_linkage_file = "/data/proj9/Fouh/Global/Projekt/FANFAR/Model/WestAfricaHYPE_v1.0/Gauges&Subids/SUBID-StationID-linkage_WWH_1.3.7_20200813.dbf"
         output_dir                   = "/data/proj9/Fouh/Global/Projekt/FANFAR/Data/Sirba-Anadia/dataFROMAnadia/auto_down"
         #output_dir                   = "/var/tmp/Data/Sirba-Anadia/dataFROMAnadia/auto_down"
 
