@@ -55,6 +55,7 @@
                     <require>hdf5</require>
                     <require>netcdf</require>
                     <require>nco</require>
+                    <require>python34</require>
                   </requires>
                   <postinstallScriptlet combine.self="override">
                     <scriptFile>${basedir}/src/main/app-resources/scripts/postinstall.sh</scriptFile>
