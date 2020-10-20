@@ -16,6 +16,13 @@ nameOfSrcFile_EOP = '/util/R/process-eo.R'
 ######################
 # FUNCTION DEFINITIONS
 
+# G-P002-KATI-M.csv seems to miss the last end of line character in the file, can maybe be handled by readLine
+# csvdata <- read.table( 
+#     text = readLines(file.choose(), warn = FALSE), 
+#     header = TRUE,  
+#     sep = "," 
+# )
+
 # read HTEP csv files 
 read.htep.csv.file<-function(csvfile,supp_vars,verbose=F){ # csvfile<-"./physical/GN-P002-FARANAH-M.wl.csv" #rm(csvfile)
   # read file and convert date
@@ -114,11 +121,19 @@ read.csv.batch<-function(path,debugPublish=F){ #path<-tmpDir
 read_stations_from_dbf <- function(shapefile_dbf) { # shapefile_dbf<-shapefileDbf
     # File exists at entry
 
-    df_station_dbf_all = read.dbf(file=shapefile_dbf,as.is=T)
-
-    # Filter stations
-    df_station_dbf = subset(df_station_dbf_all,USEFULNESS > 0)
+    df_station_dbf = read.dbf(file=shapefile_dbf,as.is=T)
+    
+    # Remove any ending whitespace characters (new line etc.)
+    df_station_dbf$StationId = trimws(df_station_dbf$StationId,which='right')
+    
+    # Filter/Sort stations
     df_station_dbf = subset(df_station_dbf,StationId != 0)
+    if ("USEFULNESS" %in% colnames(df_station_dbf)){
+        df_station_dbf = subset(df_station_dbf,USEFULNESS > 0)
+    }
+    if ("PRIORITY" %in% colnames(df_station_dbf)){
+        df_station_dbf = df_station_dbf[order(df_station_dbf$PRIORITY,decreasing=F),]
+    }
 
     idlist<-df_station_dbf[,c("StationId","SUBID")]
     
@@ -245,7 +260,7 @@ download_data_physical_station <- function(station_id_string,csv_output_dir,file
             status = 3
 
             if (file.exists(from_file)){
-                file.copy(from=from_file,to=to_file,overwrite=TRUE)
+                file.copy(from=from_file,to=to_file,overwrite=TRUE) # ToDo: Check if last line contains end of line, else write "\n" to file
                 file.remove(from_file)
                 status = 0 # OK
             }
@@ -394,9 +409,15 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
       mm<-match(dimnames(physical_data)[["Date"]],as.character(tempdf$DATE)) # match dates
       htepstn<-dimnames(physical_data)$Stn      
 
-      if (length(htepstn) > 0){
+      if (length(htepstn) > 0 & length(dbf_df$StationId) > 0){
         # Loop over htep stations
-          for (i in 1:length(htepstn)){ #i<-17
+
+          for (p in 1:length(dbf_df$StationId)){ #i<-17
+            i=match(dbf_df$StationId[p],htepstn)
+            if (is.na(i)){
+              next # Continue with next station
+            }
+
           # find the right subbasin
             mysubid<-dbf_df[match(htepstn[i],dbf_df$StationId),"SUBID"]
             
