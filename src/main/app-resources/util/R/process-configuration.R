@@ -249,10 +249,12 @@ search_download_meteo_configuration <- function(url,
     gfdElevationSubDir  <- NULL
     gfdElevationUrl     <- NULL
     gfdElevationQuery   <- NULL
+    gfdElevationDoSearch <- NULL
     
     gfdGridSubDir  <- NULL
     gfdGridUrl     <- NULL
     gfdGridQuery   <- NULL
+    gfdGridDoSearch <- NULL
     
     gfdHe5SubDir  <- NULL
     gfdHe5Url     <- NULL
@@ -334,11 +336,19 @@ search_download_meteo_configuration <- function(url,
           gfdElevationSubDir  <- meteo_config_data[r,'localdirectory']
           gfdElevationUrl     <- meteo_config_data[r,'url']
           gfdElevationQuery   <- meteo_config_data[r,'searchquery']
+          if ('dosearch' %in% colnames(meteo_config_data)){
+            # TRUE/FALSE - option to disable search and use static url
+            gfdElevationDoSearch <- as.logical(meteo_config_data[r,'dosearch'])
+          }
         }
         if (subdir == 'grid-meta') {
           gfdGridSubDir  <- meteo_config_data[r,'localdirectory']
           gfdGridUrl     <- meteo_config_data[r,'url']
           gfdGridQuery   <- meteo_config_data[r,'searchquery']
+          if ('dosearch' %in% colnames(meteo_config_data)){
+            # TRUE/FALSE - option to disable search and use static url
+            gfdGridDoSearch <- as.logical(meteo_config_data[r,'dosearch'])
+          }
         }
         if (subdir == 'he5tm') {
           gfdHe5tmSubDir  <- meteo_config_data[r,'localdirectory']
@@ -386,10 +396,12 @@ search_download_meteo_configuration <- function(url,
                    "gfdElevationSubDir"=gfdElevationSubDir,
                    "gfdElevationUrl"=gfdElevationUrl,
                    "gfdElevationQuery"=gfdElevationQuery,
+                   "gfdElevationDoSearch"=gfdElevationDoSearch,
                             
                    "gfdGridSubDir"=gfdGridSubDir,
                    "gfdGridUrl"=gfdGridUrl,
                    "gfdGridQuery"=gfdGridQuery,
+                   "gfdGridDoSearch"=gfdGridDoSearch,
                    
                    "gfdHe5SubDir"=gfdHe5SubDir,
                    "gfdHe5Url"=gfdHe5Url,
@@ -431,6 +443,8 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
     configGridLinkFilename <- NULL
     reforecastingMethod    <- NULL
     modelBin               <- NULL
+    enableAnadia           <- NULL
+    python3Dbfread         <- NULL
     
 
     # Read model configuration
@@ -480,6 +494,14 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
         if (subdir == 'model-bin') {
             # Filename of HYPE binary/executable file
             modelBin <- as.character(main_config_data[r,'searchquery'])
+        }
+        if (subdir == 'enable-anadia') {
+            # Enable alternative data source TRUE/FALSE
+            enableAnadia <- as.logical(main_config_data[r,'searchquery'])
+        }
+        if (subdir == 'python3-dbfread') {
+            # Optional path to python module dbfread. Used by python3 script.
+            python3Dbfread <- main_config_data[r,'searchquery']
         }
     }
 
@@ -637,7 +659,9 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
                    "statefileHindcastDate"=statefileHindcastDate,
                    "configGridLinkFilename"=configGridLinkFilename,
                    "reforecastingMethod"=reforecastingMethod,
-                   "modelBin"=modelBin)
+                   "modelBin"=modelBin,
+                   "enableAnadia"=enableAnadia,
+                   "python3Dbfread"=python3Dbfread)
 
     return (output)
 } # process_configuration_application_inputs

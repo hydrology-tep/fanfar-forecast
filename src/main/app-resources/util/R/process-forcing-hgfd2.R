@@ -1185,9 +1185,15 @@ download_netcdf_hgfd2 <- function(modelConfig,    # sub-dir to use for local dow
       startDate <- xCastsInterval$hydrogfdeiStartDateSearch
       stopDate  <- xCastsInterval$hydrogfdeiEndDateSearch
 
-      process_search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-      nMissing <- process_check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
-                                                     "_hydrogfdei_",fileSuffix)
+      nMissing <- process_search_download_check_wrapper(
+                      url=urlNC,
+                      query,
+                      startDate,
+                      stopDate,
+                      rootDir=netcdfDir,
+                      subDir=ncSubDir,
+                      filePrefix="_hydrogfdei_",
+                      fileSuffix)
       if (nMissing > 0){
           cmn.log(paste0(nMissing," file(s) missing for hydrogfdei"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
       }
@@ -1201,10 +1207,15 @@ download_netcdf_hgfd2 <- function(modelConfig,    # sub-dir to use for local dow
             startDate <- xCastsInterval$hydrogfdodStartDateSearch
             stopDate  <- xCastsInterval$hydrogfdodEndDateSearch
 
-            process_search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-            # Check retrieved filenames
-            nMissing <- process_check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
-                                                           "_hydrogfdod_",fileSuffix)
+            nMissing <- process_search_download_check_wrapper(
+                            url=urlNC,
+                            query,
+                            startDate,
+                            stopDate,
+                            rootDir=netcdfDir,
+                            subDir=ncSubDir,
+                            filePrefix="_hydrogfdod_",
+                            fileSuffix)
             if (nMissing > 0){
                 cmn.log(paste0(nMissing," file(s) missing for hydrogfdod"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
             }
@@ -1217,9 +1228,15 @@ download_netcdf_hgfd2 <- function(modelConfig,    # sub-dir to use for local dow
             startDate <- xCastsInterval$odStartDateSearch
             stopDate  <- xCastsInterval$odEndDateSearch
 
-            process_search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-            nMissing <- process_check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
-                                                           "_od-daily_",fileSuffix)
+            nMissing <- process_search_download_check_wrapper(
+                            url=urlNC,
+                            query,
+                            startDate,
+                            stopDate,
+                            rootDir=netcdfDir,
+                            subDir=ncSubDir,
+                            filePrefix="_od-daily_",
+                            fileSuffix)
             if (nMissing > 0){
                 cmn.log(paste0(nMissing," file(s) missing for od-daily"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
             }
@@ -1234,9 +1251,15 @@ download_netcdf_hgfd2 <- function(modelConfig,    # sub-dir to use for local dow
       startDate <- xCastsInterval$ecoperStartDateSearch
       stopDate  <- xCastsInterval$ecoperStartDateSearch # 1 file
 
-      process_search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-      nMissing <- process_check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
-                                                     "_ecoper_",paste0("00",fileSuffix))
+      nMissing <- process_search_download_check_wrapper(
+                      url=urlNC,
+                      query,
+                      startDate,
+                      stopDate,
+                      rootDir=netcdfDir,
+                      subDir=ncSubDir,
+                      filePrefix="_ecoper_",
+                      fileSuffix=paste0("00",fileSuffix))
       if (nMissing > 0){
           cmn.log(paste0(nMissing," file(s) missing for ecoper"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
       }
@@ -1250,11 +1273,24 @@ download_netcdf_hgfd2 <- function(modelConfig,    # sub-dir to use for local dow
       subDir    <- modelConfig$gfdElevationSubDir
       #startDate <- xCastsInterval$ecoperStartDateSearch
       #stopDate  <- xCastsInterval$ecoperEndDateSearch
+      search    <- TRUE
+      if (! is.null(modelConfig$gfdElevationDoSearch)){
+          search <- modelConfig$gfdElevationDoSearch
+      }
 
-      process_search_and_download(url,query,netcdfDir,subDir)
       expFilename <- paste(netcdfDir,subDir,"HydroGFD2elevation.nc",sep="/")
-      if (! file.exists(expFilename)){
-          nMissing <- 1
+      nMissing <- process_search_download_check_wrapper(
+                      url=url,
+                      query,
+                      startDate=NULL,
+                      stopDate=NULL,
+                      rootDir=netcdfDir,
+                      subDir=subDir,
+                      filePrefix=NULL,
+                      fileSuffix=NULL,
+                      filename=expFilename,
+                      search)
+      if (nMissing > 0){
           cmn.log(paste0("Missing file: ",expFilename), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
       }
       nMissingFiles <- nMissingFiles + nMissing
@@ -1267,14 +1303,27 @@ download_netcdf_hgfd2 <- function(modelConfig,    # sub-dir to use for local dow
       subDir    <- modelConfig$gfdGridSubDir
       #startDate <- xCastsInterval$ecoperStartDateSearch
       #stopDate  <- xCastsInterval$ecoperEndDateSearch
+      search    <- TRUE
+      if (! is.null(modelConfig$gfdGridDoSearch)){
+          search <- modelConfig$gfdGridDoSearch
+      }
 
-      process_search_and_download(url,query,netcdfDir,subDir) # In dir for netcdf?
-      #expFilename <- paste(netcdfDir,subDir,"HydroGFD2elevation.nc",sep="/")
-      #if (! file.exists(expFilename)){
-      #    nMissing <- 1
-      #    cmn.log(paste0("Missing file: ",expFilename), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
-      #}
-      #nMissingFiles <- nMissingFiles + nMissing
+      expFilename <- paste(netcdfDir,subDir,"grid.meta","grid.meta","grid.polygon.shp",sep="/")
+      nMissing <- process_search_download_check_wrapper(
+                      url=url,
+                      query,
+                      startDate=NULL,
+                      stopDate=NULL,
+                      rootDir=netcdfDir,
+                      subDir=subDir,
+                      filePrefix=NULL,
+                      fileSuffix=NULL,
+                      filename=expFilename,
+                      search)
+      if (nMissing > 0){
+          cmn.log(paste0("Missing file: ",expFilename), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF2)
+      }
+      nMissingFiles <- nMissingFiles + nMissing
   } # elevation
   ## ------------------------------------------------------------------------------
   # All meterological gfd parts downloaded to local tmp dir

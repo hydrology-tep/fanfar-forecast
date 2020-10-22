@@ -64,9 +64,15 @@ download_netcdf_hgfd3 <- function(modelConfig,    # sub-dir to use for local dow
             startDate <- he5StartDate
             stopDate  <- he5EndDate
 
-            process_search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-            nMissing <- process_check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
-                                                           "_he5_",fileSuffix)
+            nMissing <- process_search_download_check_wrapper(
+                            url=urlNC,
+                            query,
+                            startDate,
+                            stopDate,
+                            rootDir=netcdfDir,
+                            subDir=ncSubDir,
+                            filePrefix="_he5_",
+                            fileSuffix)
             if (nMissing > 0){
                 cmn.log(paste0(nMissing," file(s) missing for he5"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
             }
@@ -82,10 +88,15 @@ download_netcdf_hgfd3 <- function(modelConfig,    # sub-dir to use for local dow
                 startDate <- he5tmStartDate
                 stopDate  <- he5tmEndDate
 
-                process_search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-                # Check retrieved filenames
-                nMissing <- process_check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
-                                                               "_he5tm_",fileSuffix)
+                nMissing <- process_search_download_check_wrapper(
+                                url=urlNC,
+                                query,
+                                startDate,
+                                stopDate,
+                                rootDir=netcdfDir,
+                                subDir=ncSubDir,
+                                filePrefix="_he5tm_",
+                                fileSuffix)
                 if (nMissing > 0){
                     cmn.log(paste0(nMissing," file(s) missing for he5tm"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
                 }
@@ -100,10 +111,15 @@ download_netcdf_hgfd3 <- function(modelConfig,    # sub-dir to use for local dow
                 startDate <- he5tdStartDate
                 stopDate  <- he5tdEndDate
 
-                process_search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-                # Check retrieved filenames
-                nMissing <- process_check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
-                                                               "_he5td_",fileSuffix)
+                nMissing <- process_search_download_check_wrapper(
+                                url=urlNC,
+                                query,
+                                startDate,
+                                stopDate,
+                                rootDir=netcdfDir,
+                                subDir=ncSubDir,
+                                filePrefix="_he5td_",
+                                fileSuffix)
                 if (nMissing > 0){
                     cmn.log(paste0(nMissing," file(s) missing for he5td"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
                 }
@@ -118,9 +134,15 @@ download_netcdf_hgfd3 <- function(modelConfig,    # sub-dir to use for local dow
                 startDate <- odStartDate
                 stopDate  <- odEndDate
 
-                process_search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-                nMissing <- process_check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
-                                                               "_od_",fileSuffix)
+                nMissing <- process_search_download_check_wrapper(
+                                url=urlNC,
+                                query,
+                                startDate,
+                                stopDate,
+                                rootDir=netcdfDir,
+                                subDir=ncSubDir,
+                                filePrefix="_od_",
+                                fileSuffix)
                 if (nMissing > 0){
                     cmn.log(paste0(nMissing," file(s) missing for od"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
                 }
@@ -137,9 +159,15 @@ download_netcdf_hgfd3 <- function(modelConfig,    # sub-dir to use for local dow
             startDate <- odfStartDate
             stopDate  <- odfEndDate
 
-            process_search_and_download_netcdf(urlNC,query,startDate,stopDate,ncRootDir=netcdfDir,ncSubDir)
-            nMissing <- process_check_date_interval_netcdf(startDate,stopDate,ncRootDir=netcdfDir,ncSubDir,
-                                                           "_odf_",fileSuffix)
+            nMissing <- process_search_download_check_wrapper(
+                            url=urlNC,
+                            query,
+                            startDate,
+                            stopDate,
+                            rootDir=netcdfDir,
+                            subDir=ncSubDir,
+                            filePrefix="_odf_",
+                            fileSuffix)
             if (nMissing > 0){
                 cmn.log(paste0(nMissing," file(s) missing for odf"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
             }
@@ -152,11 +180,24 @@ download_netcdf_hgfd3 <- function(modelConfig,    # sub-dir to use for local dow
         url       <- modelConfig$gfdElevationUrl
         query     <- modelConfig$gfdElevationQuery
         subDir    <- modelConfig$gfdElevationSubDir
+        search    <- TRUE
+        if (! is.null(modelConfig$gfdElevationDoSearch)){
+            search <- modelConfig$gfdElevationDoSearch
+        }
 
-        process_search_and_download(url,query,netcdfDir,subDir)
         expFilename <- paste(netcdfDir,subDir,"hgfd_orography.nc",sep="/")
-        if (! file.exists(expFilename)){
-            nMissing <- 1
+        nMissing <- process_search_download_check_wrapper(
+                        url=url,
+                        query,
+                        startDate=NULL,
+                        stopDate=NULL,
+                        rootDir=netcdfDir,
+                        subDir=subDir,
+                        filePrefix=NULL,
+                        fileSuffix=NULL,
+                        filename=expFilename,
+                        search)
+        if (nMissing > 0){
             cmn.log(paste0("Missing file: ",expFilename), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
         }
         nMissingFiles <- nMissingFiles + nMissing
@@ -167,8 +208,27 @@ download_netcdf_hgfd3 <- function(modelConfig,    # sub-dir to use for local dow
         url       <- modelConfig$gfdGridUrl
         query     <- modelConfig$gfdGridQuery
         subDir    <- modelConfig$gfdGridSubDir
+        search    <- TRUE
+        if (! is.null(modelConfig$gfdGridDoSearch)){
+            search <- modelConfig$gfdGridDoSearch
+        }
 
-        process_search_and_download(url,query,netcdfDir,subDir) # In dir for netcdf?
+        expFilename <- paste(netcdfDir,subDir,"grid.meta","grid.meta","grid.polygon.shp",sep="/")
+        nMissing <- process_search_download_check_wrapper(
+                        url=url,
+                        query,
+                        startDate=NULL,
+                        stopDate=NULL,
+                        rootDir=netcdfDir,
+                        subDir=subDir,
+                        filePrefix=NULL,
+                        fileSuffix=NULL,
+                        filename=expFilename,
+                        search)
+        if (nMissing > 0){
+            cmn.log(paste0("Missing file: ",expFilename), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PF3)
+        }
+        nMissingFiles <- nMissingFiles + nMissing
     } # elevation
     ## ------------------------------------------------------------------------------
 
