@@ -275,6 +275,78 @@ rating.curve<-function(h=NULL,c,e,b,Q=NULL,opt="forward",listout=F){
 }
 
 
+# External function
+# Returns a file with comma separated list of subids' if any subid been updated the last n_days, else the text NO_DATA.
+# Assumes at least n_days of timesteps in Qobs file
+subids_updated <- function(in_file='Qobs.txt',
+                           out_file=paste0('/tmp','/subid_updated.txt'),
+                           n_days=30,
+                           variant=1, # 1 - last n_days from file contents, 2 - last n_days from today
+                           test_no_data_found=FALSE)
+{
+    status = 1 # NOK
+    text_not_found = 'NO_DATA'
+
+    if (! file.exists(in_file)){
+        # Handle model configuration without Qobs file
+        print('No check of updated subids')
+        write(text_not_found,file=out_file)
+        return (status)
+    }
+    
+    # Parse Qobs.txt csv file
+    csv_data = read.csv(file=in_file,header=T,skip=0,sep='\t',stringsAsFactors=F)
+    colnames(csv_data) = toupper(colnames(csv_data))
+
+    n_rows = nrow(csv_data)
+    if (variant == 1){
+        # Last x days based on index
+        csv_data_red = csv_data[(n_rows-n_days):n_rows,]
+    }else{
+        # Last x days from today based on timesteps
+        today = Sys.Date()
+        format='%Y-%m-%d'
+        start_date = as.POSIXct(strptime(today,format=format),tz='GMT') - (n_days*24*60*60)
+        start_date_str = strftime(start_date,format=format)
+        
+        # Last date in file
+        end_date_str = csv_data$DATE[n_rows]
+        end_date = as.POSIXct(strptime(end_date_str,format=format),tz='GMT')
+        
+        if (start_date <= end_date){
+            # Recent updated data
+            csv_data_red = csv_data[which(csv_data$DATE == start_date_str):n_rows,]
+        }else{
+            # Handle model configuration without updated Qobs file
+            print('No recent data in Qobs.txt')
+            write(text_not_found,file=out_file)
+            return (status)
+        }
+    }
+    rm(csv_data)
+    
+    if (test_no_data_found){
+        # Get only -9999
+        csv_data_red = csv_data_red[,sapply(csv_data_red,max) < 0.0]
+    }
+    
+    # Reduce/Filter columns: any value > 0.0
+    csv_data_red      = csv_data_red[,sapply(csv_data_red,max) > 0.0]
+    csv_data_red_cols = colnames(csv_data_red) # Character vector
+    if (length(csv_data_red_cols > 1)){
+        # All columns except DATE
+        csv_data_red_cols = csv_data_red_cols[csv_data_red_cols!='DATE']
+        csv_data_red_cols = gsub('X','',csv_data_red_cols)
+        write.table(as.list(csv_data_red_cols),file=out_file,sep=',',row.names=F,col.names=F,quote=F) # All subid on a line
+        status = 0 # OK
+    }else{
+        print('No recent data in Qobs.txt after filtering')
+        write(text_not_found,file=out_file)
+    }
+
+    return (status)
+} #subids_updated
+
 
 # External function
 # Wrapper for updating Qobs with discharge data from physical stations
@@ -286,6 +358,9 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
                                      modelFilesRunDir,    # HYPE model data files dir, output dir
                                      tmpDir,              # For app.sys=="tep", temporary dir to use for download of csv files, created by ciop-copy
                                      localCSVDir=NULL,    # For app.sys!="tep", dir with csv files
+                                     enableAnadia=F,      # Enable download of local observations from Anadia and convert to H-TEP format
+                                     moduleDbfreadPath=NULL, # Path to python module dbfread
+                                     #outputFileSubidUpdated=NULL, # Path + filename of csv file to contain recently updated SUBIDs
                                      debugPublishFiles=F, # Condition to publish files during development
                                      verbose=F)           # More output
 {
@@ -359,6 +434,34 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
                 cmn.log(paste0(dbf_df$StationId[id_idx],' - Other error'), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
             }
         }
+
+        if (enableAnadia){
+            app_path = Sys.getenv("_CIOP_APPLICATION_PATH")
+            command = paste(app_path,'util/python','download_convert_Anadia.py',sep="/")
+
+            if (! file.exists(command)){
+                cmn.log(paste0(command,' - file do not exist'), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+            }else{
+                # Call external script
+                tmpOutputDir=paste(tmpDir,'anadia',sep='/')
+                tmpOutputCSVDir=paste(tmpOutputDir,'htep_format',sep='/') # Path to CSV files
+                args = paste0('--input-file',' ',shapefileDbf,' ','--output-dir',' ',tmpOutputDir,' ','--dbfread-path',' ',moduleDbfreadPath)
+                status = system2(command=command,args=args)
+                if (status == 0){
+                    # Move csv files from local download dir to common download dir
+                    csvFiles = dir(path=tmpOutputCSVDir,pattern=".csv")
+                    if (length(csvFiles) > 0){
+                        for (f in 1:length(csvFiles)) {
+                            file.copy(from=paste(tmpOutputCSVDir,csvFiles[f],sep='/'),to=tmpDir,overwrite=TRUE)
+                            cmn.log(paste0("cp ",paste(tmpOutputCSVDir,csvFiles[f],sep='/')," to ",tmpDir,"/"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_EOP)
+                        }
+                    }
+                }else{
+                    cmn.log(paste0('exit status',status), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+                }
+            }
+        } # enableAnadia
+
         dir_csv = tmpDir
     }else{
         # Local dir with csv files
@@ -484,5 +587,19 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
         cmn.log(paste0("cp ",new_qobs_file," to ",init_qobs_file), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_EOP)
         file.remove(new_qobs_file)
     }
+
+    # # Check recently updated subids'
+    # if (! is.null(outputFileSubidUpdated)){
+    #     # Output path+filename defined
+    #     st = subids_updated(in_file=init_qobs_file,
+    #                         out_file=outputFileSubidUpdated,
+    #                         n_days=30,
+    #                         variant=2)
+    #     if(app_sys == 'tep'){
+    #         if (file.exists(outputFileSubidUpdated)){
+    #             rciop.publish(path=outputFileSubidUpdated,recursive=FALSE,metalink=TRUE)
+    #         }
+    #     }
+    # }
 
 } # process_eo_data
