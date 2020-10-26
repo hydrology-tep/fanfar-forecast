@@ -374,27 +374,27 @@ process_copy_obs_files <- function(fromDir, # Path to produced files
       }
   }
 
-  if (file.exists(qobs)) {
-      #nFiles <- nFiles + 1
-      #file.copy(from=qobs,to=toDir,overwrite=TRUE)
-      #cmn.log(paste0("cp ",qobs," to ",toDir,"/"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PFC)
-      if (publishFiles) {
-        toFile = paste0(toDir,"/Qobs-",textFilename,".txt")
-        file.copy(from=qobs,to=toFile)
-        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
-      }
-  }
+#   if (file.exists(qobs)) {
+#       #nFiles <- nFiles + 1
+#       #file.copy(from=qobs,to=toDir,overwrite=TRUE)
+#       #cmn.log(paste0("cp ",qobs," to ",toDir,"/"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PFC)
+#       if (publishFiles) {
+#         toFile = paste0(toDir,"/Qobs-",textFilename,".txt")
+#         file.copy(from=qobs,to=toFile)
+#         rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+#       }
+#   }
 
-  if (file.exists(xobs)) {
-      #nFiles <- nFiles + 1
-      #file.copy(from=xobs,to=toDir,overwrite=TRUE)
-      #cmn.log(paste0("cp ",xobs," to ",toDir,"/"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PFC)
-      if (publishFiles) {
-        toFile = paste0(toDir,"/Xobs-",textFilename,".txt")
-        file.copy(from=xobs,to=toFile)
-        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
-      }
-  }
+#   if (file.exists(xobs)) {
+#       #nFiles <- nFiles + 1
+#       #file.copy(from=xobs,to=toDir,overwrite=TRUE)
+#       #cmn.log(paste0("cp ",xobs," to ",toDir,"/"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PFC)
+#       if (publishFiles) {
+#         toFile = paste0(toDir,"/Xobs-",textFilename,".txt")
+#         file.copy(from=xobs,to=toFile)
+#         rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+#       }
+#   }
 
   if (nFiles < 5) {
     cmn.log("process_hindcast_netcdf2obs(): too few files produced", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PFC)
