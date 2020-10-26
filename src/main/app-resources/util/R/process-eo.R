@@ -582,11 +582,11 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
                     # lines(nn,tempdf[mm[which(!is.na(mm))][nn],match(mysubid,colnames(tempdf))],col="blue")
                   rm(thisq,nn,thiswl)
               } # !is.na
-            } else {  # move on to insert DerivedDischarge if it exists but e.g. if rating curve pars are missing
-              nn<-which(is.na(tempdf[mm[which(!is.na(mm))],match(mysubid,colnames(tempdf))]))  # find rows that still have NA values
-              tempdf[mm[which(!is.na(mm))][nn],match(mysubid,colnames(tempdf))] <- physical_data[which(!is.na(mm))[nn],match(htepstn[i],dimnames(physical_data)[["Stn"]]),"DerivedDischarge"]  # insert the derived Q only on NA rows
-              rm(nn)            
-            }
+            } # else {  # move on to insert DerivedDischarge if it exists but e.g. if rating curve pars are missing
+              # nn<-which(is.na(tempdf[mm[which(!is.na(mm))],match(mysubid,colnames(tempdf))]))  # find rows that still have NA values
+              # tempdf[mm[which(!is.na(mm))][nn],match(mysubid,colnames(tempdf))] <- physical_data[which(!is.na(mm))[nn],match(htepstn[i],dimnames(physical_data)[["Stn"]]),"DerivedDischarge"]  # insert the derived Q only on NA rows
+              # rm(nn)
+            # }
             rm(mysubid)
 
             use_new_qobs = TRUE
