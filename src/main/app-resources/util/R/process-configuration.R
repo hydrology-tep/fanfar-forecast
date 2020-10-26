@@ -21,7 +21,7 @@ process_configuration_application_runtime_options <- function(applInput=NULL) # 
     runTypeStateFileCreation <- NULL
 
 
-    urlDefault <- 'https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=E8063368628860F74178C1F3C7FB5DA11B5D97C0'
+    urlDefault <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=9300B348874866513F405D46E94EBF2E8841BE52" # WAH1.1
     urlLen     <- nchar(urlDefault)
 
     if (is.null(applInput) || nchar(applInput) < urlLen){
@@ -32,7 +32,7 @@ process_configuration_application_runtime_options <- function(applInput=NULL) # 
         modelConfigIn <- "No value"
 
         # It's up to the user to specify a correct url, so skip any checks of a valid url.
-        # Check available configurations: https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid&format=json
+        # Check available configurations: https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid&format=json&count=100
         urlModelConfigFile <- rciop.getparam("model_config_file")
         if ( (length(urlModelConfigFile) > 0) && ! is.null(urlModelConfigFile) ) {
             if (nchar(urlModelConfigFile) > nchar("https://recast.terradue.com")) {
@@ -63,7 +63,7 @@ process_configuration_application_runtime_options <- function(applInput=NULL) # 
 
             }else if (modelConfigIn == cModelConfigVariant2) {
                 prelModelConfig <- cModelConfigVariant2
-                urlAndQuery <- urlDefault
+                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=E8063368628860F74178C1F3C7FB5DA11B5D97C0"
                 urlSelected <- TRUE
 
             }else if ((modelConfigIn == cModelConfigVariant3) & (assimOnARUpd == FALSE)) {
