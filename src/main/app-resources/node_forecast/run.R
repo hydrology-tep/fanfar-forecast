@@ -187,6 +187,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
     if(app.input$assimOn != "off"){
         cmn.log("Assimilation on", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
+    }else{
+        cmn.log("Assimilation off", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
     }
     if(app.input$assimOnAR != "off"){
         cmn.log("Assimilation on with auto-regressive updating", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
@@ -240,8 +242,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         if (modelConfigData$hydrologicalModel == cHydrologicalModelVariant2) {
             modelBin  <- "hype-5.8.0.exe"
         }else{
-            #modelBin  <- "hype-5.11.1.exe"
-            modelBin  <- "hype_assimilation-5.11.1.exe"
+            modelBin  <- "hype-5.11.3.exe"
         }
 
     }else{
@@ -284,6 +285,10 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         rciop.publish(path=toFile, recursive=FALSE, metalink=TRUE)
     }
 
+    # Set initial status to NOK
+    hindcast.run <- 1
+    forecast.run <- 1
+
     cmn.log("HypeApp setup read", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
 
     #################################################################################
@@ -291,6 +296,18 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## ------------------------------------------------------------------------------
     ## eo data
     if (app.input$assimOn != "off") {
+        # From configuration file
+        enableAnadia = TRUE
+        if (! is.null(modelConfigData$enableAnadia)){
+            enableAnadia = modelConfigData$enableAnadia
+            print(paste0('enableAnadia from configuration file ',enableAnadia))
+        }
+        moduleDbfreadPath = '/opt/anaconda/pkgs/dbfread-2.0.7-py_0/site-packages'
+        if (! is.null(modelConfigData$python3Dbfread)){
+            moduleDbfreadPath = modelConfigData$python3Dbfread
+            print(paste0('python3Dbfread from configuration file ',moduleDbfreadPath))
+        }
+
         process_eo_data_physical(
             app_sys=app.sys,
             qobsFile=paste0(app.setup$runDir,"/Qobs.txt"),
@@ -298,10 +315,26 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             geodataFile=paste0(app.setup$runDir,"/GeoData.txt"),
             modelFilesRunDir=app.setup$runDir,
             tmpDir=paste0(TMPDIR,"/eo"),
+            localCSVDir=NULL,
+            enableAnadia,
+            moduleDbfreadPath=moduleDbfreadPath,
+            #outputFileSubidUpdated=paste0(TMPDIR,"/updated_subids.txt"),
             debugPublishFiles=publishHindcastForcingFiles,
             verbose=verbose)
 
         cmn.log("Hindcast eo data downloaded and prepared", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
+    }
+
+    # Check recently updated subids'
+    output_subid_file=paste0(TMPDIR,"/updated_subids.txt")
+    st = subids_updated(in_file=paste0(app.setup$runDir,"/Qobs.txt"),
+                        out_file=output_subid_file,
+                        n_days=30,
+                        variant=2)
+    if(app.sys == "tep"){
+        if (file.exists(output_subid_file)){
+            rciop.publish(path=output_subid_file,recursive=FALSE,metalink=TRUE)
+        }
     }
 
     ## forcing data
@@ -464,13 +497,23 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         if (hindcast.run != 0){
             cmn.log(paste0("Hindcast.run exit code: ",hindcast.run), logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_Run)
 
-            # Publish hindcast log file(s) in case prepareHypeAppsOutput() is not called
+            ## Close and publish logfile
+            status <- cmn.logClose(logHandle)
+            if(app.sys=="tep"){
+                if (file.exists(logHandle$file)) {
+                    rciop.publish(path=logHandle$file, recursive=FALSE, metalink=TRUE)
+                }
+            }
+
+            # Publish log file(s)
             hyssLogFiles = dir(path=app.setup$runDir,pattern=".log")
             if (length(hyssLogFiles) > 0){
                 for (i in 1:length(hyssLogFiles)) {
                     rciop.publish(path=paste(app.setup$runDir,hyssLogFiles[i],sep="/"),recursive=FALSE,metalink=TRUE)
                 }
             }
+            q(save="no", status = hindcast.run)
+
         }else{
             cmn.log(paste0("Hindcast.run exit code: ",hindcast.run), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
         }
@@ -505,7 +548,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
     ## ------------------------------------------------------------------------------
     # Check if forecast sequence shall be run
-    doForecastSequence <- (applRuntimeOptions$runTypeStateFileCreation != cRunTypeVariantStatefile)
+    doForecastSequence <- (applRuntimeOptions$runTypeStateFileCreation != cRunTypeVariantStatefile &&
+                           hindcast.run == 0)
     if (doForecastSequence) {
 
         #################################################################################
@@ -717,6 +761,19 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         # }
     }
 
+    # Summarize run status for end of workflow, q()
+    run.status <- 0 # OK
+    hindcast.nok <- (hindcast.run != 0)
+    forecast.nok <- (applRuntimeOptions$runTypeStateFileCreation != cRunTypeVariantStatefile && forecast.run != 0)
+    if (hindcast.nok){
+        run.status <- run.status + 1 # NOK
+        cmn.log("HypeApp workflow status, error hindcast", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_Run)
+    }
+    if (forecast.nok){
+        run.status <- run.status + 2 # NOK
+        cmn.log("HypeApp workflow status, error forecast", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_Run)
+    }
+
     ## close and publish the logfile
     status <- cmn.logClose(logHandle)
     # if (status != 0) {
@@ -747,5 +804,5 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     ## 9 - End of workflow
     ## ------------------------------------------------------------------------------
     ## exit with appropriate status code
-    q(save="no", status = 0)
+    q(save="no", status = run.status)
 } # while(length(input

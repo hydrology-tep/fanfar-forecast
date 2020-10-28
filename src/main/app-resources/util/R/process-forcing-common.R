@@ -55,7 +55,8 @@ nameOfSrcFile_PFC <- "/util/R/process-forcing-common.R"
 process_search_and_download <- function(url,
                                         query,
                                         rootDir,
-                                        subDir)
+                                        subDir,
+                                        search=T)
 {
   # Constants
   osClientApp <- "opensearch-client"
@@ -64,24 +65,43 @@ process_search_and_download <- function(url,
   if (! dir.exists(local.dir)){
       dir.create(local.dir)
   }
-  opensearchCmd=paste0(osClientApp," '",url,query,"'"," enclosure")
-  message(opensearchCmd)
-  res_enclosure <- system(command = opensearchCmd,intern = T)
-  if (length(res_enclosure >= 1)) {
-      for (xUrl in 1:length(res_enclosure)) {
-          res_file <- rciop.copy(res_enclosure[xUrl],local.dir)
-          if (res_file$exit.code == 0) {
-              path_plus_filename <- res_file$output
-              # Not used, future?
-          }else {
-              # file was already available in dir (re-downloaded) - $status = character(0)
-              if (length(res_file$output) == 0) {
-                  cmn.log(paste0("File with unknown name are already available in the local dir",local.netcdfDir), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PFC)
-              }
+
+  if (search){
+    opensearchCmd=paste0(osClientApp," '",url,query,"'"," enclosure")
+    message(opensearchCmd)
+    res_enclosure <- system(command = opensearchCmd,intern = T)
+    if (length(res_enclosure >= 1)) {
+        for (xUrl in 1:length(res_enclosure)) {
+            res_file <- rciop.copy(res_enclosure[xUrl],local.dir)
+            if (res_file$exit.code == 0) {
+                path_plus_filename <- res_file$output
+                # Not used, future?
+            }else {
+                # file was already available in dir (re-downloaded) - $status = character(0)
+                #print(list.files(local.dir))
+                if (length(res_file$output) == 0) {
+                    cmn.log(paste0("File with unknown name are already available in the local dir",local.dir), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PFC)
+                }
+            }
+        }
+    }else {
+        cmn.log(paste("No search result for: ",opensearchCmd), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PFC)
+    }
+
+  }else{
+      # No search, download file directly
+      fileURL=paste0(url,query)
+      res_file <- rciop.copy(fileURL,local.dir)
+      if (res_file$exit.code == 0) {
+          path_plus_filename <- res_file$output
+          # Not used, future?
+      }else {
+          # file was already available in dir (re-downloaded) - $status = character(0)
+          #print(list.files(local.dir))
+          if (length(res_file$output) == 0) {
+              cmn.log(paste0("File with unknown name are already available in the local dir",local.dir), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PFC)
           }
       }
-  }else {
-      cmn.log(paste("No search result for: ",opensearchCmd), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PFC)
   }
 
 } # process_search_and_download
@@ -240,6 +260,51 @@ process_check_date_interval_netcdf <- function(startDate,
 } # process_check_date_interval_netcdf
 
 
+process_search_download_check_wrapper <- function(url,
+                                                  query,
+                                                  startDate=NULL,
+                                                  stopDate=NULL,
+                                                  rootDir,
+                                                  subDir=T, # TRUE - variable name (pr,tas,tasmin,tasmax) as dir name
+                                                  filePrefix=NULL,
+                                                  fileSuffix=NULL,
+                                                  filename=NULL, # Path+filename
+                                                  search=T) # TRUE - use opensearch, FALSE - download file via URL 
+{
+    nMissing  = 0
+    nAttempts = 5
+
+    while(nAttempts > 0){
+        if (! is.null(startDate) && ! is.null(stopDate)){
+            process_search_and_download_netcdf(url,query,startDate,stopDate,rootDir,subDir)
+        }else{
+            process_search_and_download(url,query,rootDir,subDir,search)
+        }
+
+        # Check retrieved filenames
+        if (! is.null(filePrefix) && ! is.null(fileSuffix)){
+            nMissing <- process_check_date_interval_netcdf(startDate,stopDate,rootDir,subDir,filePrefix,fileSuffix)
+        }
+        if (! is.null(filename)){
+            if (! file.exists(filename)){
+                nMissing <- 1
+            }
+        }
+
+        if (nMissing > 0){
+            nAttempts = nAttempts - 1
+            cmn.log(paste0(nMissing," file(s) missing for XYZ"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PFC)
+            Sys.sleep(60)
+        }else{
+            nAttempts = 0
+            #cmn.log(paste0(nMissing," file(s) missing NOT for XYZ"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PFC)
+        }
+    }
+    
+    return (nMissing)
+}
+
+
 process_copy_obs_files <- function(fromDir, # Path to produced files
                                    toDir,   # Path to model run dir
                                    publishFiles=F,
@@ -309,27 +374,27 @@ process_copy_obs_files <- function(fromDir, # Path to produced files
       }
   }
 
-  if (file.exists(qobs)) {
-      #nFiles <- nFiles + 1
-      #file.copy(from=qobs,to=toDir,overwrite=TRUE)
-      #cmn.log(paste0("cp ",qobs," to ",toDir,"/"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PFC)
-      if (publishFiles) {
-        toFile = paste0(toDir,"/Qobs-",textFilename,".txt")
-        file.copy(from=qobs,to=toFile)
-        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
-      }
-  }
+#   if (file.exists(qobs)) {
+#       #nFiles <- nFiles + 1
+#       #file.copy(from=qobs,to=toDir,overwrite=TRUE)
+#       #cmn.log(paste0("cp ",qobs," to ",toDir,"/"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PFC)
+#       if (publishFiles) {
+#         toFile = paste0(toDir,"/Qobs-",textFilename,".txt")
+#         file.copy(from=qobs,to=toFile)
+#         rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+#       }
+#   }
 
-  if (file.exists(xobs)) {
-      #nFiles <- nFiles + 1
-      #file.copy(from=xobs,to=toDir,overwrite=TRUE)
-      #cmn.log(paste0("cp ",xobs," to ",toDir,"/"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PFC)
-      if (publishFiles) {
-        toFile = paste0(toDir,"/Xobs-",textFilename,".txt")
-        file.copy(from=xobs,to=toFile)
-        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
-      }
-  }
+#   if (file.exists(xobs)) {
+#       #nFiles <- nFiles + 1
+#       #file.copy(from=xobs,to=toDir,overwrite=TRUE)
+#       #cmn.log(paste0("cp ",xobs," to ",toDir,"/"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PFC)
+#       if (publishFiles) {
+#         toFile = paste0(toDir,"/Xobs-",textFilename,".txt")
+#         file.copy(from=xobs,to=toFile)
+#         rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+#       }
+#   }
 
   if (nFiles < 5) {
     cmn.log("process_hindcast_netcdf2obs(): too few files produced", logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_PFC)

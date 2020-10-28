@@ -11,7 +11,8 @@
     cModelConfigVariant3 <- "WestAfrica-HYPE 0.5 + HydroGFD 2.0 + ECOPER"
     cModelConfigVariant4 <- "WestAfrica-HYPE 1.0 + HydroGFD 3.0 + ECOPER"
     cModelConfigVariant5 <- "Niger-HYPE 2.30 + HydroGFD 3.0 + ECOPER"
-    cModelConfigVariants <- c(cModelConfigVariant1,cModelConfigVariant2,cModelConfigVariant3,cModelConfigVariant4,cModelConfigVariant5)
+    cModelConfigVariant6 <- "WestAfrica-HYPE 1.1 + HydroGFD 3.0 + ECOPER"
+    cModelConfigVariants <- c(cModelConfigVariant1,cModelConfigVariant2,cModelConfigVariant3,cModelConfigVariant4,cModelConfigVariant5,cModelConfigVariant6)
 
     # Global constants not part of application.xml that
     # may be used for comparsion in if-statements etc.
