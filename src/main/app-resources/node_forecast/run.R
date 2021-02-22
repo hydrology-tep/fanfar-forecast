@@ -259,6 +259,13 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     }
     cmn.log(paste0("HYPE model binary file: ",modelBin), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
 
+    # From configuration file
+    modelBinPath = NULL
+    if (! is.null(modelConfigData$modelBinPath)){
+        modelBinPath = modelConfigData$modelBinPath
+        print('modelBinPath from configuration file')
+    }
+
     ## ------------------------------------------------------------------------------
     app.setup <- getHypeAppSetup(modelName = modelName,
                                  modelBin  = modelBin,
@@ -272,6 +279,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                  hype2csvPath = hype2csv.path,
                                  stateFilesPath = state.files.path,
                                  stateFilesIN = state.files,
+                                 modelBinPath = modelBinPath,
                                  debugPublishFiles = debugPublish)
 
     if (verboseVerbose) {

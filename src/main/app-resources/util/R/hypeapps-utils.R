@@ -717,6 +717,7 @@ getHypeAppSetup<-function(modelName,
                           hype2csvPath=NULL,
                           stateFilesPath=NULL,
                           stateFilesIN=NULL,
+                          modelBinPath=NULL,
                           debugPublishFiles=FALSE){
 
 # 
@@ -820,7 +821,12 @@ getHypeAppSetup<-function(modelName,
     if (app.sys=='local' || app.sys=='server'){
       modelBinaryFile=paste(appDir,modelBin,sep="/")
     }else if(app.sys=="tep"){
-      modelBinaryFile=paste(appDir,'util/bin',modelBin,sep="/")
+      if (is.null(modelBinPath)){
+        modelBinaryFile=paste(appDir,'util/bin',modelBin,sep="/")
+      }else{
+        modelBinaryFile=paste(modelBinPath,modelBin,sep="/")
+      }
+      
     }else{
       modelBinaryFile=paste(appDir,'util/bin',modelBin,sep="/")
     }

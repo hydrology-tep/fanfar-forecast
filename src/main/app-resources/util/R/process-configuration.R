@@ -194,7 +194,8 @@ check_file_exist <- function(absPath)
 
 # Search for the HYPE model configuration and download the model data
 search_download_model_configuration <- function(url,
-                                                query)
+                                                query,
+                                                tmp_dir=paste0(TMPDIR,"/hype-model/config"))
 {
     # Outputs
     modelConfigPath <- NULL
@@ -211,8 +212,8 @@ search_download_model_configuration <- function(url,
     cmn.log(res_enclosure, logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
 
     # Download
-    tmp_dir=paste0(TMPDIR,"/hype-model/config")
-    res_copy <- rciop.copy(res_enclosure,target=tmp_dir,uncompress=TRUE,createOutputDirectory=TRUE)
+    #tmp_dir=paste0(TMPDIR,"/hype-model/config")
+    res_copy <- rciop.copy(res_enclosure,target=tmp_dir,uncompress=TRUE,createOutputDirectory=TRUE) # Uncompress when non-zip?
 
     if (res_copy$exit.code==0) {
         modelConfigPath <- res_copy$output
@@ -443,6 +444,7 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
     configGridLinkFilename <- NULL
     reforecastingMethod    <- NULL
     modelBin               <- NULL
+    modelBinPath           <- NULL
     enableAnadia           <- NULL
     python3Dbfread         <- NULL
     
@@ -462,6 +464,8 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
     local.modelConfigQuery <- NULL
     local.hydroGFDConfigUrl <- NULL
     local.hydroGFDConfigQuery <- NULL
+    local.modelBinUrl <- NULL
+    local.modelBinQuery <- NULL
     for (r in 1:nrow(main_config_data)) {
         subdir <- main_config_data[r,'localdirectory']
         if (subdir == 'model-config-name') {
@@ -494,6 +498,10 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
         if (subdir == 'model-bin') {
             # Filename of HYPE binary/executable file
             modelBin <- as.character(main_config_data[r,'searchquery'])
+        }
+        if (subdir == 'model-bin-search') {
+            local.modelBinUrl   <- main_config_data[r,'url']
+            local.modelBinQuery <- main_config_data[r,'searchquery']
         }
         if (subdir == 'enable-anadia') {
             # Enable alternative data source TRUE/FALSE
@@ -631,6 +639,13 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
     modelFiles <- search_download_model_configuration(local.modelConfigUrl,
                                                       local.modelConfigQuery)
     #print(list.files(modelFiles))
+    if ((! is.null(modelBin)) & (! is.null(local.modelBinUrl)) & (! is.null(local.modelBinQuery))){
+        # Download binary file, use filename from variable modelBin
+        modelBinPath <- search_download_model_configuration(local.modelBinUrl, # Use a separate function due to uncompress?
+                                                            local.modelBinQuery,
+                                                            tmp_dir=paste0(TMPDIR,"/bin"))
+    }
+    print(list.files(modelBinPath))
 
     # GFD/HydroGFD
     meteoConfigSearch <- search_download_meteo_configuration(local.hydroGFDConfigUrl,
@@ -648,6 +663,9 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
     if (! is.null(modelBin)){
         cmn.log(paste0("HYPE binary/executable:  ",modelBin), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
     }
+    if (! is.null(modelBinPath)){
+        cmn.log(paste0("HYPE binary/executable path:  ",modelBinPath), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+    }
     cmn.log("-------------------------------------------", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
 
     output <- list("modelConfigName"=modelConfigName, # Do not use for if statements etc. Rather use the individual parts meteoHindcast etc.
@@ -660,6 +678,7 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
                    "configGridLinkFilename"=configGridLinkFilename,
                    "reforecastingMethod"=reforecastingMethod,
                    "modelBin"=modelBin,
+                   "modelBinPath"=modelBinPath,
                    "enableAnadia"=enableAnadia,
                    "python3Dbfread"=python3Dbfread)
 
