@@ -326,6 +326,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             localCSVDir=NULL,
             enableAnadia,
             moduleDbfreadPath=moduleDbfreadPath,
+            scriptPath=modelBinPath,
             #outputFileSubidUpdated=paste0(TMPDIR,"/updated_subids.txt"),
             debugPublishFiles=publishHindcastForcingFiles,
             verbose=verbose)

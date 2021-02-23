@@ -180,9 +180,14 @@ read_geodata <- function(gdf) { # gfd<-geodataFile
   colnames(gd)<-toupper(colnames(gd))  # convert to uppercase to simplify stuff later
 
   if (is_geodata_rc_attr(gd)){
-    gd[which(gd[,"MRRATCK_NOI"]==0),"MRRATCK_NOI"] <- NA  # set zero to missing, possibly adapt if it changes to -9999 or whatever...
-    gd[which(gd[,"MRRATCP_NOI"]==0),"MRRATCP_NOI"] <- NA  # set zero to missing, possibly adapt if it changes to -9999 or whatever...
-    gd[which(gd[,"MRRATCW0"]==0),"MRRATCW0"] <- NA  # set zero to missing, possibly adapt if it changes to -9999 or whatever...    
+    # set zero and -9999 to missing, possibly adapt if it changes to whatever...
+    gd[which(gd[,"MRRATCK_NOI"]==0),"MRRATCK_NOI"] <- NA
+    gd[which(gd[,"MRRATCP_NOI"]==0),"MRRATCP_NOI"] <- NA
+    gd[which(gd[,"MRRATCW0"]==0),"MRRATCW0"] <- NA
+
+    gd[which(gd[,"MRRATCK_NOI"]==-9999),"MRRATCK_NOI"] <- NA
+    gd[which(gd[,"MRRATCP_NOI"]==-9999),"MRRATCP_NOI"] <- NA
+    gd[which(gd[,"MRRATCW0"]==-9999),"MRRATCW0"] <- NA
   }else{
     cmn.log('GeoData.txt does not contain rating curve attributes: MRRATCK_NOI,MRRATCP_NOI,MRRATCW0', logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
   }
@@ -398,6 +403,7 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
                                      localCSVDir=NULL,    # For app.sys!="tep", dir with csv files
                                      enableAnadia=F,      # Enable download of local observations from Anadia and convert to H-TEP format
                                      moduleDbfreadPath=NULL, # Path to python module dbfread
+                                     scriptPath=NULL,     # Path to python download script
                                      #outputFileSubidUpdated=NULL, # Path + filename of csv file to contain recently updated SUBIDs
                                      debugPublishFiles=F, # Condition to publish files during development
                                      verbose=F)           # More output
@@ -469,8 +475,14 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
         }
 
         if (enableAnadia){
-            app_path = Sys.getenv("_CIOP_APPLICATION_PATH")
-            command = paste(app_path,'util/python','download_convert_Anadia.py',sep="/")
+            if (! is.null(scriptPath)){
+              app_path = scriptPath
+            }else{
+              app_path = Sys.getenv("_CIOP_APPLICATION_PATH")
+              app_path = paste(app_path,'util/python',sep="/")
+            }
+            
+            command = paste(app_path,'download_convert_Anadia.py',sep="/")
 
             if (! file.exists(command)){
                 cmn.log(paste0(command,' - file do not exist'), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
