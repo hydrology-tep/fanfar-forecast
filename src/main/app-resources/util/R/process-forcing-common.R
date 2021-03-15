@@ -326,7 +326,8 @@ process_copy_obs_files <- function(fromDir, # Path to produced files
       if (publishFiles) {
         toFile = paste0(fromDir,"/Pobs-",textFilename,".txt")
         file.copy(from=pobs,to=toFile)
-        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+        #rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+	rciop_publish_extended(fromDir,toFile)
       }
   }
 
@@ -337,7 +338,8 @@ process_copy_obs_files <- function(fromDir, # Path to produced files
       if (publishFiles) {
         toFile = paste0(fromDir,"/Tobs-",textFilename,".txt")
         file.copy(from=tobs,to=toFile)
-        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+        #rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+	rciop_publish_extended(fromDir,toFile)
       }
   }
 
@@ -348,7 +350,8 @@ process_copy_obs_files <- function(fromDir, # Path to produced files
       if (publishFiles) {
         toFile = paste0(fromDir,"/TMINobs-",textFilename,".txt")
         file.copy(from=tminobs,to=toFile)
-        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+        #rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+	rciop_publish_extended(fromDir,toFile)
       }
   }
 
@@ -359,7 +362,8 @@ process_copy_obs_files <- function(fromDir, # Path to produced files
       if (publishFiles) {
         toFile = paste0(fromDir,"/TMAXobs-",textFilename,".txt")
         file.copy(from=tmaxobs,to=toFile)
-        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+        #rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+	rciop_publish_extended(fromDir,toFile)
       }
   }
 
@@ -370,7 +374,8 @@ process_copy_obs_files <- function(fromDir, # Path to produced files
       if (publishFiles) {
         toFile = paste0(fromDir,"/ForcKey-",textFilename,".txt")
         file.copy(from=forckey,to=toFile)
-        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+        #rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+	rciop_publish_extended(fromDir,toFile)
       }
   }
 
