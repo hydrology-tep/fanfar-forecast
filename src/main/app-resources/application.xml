@@ -11,8 +11,9 @@
             <!-- <option>WorldWide-HYPE 1.3.6 + HydroGFD 2.0 + ECOPER</option> -->
             <!-- <option>WestAfrica-HYPE 0.5 + HydroGFD 2.0 + ECOPER</option> -->
             <!-- <option>WestAfrica-HYPE 1.0 + HydroGFD 3.0 + ECOPER</option> -->
-            <option>WestAfrica-HYPE 1.1 + HydroGFD 3.0 + ECOPER</option>
-            <default>WestAfrica-HYPE 1.1 + HydroGFD 3.0 + ECOPER</default>
+            <!-- <option>WestAfrica-HYPE 1.1 + HydroGFD 3.0 + ECOPER</option> -->
+            <option>WestAfrica-HYPE 1.2 + HydroGFD 3.0 + ECOPER</option>
+            <default>WestAfrica-HYPE 1.2 + HydroGFD 3.0 + ECOPER</default>
           </options>
         </parameter>
 

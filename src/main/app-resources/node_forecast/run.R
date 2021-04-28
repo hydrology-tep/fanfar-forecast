@@ -242,13 +242,13 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         if (modelConfigData$hydrologicalModel == cHydrologicalModelVariant2) {
             modelBin  <- "hype-5.8.0.exe"
         }else{
-            modelBin  <- "hype-5.11.3.exe"
+            modelBin  <- "hype-5.14.0"
         }
 
     }else{
         # Default
         modelName <- "westafrica-hype"
-        modelBin  <- "hype-5.8.0.exe"
+        modelBin  <- "hype-5.14.0"
         print('modelBin from model default')
     }
 
