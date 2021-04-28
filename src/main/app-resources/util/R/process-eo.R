@@ -90,8 +90,7 @@ read.csv.batch<-function(path,debugPublish=F){ #path<-tmpDir
       fname = paste(path,"/",files[i],sep="")
 
       if (debugPublish) {
-        #rciop.publish(path=fname, recursive=FALSE, metalink=TRUE)
-	rciop_publish_extended(path,fname)
+        rciop.publish(path=fname, recursive=FALSE, metalink=TRUE)
       }
 
       mycsv<-read.htep.csv.file(csvfile = fname,supported_vars)
@@ -633,12 +632,10 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
     if (debugPublishFiles){
         if(app_sys == 'tep'){
             if (file.exists(init_qobs_file)){
-                #rciop.publish(path=init_qobs_file,recursive=FALSE,metalink=TRUE)
-		rciop_publish_extended(modelFilesRunDir,init_qobs_file)
+                rciop.publish(path=init_qobs_file,recursive=FALSE,metalink=TRUE)
             }
             if (file.exists(new_qobs_file)){
-                #rciop.publish(path=new_qobs_file,recursive=FALSE,metalink=TRUE)
-		rciop_publish_extended(modelFilesRunDir,new_qobs_file)
+                rciop.publish(path=new_qobs_file,recursive=FALSE,metalink=TRUE)
             }
         }else{
             # Rename file?
