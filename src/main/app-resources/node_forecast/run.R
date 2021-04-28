@@ -163,7 +163,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/hypeapps-environment.R",sep="/"))
         source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/hypeapps-utils.R", sep="/"))
-        source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-eo.R",sep="/"))
+        source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/update_obs.R",sep="/"))
 
     }else if(app.sys=="win"){
         if (modelConfigData$meteoHindcast == cMeteoHindcastVariant2) {
@@ -177,7 +177,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
 
         source("application/util/R/hypeapps-environment.R")
         source("application/util/R/hypeapps-utils.R")
-        source("application/util/R/process-eo.R")
+        source("application/util/R/update_obs.R")
     }
     cmn.log("Libraries loaded and common utilities sourced", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
 
@@ -316,7 +316,7 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             print(paste0('python3Dbfread from configuration file ',moduleDbfreadPath))
         }
 
-        process_eo_data_physical(
+        update_obs_data_physical(
             app_sys=app.sys,
             qobsFile=paste0(app.setup$runDir,"/Qobs.txt"),
             shapefileDbf=paste0(modelConfigData$modelFiles,"/subidshapefile/SUBID-StationID-linkage.dbf"),

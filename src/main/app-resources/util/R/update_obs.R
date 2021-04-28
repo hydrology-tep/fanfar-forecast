@@ -10,7 +10,7 @@ library(foreign)
 
 
 # CONSTANTS
-nameOfSrcFile_EOP = '/util/R/process-eo.R'
+nameOfSrcFile_EOP = '/util/R/update_obs.R'
 
 
 ######################
@@ -394,7 +394,7 @@ subids_updated <- function(in_file='Qobs.txt',
 # External function
 # Wrapper for updating Qobs with discharge data from physical stations
 # Output: When successful, file 'Qobs.txt' updated in dir modelFilesRunDir
-process_eo_data_physical <- function(app_sys,             # Reduce global configuration settings (variable app.sys) if needed
+update_obs_data_physical <- function(app_sys,             # Reduce global configuration settings (variable app.sys) if needed
                                      qobsFile,            # Path + filename
                                      shapefileDbf,        # Path + filename of shapefile with station id
                                      geodataFile,         # Path + filename of geodata
