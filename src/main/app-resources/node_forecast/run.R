@@ -80,6 +80,31 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         rciop.log("DEBUG", paste(" R session working directory set to ",TMPDIR,sep=""), nameOfSrcFile_Run)
     }
 
+    rciop_publish_extended <- function(path,pathplusfile,cmnlog=TRUE,listfiles=TRUE)
+    {
+	if (listfiles){
+	   if (cmnlog){
+	      cmn.log(paste0(list.files(path)), logHandle, rciopStatus="DEBUG", rciopProcess="run.R")
+	   }else{
+	      print(paste0(list.files(path)))
+	   }
+	}
+
+	if (cmnlog){
+	   cmn.log(paste("cmd:","rciop.publish(path=",pathplusfile,", recursive=FALSE, metalink=TRUE",")"), logHandle, rciopStatus="DEBUG", rciopProcess="run.R")
+	}else{
+	   print(paste("cmd:","rciop.publish(path=",pathplusfile,", recursive=FALSE, metalink=TRUE",")"))
+	}
+
+	res_pub=rciop.publish(path=pathplusfile, recursive=FALSE, metalink=TRUE)
+
+	if (cmnlog){
+	   cmn.log(paste("res_pub=rciop.publish()",res_pub,pathplusfile, sep=" "), logHandle, rciopStatus="DEBUG", rciopProcess="run.R")
+	}else{
+	   print(paste("res_pub=rciop.publish()",res_pub,pathplusfile, sep=" "))
+	}
+    }
+
     ## ------------------------------------------------------------------------------
     ## Load common log functions and setup redirection of log text to log file, stdout and rciop
     if(app.sys=="tep") {
@@ -288,9 +313,12 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     }
     if (debugPublish) {
         toFile = paste(app.setup$runDir,"info-hindcast-template.txt",sep="/")
-        rciop.publish(path=toFile, recursive=FALSE, metalink=TRUE)
+        #res_pub=rciop.publish(path=toFile, recursive=FALSE, metalink=TRUE)
+	rciop_publish_extended(app.setup$runDir,toFile)
+
         toFile = paste(app.setup$runDir,"info-forecast-template.txt",sep="/")
-        rciop.publish(path=toFile, recursive=FALSE, metalink=TRUE)
+        #res_pub=rciop.publish(path=toFile, recursive=FALSE, metalink=TRUE)
+	rciop_publish_extended(app.setup$runDir,toFile)
     }
 
     # Set initial status to NOK
@@ -342,7 +370,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                         variant=2)
     if(app.sys == "tep"){
         if (file.exists(output_subid_file)){
-            rciop.publish(path=output_subid_file,recursive=FALSE,metalink=TRUE)
+            #rciop.publish(path=output_subid_file,recursive=FALSE,metalink=TRUE)
+	    rciop_publish_extended(TMPDIR,output_subid_file)
         }
     }
 
@@ -487,7 +516,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     if(file.exists(fromFile)) {
         file.copy(from=fromFile,to=toFile,overwrite=T) # Rename file
         cmn.log(paste0("cp ",fromFile," to ",toFile), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
-        rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+        #rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+	rciop_publish_extended(app.setup$runDir,toFile)
     }else {
         cmn.log(paste0("File missing: ",fromFile), logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_Run)
         #q()
@@ -510,7 +540,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             status <- cmn.logClose(logHandle)
             if(app.sys=="tep"){
                 if (file.exists(logHandle$file)) {
-                    rciop.publish(path=logHandle$file, recursive=FALSE, metalink=TRUE)
+                    #rciop.publish(path=logHandle$file, recursive=FALSE, metalink=TRUE)
+		    rciop_publish_extended(TMPDIR,logHandle$file)
                 }
             }
 
@@ -518,7 +549,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             hyssLogFiles = dir(path=app.setup$runDir,pattern=".log")
             if (length(hyssLogFiles) > 0){
                 for (i in 1:length(hyssLogFiles)) {
-                    rciop.publish(path=paste(app.setup$runDir,hyssLogFiles[i],sep="/"),recursive=FALSE,metalink=TRUE)
+                    #rciop.publish(path=paste(app.setup$runDir,hyssLogFiles[i],sep="/"),recursive=FALSE,metalink=TRUE)
+		    rciop_publish_extended(app.setup$runDir,paste(app.setup$runDir,hyssLogFiles[i],sep="/"))
                 }
             }
             q(save="no", status = hindcast.run)
@@ -534,7 +566,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         doPublishFile <- ((applRuntimeOptions$runTypeStateFileCreation == cRunTypeVariantStatefile) || debugPublish)
         if (doPublishFile) {
             if(file.exists(stateFile)) {
-                rciop.publish(path=stateFile,recursive=FALSE,metalink=TRUE)
+                #rciop.publish(path=stateFile,recursive=FALSE,metalink=TRUE)
+		rciop_publish_extended(paste0(app.setup$runDir,"/hindcast"),stateFile)
             }else {
                 cmn.log(paste0("File missing: ",stateFile), logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_Run)
                 #q()
@@ -618,7 +651,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                 file.copy(from=stateFile,to=app.setup$runDir,overwrite=TRUE)
                 cmn.log(paste0("cp ",stateFile," to ",app.setup$runDir,"/"), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
                 if (debugPublish) {
-                    rciop.publish(path=stateFile,recursive=FALSE,metalink=TRUE)
+                    #rciop.publish(path=stateFile,recursive=FALSE,metalink=TRUE)
+		    rciop_publish_extended(paste0(app.setup$runDir,"/hindcast"),stateFile)
                 }
             }else {
                 cmn.log(paste0("File missing: ",stateFile), logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_Run)
@@ -677,7 +711,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         if(file.exists(fromFile)) {
             file.copy(from=fromFile,to=toFile,overwrite=T) # Rename file
             cmn.log(paste0("cp ",fromFile," to ",toFile), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
-            rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+            #rciop.publish(path=toFile,recursive=FALSE,metalink=TRUE)
+	    rciop_publish_extended(app.setup$runDir,toFile)
         }else {
             cmn.log(paste0("File missing: ",fromFile), logHandle, rciopStatus="ERROR", rciopProcess=nameOfSrcFile_Run)
             #q()
@@ -757,8 +792,14 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     # }
 
     if(app.sys=="tep"){
+	listpath=outDir = paste(app.setup$tmpDir,'output/forecast',sep="/")
+        cmn.log(paste0(list.files(listpath)), logHandle, rciopStatus="DEBUG", rciopProcess="run.R")
+	listpath=outDir = paste(app.setup$tmpDir,'output/hindcast',sep="/")
+        cmn.log(paste0(list.files(listpath)), logHandle, rciopStatus="DEBUG", rciopProcess="run.R")
+
         for(k in 1:length(app.outfiles)){
-            rciop.publish(path=app.outfiles[k], recursive=FALSE, metalink=TRUE)
+            #rciop.publish(path=app.outfiles[k], recursive=FALSE, metalink=TRUE)
+	    rciop_publish_extended(appSetup$tmpDir,app.outfiles[k],listfiles=FALSE) # Ignore path, used when listfiles
         }
         cmn.log("HypeApp outputs published", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
 
@@ -791,7 +832,8 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     # }
     if(app.sys=="tep"){
         if (file.exists(logHandle$file)) {
-            rciop.publish(path=logHandle$file, recursive=FALSE, metalink=TRUE)
+            #rciop.publish(path=logHandle$file, recursive=FALSE, metalink=TRUE)
+	    rciop_publish_extended(TMPDIR,logHandle$file,cmnlog=FALSE) # log file closed
         }
     }
 
