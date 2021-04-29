@@ -90,24 +90,24 @@ process_configuration_application_runtime_options <- function(applInput=NULL) # 
 
             }else if ((modelConfigIn == cModelConfigVariant5) & (assimOnARUpd == FALSE)) {
                 prelModelConfig <- cModelConfigVariant5
-                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=3EF24C77C347F6591BD9AB6CFDF1F0BA4D20DB9F" #ToDo: Possibly update
+                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=C15BDA21E2583318EB161B4C49BE413252ADBFAE"
                 urlSelected <- TRUE
 
             }else if ((modelConfigIn == cModelConfigVariant5) & (assimOnARUpd == TRUE)) {
                 # Configuration with a state file supporting AR update
                 prelModelConfig <- cModelConfigVariant5
-                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=E99144FB1343B9589D500CC2360E2A59F6E57212" #ToDo: Possibly update
+                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=4EDE9B27AF61530627F476AACC92C39A1BD5E623"
                 urlSelected <- TRUE
 
             }else if ((modelConfigIn == cModelConfigVariant6) & (assimOnARUpd == FALSE)) {
                 prelModelConfig <- cModelConfigVariant6
-                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=9300B348874866513F405D46E94EBF2E8841BE52" #ToDo: Possibly update
+                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=40E84875034F8AAFC2E5CD71D9AE60D066F32076"
                 urlSelected <- TRUE
 
             }else if ((modelConfigIn == cModelConfigVariant6) & (assimOnARUpd == TRUE)) {
                 # Configuration with a state file supporting AR update
                 prelModelConfig <- cModelConfigVariant6
-                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=CBA9FE3F0A2352C886A7B538E6F7A847390C06B7" #ToDo: Possibly update
+                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=5BB8CDCF2F1C19854F92334562049E10EB4717B6"
                 urlSelected <- TRUE
 
             }
