@@ -161,8 +161,7 @@ read_qobs <- function(csv_file)
     # If logical types exists, replace value in first row for a column with a numeric value and restore to NA
     col_types=sapply(df_qobs,typeof)
     col_logical_idx=col_types=="logical" # col_logical=col_types=="character"
-    df_qobs[1,col_logical_idx]=9999
-    df_qobs[1,col_logical_idx]=NA
+    df_qobs[,col_logical_idx]=sapply(df_qobs[,col_logical_idx],as.numeric)
 
     return (list('last_date'=last_date,
                  'next_date'=next_date,
@@ -303,6 +302,7 @@ rating.curve<-function(h=NULL,c,e,b,Q=NULL,opt="forward",listout=F){
     # e = base reference waterlevel (mrratcw0 in geodata)
     # b = exponent in the rating curve (mrratcp_noi or mrratcp_ice, depending on ice conditions)
     # Q is discharge vector
+    #https://stackoverflow.com/questions/32847363/weird-nan-when-raising-a-number-to-a-non-integer-power
   if(opt=="forward"){
     if(!is.null(h[1])){
       Q=c*(h-e)^b
@@ -437,6 +437,9 @@ update_obs_data_physical <- function(app_sys,             # Reduce global config
 
     # Outputs/Internal status
     use_new_qobs = FALSE
+
+    # Report NaN once
+    flag_nans = TRUE
 
 
     # Check inputs, otherwise return and continue without EO
@@ -648,6 +651,13 @@ update_obs_data_physical <- function(app_sys,             # Reduce global config
 
                 # Handle any nan values from calculations
                 #thisq[is.nan(thisq)]=NA
+
+                if (flag_nans){
+                  if (sum(is.nan(thisq)) > 0){
+                    cmn.log('Qobs.txt: Some subids contains NaN values', logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+                    flag_nans = FALSE
+                  }
+                }
 
                 # plot(as.POSIXct(as.character(dimnames(physical_data)[["Date"]][which(!is.na(mm))]),tz="GMT"),thisq,type="l",main=paste(htepstn[i],"\nSUBID",mysubid),xlab="",ylab="Discharge(m3/s)"); summary(thisq)
                 # lines(as.POSIXct(as.character(dimnames(physical_data)[["Date"]][which(!is.na(mm))]),tz="GMT"),physical_data[which(!is.na(mm)),match(htepstn[i],dimnames(physical_data)[["Stn"]]),"DerivedDischarge"],col="red")
