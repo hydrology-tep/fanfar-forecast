@@ -10,7 +10,7 @@ library(foreign)
 
 
 # CONSTANTS
-nameOfSrcFile_EOP = '/util/R/process-eo.R'
+nameOfSrcFile_EOP = '/util/R/update_obs.R'
 
 
 ######################
@@ -31,6 +31,11 @@ read.htep.csv.file<-function(csvfile,supp_vars,verbose=F){ # csvfile<-"./physica
     print(csvfile)
   }
   csvdata = read.csv(file = csvfile,header = T,stringsAsFactors = F)  # tail(csvdata)
+  # Check if last row is corrupt (contains NA), remove last row
+  lastrowna=sum(is.na(csvdata[nrow(csvdata),])) > 0
+  if (lastrowna) {
+    csvdata=csvdata[-nrow(csvdata),]
+  }
   csvdata$date=as.POSIXct(as.character(csvdata$Timestamp),tz = "GMT")
   #head(csvdata)
   
@@ -90,8 +95,7 @@ read.csv.batch<-function(path,debugPublish=F){ #path<-tmpDir
       fname = paste(path,"/",files[i],sep="")
 
       if (debugPublish) {
-        #rciop.publish(path=fname, recursive=FALSE, metalink=TRUE)
-	rciop_publish_extended(path,fname)
+        rciop.publish(path=fname, recursive=FALSE, metalink=TRUE)
       }
 
       mycsv<-read.htep.csv.file(csvfile = fname,supported_vars)
@@ -153,6 +157,12 @@ read_qobs <- function(csv_file)
 
     next_date = last_date + 86400
 
+    # Either is not always rows in Qobs.txt equally, so fread has padded with a value (NA) and of the first type (logical)
+    # If logical types exists, replace value in first row for a column with a numeric value and restore to NA
+    col_types=sapply(df_qobs,typeof)
+    col_logical_idx=col_types=="logical" # col_logical=col_types=="character"
+    df_qobs[,col_logical_idx]=sapply(df_qobs[,col_logical_idx],as.numeric)
+
     return (list('last_date'=last_date,
                  'next_date'=next_date,
                  'df_qobs'=df_qobs))
@@ -160,36 +170,46 @@ read_qobs <- function(csv_file)
 }
 
 
-# Check if GeoData.txt contains rating curve attributes
-is_geodata_rc_attr <- function(geodata)
+# Check if riverRatingCurveData contains rating curve attributes
+# Assumes capital column names
+is_river_rc_attr <- function(df)
 {
-    status = FALSE
-    if ( ("MRRATCK_NOI" %in% colnames(geodata)) & 
-         ("MRRATCP_NOI" %in% colnames(geodata)) &
-         ("MRRATCW0" %in% colnames(geodata)) ){
-        status = TRUE
-    }
-    return (status)
+  status = FALSE
+  if ( ("K" %in% colnames(df)) &
+       ("P" %in% colnames(df)) &
+       ("GAUGEZERO" %in% colnames(df)) &
+       ("W0REF" %in% colnames(df)) &
+       ("UNITCONV" %in% colnames(df)) &
+       ("WMIN" %in% colnames(df)) &
+       ("WMAX" %in% colnames(df)) ){
+      status = TRUE
+  }
+  return (status)
 }
 
 
-# Read GeoData  (note if needed it can be moved to the other script with functions)
-read_geodata <- function(gdf) { # gfd<-geodataFile
+# Read RiverRatingCurveData  (note if needed it can be moved to the other script with functions)
+read_riverratingcurvedata <- function(filename) { # filename<-riverratingdataFile
   status = 0 # OK
 
-  gd<-read.table(gdf,header=T,sep = "\t")  # can be optimized if it is slow to read everything...
-  colnames(gd)<-toupper(colnames(gd))  # convert to uppercase to simplify stuff later
+  df<-read.table(filename,header=T,sep = "\t")  # can be optimized if it is slow to read everything...
+  colnames(df)<-toupper(colnames(df))  # convert to uppercase to simplify stuff later
 
-  if (is_geodata_rc_attr(gd)){
-    gd[which(gd[,"MRRATCK_NOI"]==0),"MRRATCK_NOI"] <- NA  # set zero to missing, possibly adapt if it changes to -9999 or whatever...
-    gd[which(gd[,"MRRATCP_NOI"]==0),"MRRATCP_NOI"] <- NA  # set zero to missing, possibly adapt if it changes to -9999 or whatever...
-    gd[which(gd[,"MRRATCW0"]==0),"MRRATCW0"] <- NA  # set zero to missing, possibly adapt if it changes to -9999 or whatever...    
+  if (is_river_rc_attr(df)){
+    # set -9999 to missing, possibly adapt if it changes to whatever...
+    df[which(df[,"K"]==-9999),"K"] <- NA
+    df[which(df[,"P"]==-9999),"P"] <- NA
+    df[which(df[,"GAUGEZERO"]==-9999),"GAUGEZERO"] <- NA
+    df[which(df[,"W0REF"]==-9999),"W0REF"] <- NA
+    df[which(df[,"UNITCONV"]==-9999),"UNITCONV"] <- NA
+    df[which(df[,"WMIN"]==-9999),"WMIN"] <- NA
+    df[which(df[,"WMAX"]==-9999),"WMAX"] <- NA
   }else{
-    cmn.log('GeoData.txt does not contain rating curve attributes: MRRATCK_NOI,MRRATCP_NOI,MRRATCW0', logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+    cmn.log('RiverRatingCurveData.txt does not contain rating curve attributes: K,P,W0REF,UNITCONV,WMIN or WMAX', logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
   }
 
-  #gd[1:10,1:10]
-  return(gd)
+  #df[1:10,1:10]
+  return(df)
 }
 
 
@@ -282,6 +302,7 @@ rating.curve<-function(h=NULL,c,e,b,Q=NULL,opt="forward",listout=F){
     # e = base reference waterlevel (mrratcw0 in geodata)
     # b = exponent in the rating curve (mrratcp_noi or mrratcp_ice, depending on ice conditions)
     # Q is discharge vector
+    #https://stackoverflow.com/questions/32847363/weird-nan-when-raising-a-number-to-a-non-integer-power
   if(opt=="forward"){
     if(!is.null(h[1])){
       Q=c*(h-e)^b
@@ -390,15 +411,16 @@ subids_updated <- function(in_file='Qobs.txt',
 # External function
 # Wrapper for updating Qobs with discharge data from physical stations
 # Output: When successful, file 'Qobs.txt' updated in dir modelFilesRunDir
-process_eo_data_physical <- function(app_sys,             # Reduce global configuration settings (variable app.sys) if needed
+update_obs_data_physical <- function(app_sys,             # Reduce global configuration settings (variable app.sys) if needed
                                      qobsFile,            # Path + filename
                                      shapefileDbf,        # Path + filename of shapefile with station id
-                                     geodataFile,         # Path + filename of geodata
+                                     riverratingdataFile, # Path + filename of riverratingcurvedata
                                      modelFilesRunDir,    # HYPE model data files dir, output dir
                                      tmpDir,              # For app.sys=="tep", temporary dir to use for download of csv files, created by ciop-copy
                                      localCSVDir=NULL,    # For app.sys!="tep", dir with csv files
                                      enableAnadia=F,      # Enable download of local observations from Anadia and convert to H-TEP format
                                      moduleDbfreadPath=NULL, # Path to python module dbfread
+                                     scriptPath=NULL,     # Path to python download script
                                      #outputFileSubidUpdated=NULL, # Path + filename of csv file to contain recently updated SUBIDs
                                      debugPublishFiles=F, # Condition to publish files during development
                                      verbose=F)           # More output
@@ -406,14 +428,18 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
     if (verbose){
         print(paste0('qobsFile: ',qobsFile))
         print(paste0('shapefileDbf: ',shapefileDbf))
-        print(paste0('geodataFile: ',geodataFile))
+        print(paste0('riverratingdataFile: ',riverratingdataFile))
         print(paste0('modelFilesRunDir: ',modelFilesRunDir))
         print(paste0('tmpDir: ',tmpDir))
+        print(paste0('localCSVDir: ',localCSVDir))
         print(paste0('debugPublishFiles: ',debugPublishFiles))
     }
 
     # Outputs/Internal status
     use_new_qobs = FALSE
+
+    # Report NaN once
+    flag_nans = TRUE
 
 
     # Check inputs, otherwise return and continue without EO
@@ -426,10 +452,10 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
         cmn.log('Shapefile missing, continuing without EO', logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
         return ()
     }
-
-    if (! file.exists(geodataFile)){
-        cmn.log('GeoData.txt missing, continuing without EO', logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
-        return ()
+    
+    if (! file.exists(riverratingdataFile)){
+      cmn.log('RiverRatingCurveData.txt missing, continuing without observations', logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+      return ()
     }
 
     # Read Qobs.txt
@@ -445,8 +471,8 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
     # Read and filter stationid subid table
     dbf_df = read_stations_from_dbf(shapefile_dbf=shapefileDbf)
     
-    # read geodata file
-    geodata <- read_geodata(geodataFile)  #geodata[1:10,1:10]; colnames(geodata)
+    # read riverratingdata file
+    ratingcurvedata <- read_riverratingcurvedata(riverratingdataFile)  #ratingcurvedata[1:10,1:10]; colnames(ratingcurvedata)
 
     # Search and download data for physical stations
     if(app_sys == 'tep'){
@@ -470,8 +496,14 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
         }
 
         if (enableAnadia){
-            app_path = Sys.getenv("_CIOP_APPLICATION_PATH")
-            command = paste(app_path,'util/python','download_convert_Anadia.py',sep="/")
+            if (! is.null(scriptPath)){
+              app_path = scriptPath
+            }else{
+              app_path = Sys.getenv("_CIOP_APPLICATION_PATH")
+              app_path = paste(app_path,'util/python',sep="/")
+            }
+            
+            command = paste(app_path,'download_convert_Anadia.py',sep="/")
 
             if (! file.exists(command)){
                 cmn.log(paste0(command,' - file do not exist'), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
@@ -507,9 +539,20 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
     
     # Combine data
       # initiate temporary df to store data after qobs.init last date and identify stations to process
-      newdates<-seq(as.Date(tail(qobs.init[,"DATE"],n=1L))+1,tail(sort(as.Date(dimnames(physical_data)$Date)),n=1L),by=1)
-      tempdf<-as.data.frame(matrix(data=NA,nrow=length(newdates),ncol=ncol(qobs.init)));colnames(tempdf)<-colnames(qobs.init)  # object with new data in qobs format
-      tempdf$DATE<-as.POSIXct(as.character(newdates),tz="GMT")
+      startdate<-as.Date(tail(qobs.init[,"DATE"],n=1L))+1
+      enddate<-tail(sort(as.Date(dimnames(physical_data)$Date)),n=1L)
+      extend_qobs<-TRUE # Control if qobs.init shall be extended
+      if (startdate >= enddate){
+        extend_qobs<-FALSE
+      }
+      if (extend_qobs){
+        newdates<-seq(startdate,enddate,by=1)
+        tempdf<-as.data.frame(matrix(data=NA,nrow=length(newdates),ncol=ncol(qobs.init)));colnames(tempdf)<-colnames(qobs.init)  # object with new data in qobs format
+        tempdf$DATE<-as.POSIXct(as.character(newdates),tz="GMT")
+      }else{
+        # Update existing
+        tempdf<-qobs.init
+      }
       mm<-match(dimnames(physical_data)[["Date"]],as.character(tempdf$DATE)) # match dates
       htepstn<-dimnames(physical_data)$Stn      
 
@@ -527,7 +570,7 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
             
             if (! (mysubid %in% colnames(tempdf))){
               cmn.log(paste0('New SUBID, append to Qobs.txt: ',mysubid), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
-              tempdf$NEWSUBID<-rep(NA,length(newdates))
+              tempdf$NEWSUBID<-rep(NA,nrow(tempdf))
               names(tempdf)[names(tempdf)=="NEWSUBID"]<-mysubid
               qobs.init$NEWSUBID<-rep(NA,nrow(qobs.init))
               names(qobs.init)[names(qobs.init)=="NEWSUBID"]<-mysubid
@@ -535,55 +578,107 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
               # Update objects internal attribute obsid (integer) defined by ReadPTQobs()
               attr(qobs.init, which = "obsid") <- c(attr(qobs.init, which = "obsid"),mysubid)
             }
-                
-            # insert data directly for variable "Discharge"
-              tempdf[mm[which(!is.na(mm))],match(mysubid,colnames(tempdf))] <- physical_data[which(!is.na(mm)),match(htepstn[i],dimnames(physical_data)[["Stn"]]),"Discharge"]
-              #plot(tempdf[mm[which(!is.na(mm))],match(mysubid,colnames(tempdf))],type="l")#,ylim=c(0,5000))
+            
+          # insert data directly for variable "Discharge"
+            tempdf[mm[which(!is.na(mm))],match(mysubid,colnames(tempdf))] <- physical_data[which(!is.na(mm)),match(htepstn[i],dimnames(physical_data)[["Stn"]]),"Discharge"]
+            #plot(tempdf[mm[which(!is.na(mm))],match(mysubid,colnames(tempdf))],type="l")#,ylim=c(0,5000))
 
-            # insert data directly for variable "DerivedDischarge", remove once the WL conversion works 
-              # tempdf[mm[which(!is.na(mm))],match(mysubid,colnames(tempdf))] <- physical_data[which(!is.na(mm)),match(htepstn[i],dimnames(physical_data)[["Stn"]]),"DerivedDischarge"]
-              # tempdf[mm[which(!is.na(mm))][1:100],match(mysubid,colnames(tempdf))] <- physical_data[which(!is.na(mm))[1:100],match(htepstn[i],dimnames(physical_data)[["Stn"]]),"DerivedDischarge"] # first rows only
-              # plot(physical_data[which(!is.na(mm)),match(htepstn[i],dimnames(physical_data)[["Stn"]]),"DerivedDischarge"],col="red",type="l")
-              # summary(physical_data[which(!is.na(mm)),match(htepstn[i],dimnames(physical_data)[["Stn"]]),"DerivedDischarge"])
+          # insert data directly for variable "DerivedDischarge", remove once the WL conversion works 
+            # tempdf[mm[which(!is.na(mm))],match(mysubid,colnames(tempdf))] <- physical_data[which(!is.na(mm)),match(htepstn[i],dimnames(physical_data)[["Stn"]]),"DerivedDischarge"]
+            # tempdf[mm[which(!is.na(mm))][1:100],match(mysubid,colnames(tempdf))] <- physical_data[which(!is.na(mm))[1:100],match(htepstn[i],dimnames(physical_data)[["Stn"]]),"DerivedDischarge"] # first rows only
+            # plot(physical_data[which(!is.na(mm)),match(htepstn[i],dimnames(physical_data)[["Stn"]]),"DerivedDischarge"],col="red",type="l")
+            # summary(physical_data[which(!is.na(mm)),match(htepstn[i],dimnames(physical_data)[["Stn"]]),"DerivedDischarge"])
 
-            # Convert water Level to discharge, and insert, start with this, and then fill with "Discharge" afterwards so that the latter takes precedence
-              # conditioned on that the rating curve parameters are set, and that there is some water level data to use
-            if(is_geodata_rc_attr(geodata)) {
-              if(!is.na(geodata[match(mysubid,geodata$SUBID),"MRRATCK_NOI"]) &
-                !is.na(geodata[match(mysubid,geodata$SUBID),"MRRATCP_NOI"]) &
-                !is.na(geodata[match(mysubid,geodata$SUBID),"MRRATCW0"]) & 
-                !all(is.na(physical_data[which(!is.na(mm)),match(htepstn[i],dimnames(physical_data)[["Stn"]]),"WaterLevel"])) ) {
-              
-                # first convert water level from cm to meters and move to the reference level
-                  thiswl<-physical_data[which(!is.na(mm)),match(htepstn[i],dimnames(physical_data)[["Stn"]]),"WaterLevel"]/100 + geodata[match(mysubid,geodata$SUBID),"MRRATCW0"]
-                  # summary(thiswl)
-                  # summary(physical_data[which(!is.na(mm)),match(htepstn[i],dimnames(physical_data)[["Stn"]]),"WaterLevel"])
-                  # plot(as.POSIXct(as.character(dimnames(physical_data)[["Date"]][which(!is.na(mm))][507:545]),tz="GMT"),physical_data[which(!is.na(mm))[507:545],match(htepstn[i],dimnames(physical_data)[["Stn"]]),"WaterLevel"],type="b",xlab="",ylab="WaterLevel (cm)",main=htepstn[i])
-                  
+          # Convert water Level to discharge, and insert, start with this, and then fill with "Discharge" afterwards so that the latter takes precedence
+            # conditioned on that the rating curve parameters are set, and that there is some water level data to use
+            if(is_river_rc_attr(ratingcurvedata)) {
+              if(!is.na(ratingcurvedata[match(mysubid,ratingcurvedata$SUBID),"K"]) &
+                 !is.na(ratingcurvedata[match(mysubid,ratingcurvedata$SUBID),"P"]) &
+                 !is.na(ratingcurvedata[match(mysubid,ratingcurvedata$SUBID),"W0REF"]) &
+                 !is.na(ratingcurvedata[match(mysubid,ratingcurvedata$SUBID),"UNITCONV"]) &
+                 !is.na(ratingcurvedata[match(mysubid,ratingcurvedata$SUBID),"GAUGEZERO"]) &
+                 !all(is.na(physical_data[which(!is.na(mm)),match(htepstn[i],dimnames(physical_data)[["Stn"]]),"WaterLevel"])) ) {
+            
+              # first convert water level from cm to meters and move to the reference level
+                thiswl<-physical_data[which(!is.na(mm)),match(htepstn[i],dimnames(physical_data)[["Stn"]]),"WaterLevel"]/ratingcurvedata[match(mysubid,ratingcurvedata$SUBID),"UNITCONV"] + ratingcurvedata[match(mysubid,ratingcurvedata$SUBID),"GAUGEZERO"]
+                # summary(thiswl)
+                # summary(physical_data[which(!is.na(mm)),match(htepstn[i],dimnames(physical_data)[["Stn"]]),"WaterLevel"])
+                # plot(as.POSIXct(as.character(dimnames(physical_data)[["Date"]][which(!is.na(mm))][507:545]),tz="GMT"),physical_data[which(!is.na(mm))[507:545],match(htepstn[i],dimnames(physical_data)[["Stn"]]),"WaterLevel"],type="b",xlab="",ylab="WaterLevel (cm)",main=htepstn[i])
+
                 # apply rating curve to derive discharge
+                if (sum(ratingcurvedata$SUBID==mysubid) < 2){   # (length(which(ratingcurvedata$SUBID==mysubid)) < 2){
+                  # One set of parameters
                   thisq<-rating.curve(h=thiswl,
-                                      c=geodata[match(mysubid,geodata$SUBID),"MRRATCK_NOI"],
-                                      e=geodata[match(mysubid,geodata$SUBID),"MRRATCW0"],
-                                      b=geodata[match(mysubid,geodata$SUBID),"MRRATCP_NOI"]
-                                      )
+                                      c=ratingcurvedata[match(mysubid,ratingcurvedata$SUBID),"K"],
+                                      e=ratingcurvedata[match(mysubid,ratingcurvedata$SUBID),"W0REF"],
+                                      b=ratingcurvedata[match(mysubid,ratingcurvedata$SUBID),"P"]
+                  )
+                }else{
+                  # Two sets of parameters, iterate each individual time stamp
+                  thisq<-rep(NA,length(thiswl))
                   
-                  # plot(as.POSIXct(as.character(dimnames(physical_data)[["Date"]][which(!is.na(mm))]),tz="GMT"),thisq,type="l",main=paste(htepstn[i],"\nSUBID",mysubid),xlab="",ylab="Discharge(m3/s)"); summary(thisq)
-                  # lines(as.POSIXct(as.character(dimnames(physical_data)[["Date"]][which(!is.na(mm))]),tz="GMT"),physical_data[which(!is.na(mm)),match(htepstn[i],dimnames(physical_data)[["Stn"]]),"DerivedDischarge"],col="red")
-                  # lines(qobs_info[["df_qobs"]][,"DATE"],qobs_info[["df_qobs"]][,mysub],col="blue",type="l")
-                  # abline(h=seq(2000,3000,by=100),col=rgb(0,0,0,0.5))
-                  # legend("topright",legend=c("Discharge_rc-smhi","DerivedDischarge_T2"),lwd=1,col=c("black","red"))
-                  #   plot(thiswl,thisq) 
-                  # plot(qobs.init[,"DATE"],qobs.init[,match(mysubid,colnames(qobs.init))],type="l")
-                  # lines(as.POSIXct(as.character(dimnames(physical_data)[["Date"]][which(!is.na(mm))]),tz="GMT"),thisq,col="red")
+                  # Get each index for both subids
+                  idx_subid=which(ratingcurvedata$SUBID==mysubid)
                   
+                  # Sort, low vs high window
+                  if (ratingcurvedata$WMIN[idx_subid[1]] < ratingcurvedata$WMIN[idx_subid[2]]){
+                    idx_low=idx_subid[1]
+                    idx_high=idx_subid[2]
+                  }else{
+                    idx_low=idx_subid[2]
+                    idx_high=idx_subid[1]
+                  }
 
-                # insert the data where there were NAs so far
-                  nn<-which(is.na(tempdf[mm[which(!is.na(mm))],match(mysubid,colnames(tempdf))]))  # find rows that still have NA values
+                  for (ts in 1:length(thiswl)){ # ts=65 ts=22
+                    if (!is.na(thiswl[ts])){
+                      if (thiswl[ts] < ratingcurvedata$WMIN[idx_low]){
+                        sel_idx=idx_low
+                      }else if (thiswl[ts] >= ratingcurvedata$WMIN[idx_low] & thiswl[ts] <= ratingcurvedata$WMAX[idx_low]){
+                        sel_idx=idx_low
+                      }else{
+                        sel_idx=idx_high
+                      }
+                    
+                      thisq[ts]<-rating.curve(h=thiswl[ts],
+                                              c=ratingcurvedata$K[sel_idx],
+                                              e=ratingcurvedata$W0REF[sel_idx],
+                                              b=ratingcurvedata$P[sel_idx]
+                                            )
+                    }
+                  }
+                  rm(idx_subid);rm(idx_low);rm(idx_high);rm(sel_idx)
+                }
+
+                # Handle any nan values from calculations
+                #thisq[is.nan(thisq)]=NA
+
+                if (flag_nans){
+                  if (sum(is.nan(thisq)) > 0){
+                    cmn.log('Qobs.txt: Some subids contains NaN values', logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+                    flag_nans = FALSE
+                  }
+                }
+
+                # plot(as.POSIXct(as.character(dimnames(physical_data)[["Date"]][which(!is.na(mm))]),tz="GMT"),thisq,type="l",main=paste(htepstn[i],"\nSUBID",mysubid),xlab="",ylab="Discharge(m3/s)"); summary(thisq)
+                # lines(as.POSIXct(as.character(dimnames(physical_data)[["Date"]][which(!is.na(mm))]),tz="GMT"),physical_data[which(!is.na(mm)),match(htepstn[i],dimnames(physical_data)[["Stn"]]),"DerivedDischarge"],col="red")
+                # lines(qobs_info[["df_qobs"]][,"DATE"],qobs_info[["df_qobs"]][,mysub],col="blue",type="l")
+                # abline(h=seq(2000,3000,by=100),col=rgb(0,0,0,0.5))
+                # legend("topright",legend=c("Discharge_rc-smhi","DerivedDischarge_T2"),lwd=1,col=c("black","red"))
+                #   plot(thiswl,thisq) 
+                # plot(qobs.init[,"DATE"],qobs.init[,match(mysubid,colnames(qobs.init))],type="l")
+                # lines(as.POSIXct(as.character(dimnames(physical_data)[["Date"]][which(!is.na(mm))]),tz="GMT"),thisq,col="red")
+                
+              # insert the data where there were NAs so far
+                nn<-which(is.na(tempdf[mm[which(!is.na(mm))],match(mysubid,colnames(tempdf))]))  # find rows that still have NA values
+                if (length(nn) > 0){
                   tempdf[mm[which(!is.na(mm))][nn],match(mysubid,colnames(tempdf))] <- thisq[nn]  # insert the calculated Q only on NA rows
                     # lines(nn,tempdf[mm[which(!is.na(mm))][nn],match(mysubid,colnames(tempdf))],col="blue")
-                  rm(thisq,nn,thiswl)
+                }else{
+                  cmn.log(paste0('No NA values to update for subid: ',mysubid), logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
+                }
+                rm(thisq,nn,thiswl)
               } # !is.na
-            } # else {  # move on to insert DerivedDischarge if it exists but e.g. if rating curve pars are missing
+            } # is_river_rc_attr(ratingcurvedata))  # else {  # move on to insert DerivedDischarge if it exists but e.g. if rating curve pars are missing
               # nn<-which(is.na(tempdf[mm[which(!is.na(mm))],match(mysubid,colnames(tempdf))]))  # find rows that still have NA values
               # tempdf[mm[which(!is.na(mm))][nn],match(mysubid,colnames(tempdf))] <- physical_data[which(!is.na(mm))[nn],match(htepstn[i],dimnames(physical_data)[["Stn"]]),"DerivedDischarge"]  # insert the derived Q only on NA rows
               # rm(nn)
@@ -597,9 +692,13 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
       }
       
       # put in one new qobs object
-        qobs.new<-rbind(qobs.init,tempdf);rm(tempdf)
+        if (extend_qobs){
+          qobs.new<-rbind(qobs.init,tempdf);rm(tempdf)
+        }else{
+          qobs.new<-tempdf;rm(tempdf)
+        }
       
-      # clean dates without data and set decimals (can happen e.g. if another variable in physcal_data has values)
+      # clean dates without data and set decimals (can happen e.g. if another variable in physical_data has values)
         allna<-function(x) {all(is.na(x))}
         qrd<-apply(qobs.new[,-1],1,allna)
         qobs.new<-qobs.new[1:tail(which(!qrd),n=1L),]
@@ -619,18 +718,21 @@ process_eo_data_physical <- function(app_sys,             # Reduce global config
     WritePTQobs(x=qobs.new,filename=new_qobs_file) # hypeapps-hype-utils.R
 
     if (debugPublishFiles){
-        if(app_sys == 'tep'){
-            if (file.exists(init_qobs_file)){
-                #rciop.publish(path=init_qobs_file,recursive=FALSE,metalink=TRUE)
-		rciop_publish_extended(modelFilesRunDir,init_qobs_file)
+        if (file.exists(init_qobs_file)){
+            if(app_sys == 'tep'){
+                rciop.publish(path=init_qobs_file,recursive=FALSE,metalink=TRUE)
+            }else{
+                dst_file = paste0(modelFilesRunDir,"/hindcast/Qobs.txt-initial")
+                file.copy(from=init_qobs_file,to=dst_file,overwrite=T)
             }
-            if (file.exists(new_qobs_file)){
-                #rciop.publish(path=new_qobs_file,recursive=FALSE,metalink=TRUE)
-		rciop_publish_extended(modelFilesRunDir,new_qobs_file)
+        }
+        if (file.exists(new_qobs_file)){
+            if(app_sys == 'tep'){
+                rciop.publish(path=new_qobs_file,recursive=FALSE,metalink=TRUE)
+            }else{
+                dst_file = paste0(modelFilesRunDir,"/hindcast/Qobs.txt-local-obs")
+                file.copy(from=new_qobs_file,to=dst_file,overwrite=T)
             }
-        }else{
-            # Rename file?
-            #file.copy(from=,to=)
         }
     }
 
