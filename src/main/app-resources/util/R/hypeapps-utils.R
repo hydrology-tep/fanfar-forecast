@@ -32,18 +32,6 @@ if(app.sys=="tep"){
   library("rciop")
 }
 
-rciop_publish_extended2 <- function(path,pathplusfile)
-{
-    cmn.log(paste0(list.files(path)), logHandle, rciopStatus="DEBUG", rciopProcess="hypeapps-utils.R")
-
-    #cmn.log(paste("cmd: ","rciop.publish(path=",pathplusfile,", recursive=FALSE, metalink=TRUE"), logHandle, rciopStatus="DEBUG", rciopProcess="run.R")
-    cmn.log(paste("cmd:","rciop.publish(path=",pathplusfile,", recursive=FALSE, metalink=TRUE",")"), logHandle, rciopStatus="DEBUG", rciopProcess="run.R")
-
-    res_pub=rciop.publish(path=pathplusfile, recursive=FALSE, metalink=TRUE)
-
-    cmn.log(paste("res_pub=rciop.publish()",res_pub,pathplusfile, sep=" "), logHandle, rciopStatus="DEBUG", rciopProcess="hypeapps-utils.R")
-}
-
 # source hypeapps environment file, if needed
 if(!exists("app.envset")){
   if(app.sys=="tep"){
@@ -729,6 +717,7 @@ getHypeAppSetup<-function(modelName,
                           hype2csvPath=NULL,
                           stateFilesPath=NULL,
                           stateFilesIN=NULL,
+                          modelBinPath=NULL,
                           debugPublishFiles=FALSE){
 
 # 
@@ -819,8 +808,7 @@ getHypeAppSetup<-function(modelName,
         if(app.sys=="tep"){
           rciop.log ("DEBUG", paste0("cp ",modelFilesPath,"/",fileNames[i]," to ",modelFilesRunDir,"/",fileNames[i]),"/util/R/hypeapps-utils.R")
           if(debugPublishFiles){
-            #rciop.publish(path=paste(modelFilesPath,fileNames[i],sep="/"),recursive=FALSE,metalink=TRUE)
-	    rciop_publish_extended2(modelFilesPath,paste(modelFilesPath,fileNames[i],sep="/"))
+            rciop.publish(path=paste(modelFilesPath,fileNames[i],sep="/"),recursive=FALSE,metalink=TRUE)
           }
         }
       }
@@ -833,14 +821,18 @@ getHypeAppSetup<-function(modelName,
     if (app.sys=='local' || app.sys=='server'){
       modelBinaryFile=paste(appDir,modelBin,sep="/")
     }else if(app.sys=="tep"){
-      modelBinaryFile=paste(appDir,'util/bin',modelBin,sep="/")
+      if (is.null(modelBinPath)){
+        modelBinaryFile=paste(appDir,'util/bin',modelBin,sep="/")
+      }else{
+        modelBinaryFile=paste(modelBinPath,modelBin,sep="/")
+      }
+      
     }else{
       modelBinaryFile=paste(appDir,'util/bin',modelBin,sep="/")
     }
     if(app.sys=="tep"){
       if(debugPublishFiles){
-        #rciop.publish(path=modelBinaryFile,recursive=FALSE,metalink=TRUE)
-        rciop_publish_extended2(paste(appDir,'util/bin',sep="/"),modelBinaryFile)
+        rciop.publish(path=modelBinaryFile,recursive=FALSE,metalink=TRUE)
       }
     }
     
@@ -907,8 +899,7 @@ getHypeAppSetup<-function(modelName,
       rciop.log ("DEBUG", shapefileDir, "getHypeSetup")
       syscmd = paste("zip -j ", shapefileDir, "/", "subbasin_shp", shape_ver, ".zip ", shapefileDir, "/", shapefile.layer, "*", sep="")
       system(command = syscmd,intern = T)
-      #rciop.publish(path=paste(shapefileDir, "/", "subbasin_shp", shape_ver, ".zip", sep=""), recursive=FALSE, metalink=TRUE)
-      rciop_publish_extended2(shapefileDir,paste(shapefileDir, "/", "subbasin_shp", shape_ver, ".zip", sep=""))
+      rciop.publish(path=paste(shapefileDir, "/", "subbasin_shp", shape_ver, ".zip", sep=""), recursive=FALSE, metalink=TRUE)
     }
 
     # open and save shapefile as Rdata

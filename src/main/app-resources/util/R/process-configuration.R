@@ -90,24 +90,24 @@ process_configuration_application_runtime_options <- function(applInput=NULL) # 
 
             }else if ((modelConfigIn == cModelConfigVariant5) & (assimOnARUpd == FALSE)) {
                 prelModelConfig <- cModelConfigVariant5
-                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=3EF24C77C347F6591BD9AB6CFDF1F0BA4D20DB9F"
+                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=C15BDA21E2583318EB161B4C49BE413252ADBFAE"
                 urlSelected <- TRUE
 
             }else if ((modelConfigIn == cModelConfigVariant5) & (assimOnARUpd == TRUE)) {
                 # Configuration with a state file supporting AR update
                 prelModelConfig <- cModelConfigVariant5
-                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=E99144FB1343B9589D500CC2360E2A59F6E57212"
+                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=4EDE9B27AF61530627F476AACC92C39A1BD5E623"
                 urlSelected <- TRUE
 
             }else if ((modelConfigIn == cModelConfigVariant6) & (assimOnARUpd == FALSE)) {
                 prelModelConfig <- cModelConfigVariant6
-                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=9300B348874866513F405D46E94EBF2E8841BE52"
+                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=40E84875034F8AAFC2E5CD71D9AE60D066F32076"
                 urlSelected <- TRUE
 
             }else if ((modelConfigIn == cModelConfigVariant6) & (assimOnARUpd == TRUE)) {
                 # Configuration with a state file supporting AR update
                 prelModelConfig <- cModelConfigVariant6
-                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=CBA9FE3F0A2352C886A7B538E6F7A847390C06B7"
+                urlAndQuery <- "https://recast.terradue.com/t2api/search/hydro-smhi/fanfar/forecast/config?uid=5BB8CDCF2F1C19854F92334562049E10EB4717B6"
                 urlSelected <- TRUE
 
             }
@@ -194,7 +194,8 @@ check_file_exist <- function(absPath)
 
 # Search for the HYPE model configuration and download the model data
 search_download_model_configuration <- function(url,
-                                                query)
+                                                query,
+                                                tmp_dir=paste0(TMPDIR,"/hype-model/config"))
 {
     # Outputs
     modelConfigPath <- NULL
@@ -211,8 +212,8 @@ search_download_model_configuration <- function(url,
     cmn.log(res_enclosure, logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
 
     # Download
-    tmp_dir=paste0(TMPDIR,"/hype-model/config")
-    res_copy <- rciop.copy(res_enclosure,target=tmp_dir,uncompress=TRUE,createOutputDirectory=TRUE)
+    #tmp_dir=paste0(TMPDIR,"/hype-model/config")
+    res_copy <- rciop.copy(res_enclosure,target=tmp_dir,uncompress=TRUE,createOutputDirectory=TRUE) # Uncompress when non-zip?
 
     if (res_copy$exit.code==0) {
         modelConfigPath <- res_copy$output
@@ -443,6 +444,7 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
     configGridLinkFilename <- NULL
     reforecastingMethod    <- NULL
     modelBin               <- NULL
+    modelBinPath           <- NULL
     enableAnadia           <- NULL
     python3Dbfread         <- NULL
     
@@ -462,6 +464,8 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
     local.modelConfigQuery <- NULL
     local.hydroGFDConfigUrl <- NULL
     local.hydroGFDConfigQuery <- NULL
+    local.modelBinUrl <- NULL
+    local.modelBinQuery <- NULL
     for (r in 1:nrow(main_config_data)) {
         subdir <- main_config_data[r,'localdirectory']
         if (subdir == 'model-config-name') {
@@ -494,6 +498,10 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
         if (subdir == 'model-bin') {
             # Filename of HYPE binary/executable file
             modelBin <- as.character(main_config_data[r,'searchquery'])
+        }
+        if (subdir == 'model-bin-search') {
+            local.modelBinUrl   <- main_config_data[r,'url']
+            local.modelBinQuery <- main_config_data[r,'searchquery']
         }
         if (subdir == 'enable-anadia') {
             # Enable alternative data source TRUE/FALSE
@@ -631,6 +639,13 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
     modelFiles <- search_download_model_configuration(local.modelConfigUrl,
                                                       local.modelConfigQuery)
     #print(list.files(modelFiles))
+    if ((! is.null(modelBin)) & (! is.null(local.modelBinUrl)) & (! is.null(local.modelBinQuery))){
+        # Download binary file, use filename from variable modelBin
+        modelBinPath <- search_download_model_configuration(local.modelBinUrl, # Use a separate function due to uncompress?
+                                                            local.modelBinQuery,
+                                                            tmp_dir=paste0(TMPDIR,"/bin"))
+    }
+    #print(list.files(modelBinPath))
 
     # GFD/HydroGFD
     meteoConfigSearch <- search_download_meteo_configuration(local.hydroGFDConfigUrl,
@@ -648,6 +663,9 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
     if (! is.null(modelBin)){
         cmn.log(paste0("HYPE binary/executable:  ",modelBin), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
     }
+    if (! is.null(modelBinPath)){
+        cmn.log(paste0("HYPE binary/executable path:  ",modelBinPath), logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
+    }
     cmn.log("-------------------------------------------", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_PC)
 
     output <- list("modelConfigName"=modelConfigName, # Do not use for if statements etc. Rather use the individual parts meteoHindcast etc.
@@ -660,6 +678,7 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
                    "configGridLinkFilename"=configGridLinkFilename,
                    "reforecastingMethod"=reforecastingMethod,
                    "modelBin"=modelBin,
+                   "modelBinPath"=modelBinPath,
                    "enableAnadia"=enableAnadia,
                    "python3Dbfread"=python3Dbfread)
 
