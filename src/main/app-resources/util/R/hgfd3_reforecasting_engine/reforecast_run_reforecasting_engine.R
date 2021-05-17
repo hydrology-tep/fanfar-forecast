@@ -29,7 +29,8 @@ run_hindcast_calc<-function(
     part2_url=NULL,
     part2_query=NULL,
     hype_state_file_bdate=NULL,
-    hype_state_files_path=NULL)
+    hype_state_files_path=NULL,
+    meteo_variant="HydroGFD 3.0")
 {
 
     # Call function that returns the latest file date for he5 and he5tm
@@ -112,7 +113,7 @@ run_hindcast_calc<-function(
     if (app_sys == 'tep'){
         if (! is.null(hype_state_file_bdate) && ! is.null(hype_state_files_path)){
             res = utils_file_check_latest_statefiles_category(filePath=hype_state_files_path,
-                                                              meteo="HydroGFD 3.0",
+                                                              meteo=meteo_variant,
                                                               meteoVersion=NULL,
                                                               hindcastStartDate=hype_state_file_bdate)
             if (res$status == 0) {

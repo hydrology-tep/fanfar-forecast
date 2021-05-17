@@ -156,7 +156,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-forcing-hgfd2.R",sep="/"))
             cmn.log("Libraries loaded and utilities for HydroGFD 2 sourced", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
         }
-        if (modelConfigData$meteoHindcast == cMeteoHindcastVariant3) {
+        if (modelConfigData$meteoHindcast == cMeteoHindcastVariant3 ||
+            modelConfigData$meteoHindcast == cMeteoHindcastVariant4 ||
+            modelConfigData$meteoHindcast == cMeteoHindcastVariant5) {
             source(paste(Sys.getenv("_CIOP_APPLICATION_PATH"), "util/R/process-forcing-hgfd3.R",sep="/"))
             cmn.log("Libraries loaded and utilities for HydroGFD 3 sourced", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
         }
@@ -170,7 +172,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
             source("application/util/R/process-forcing-hgfd2.R",sep="/")
             cmn.log("Libraries loaded and utilities for HydroGFD 2 sourced", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
         }
-        if (modelConfigData$meteoHindcast == cMeteoHindcastVariant3) {
+        if (modelConfigData$meteoHindcast == cMeteoHindcastVariant3 ||
+            modelConfigData$meteoHindcast == cMeteoHindcastVariant4 ||
+            modelConfigData$meteoHindcast == cMeteoHindcastVariant5) {
             source("application/util/R/process-forcing-hgfd3.R",sep="/")
             cmn.log("Libraries loaded and utilities for HydroGFD 3 sourced", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
         }
@@ -356,7 +360,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     }
 
     if (modelConfigData$meteoHindcast == cMeteoHindcastVariant2 ||
-        modelConfigData$meteoHindcast == cMeteoHindcastVariant3) {
+        modelConfigData$meteoHindcast == cMeteoHindcastVariant3 ||
+        modelConfigData$meteoHindcast == cMeteoHindcastVariant4 ||
+        modelConfigData$meteoHindcast == cMeteoHindcastVariant5) {
         ## Download hydrogfd netcdf files
         dirNetcdfToObsTmp <- paste(TMPDIR,"netcdf_to_obs_tmp",sep="/") # Temporary work dir for netcdf_to_obs
         dirNCFiles        <- paste(TMPDIR,"netcdf_files_tmp",sep="/")  # Temporary download dir, common for hindcast and forecast (thereby only some files are downloaded for hindcast)
@@ -382,7 +388,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                     publishHindcastForcingFiles)
         }
 
-        if (modelConfigData$meteoHindcast == cMeteoHindcastVariant3) {
+        if (modelConfigData$meteoHindcast == cMeteoHindcastVariant3 ||
+            modelConfigData$meteoHindcast == cMeteoHindcastVariant4 ||
+            modelConfigData$meteoHindcast == cMeteoHindcastVariant5) {
             cmn.log("Forcing data: HydroGFD 3", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
 
             reforcasting_method = 2 # Default for run type 'reforcast'
@@ -575,7 +583,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         }
 
         if (modelConfigData$meteoHindcast == cMeteoHindcastVariant2 ||
-            modelConfigData$meteoHindcast == cMeteoHindcastVariant3) {
+            modelConfigData$meteoHindcast == cMeteoHindcastVariant3 ||
+            modelConfigData$meteoHindcast == cMeteoHindcastVariant4 ||
+            modelConfigData$meteoHindcast == cMeteoHindcastVariant5) {
             # WWH or WestAfrica HYPE
             ## Download hydrogfd netcdf files
             dirNetcdfToObsTmp <- paste(TMPDIR,"netcdf_to_obs_tmp",sep="/") # Temporary work dir for netcdf_to_obs
@@ -595,7 +605,9 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                                         debugPublish)
             }
 
-            if (modelConfigData$meteoHindcast == cMeteoHindcastVariant3) {
+            if (modelConfigData$meteoHindcast == cMeteoHindcastVariant3 ||
+                modelConfigData$meteoHindcast == cMeteoHindcastVariant4 ||
+                modelConfigData$meteoHindcast == cMeteoHindcastVariant5) {
                 cmn.log("Forcing data: HydroGFD 3, ECOPER (ODF)", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)
                 forecastForcing <- process_forcing_hydrogfd3_forecast(
                                         modelConfigData$meteoConfig,

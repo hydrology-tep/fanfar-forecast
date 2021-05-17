@@ -556,6 +556,10 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
                 meteoHindcast = cMeteoHindcastVariant2
             }else if (grepl(cMeteoHindcastVariant3,local.modelConfigName,fixed=TRUE)) {
                 meteoHindcast = cMeteoHindcastVariant3
+            }else if (grepl(cMeteoHindcastVariant4,local.modelConfigName,fixed=TRUE)) {
+                meteoHindcast = cMeteoHindcastVariant4
+            }else if (grepl(cMeteoHindcastVariant5,local.modelConfigName,fixed=TRUE)) {
+                meteoHindcast = cMeteoHindcastVariant5
             }
 
             # if (grepl(cMeteoForecastVariant1,local.modelConfigName,fixed=TRUE)) {
@@ -626,12 +630,12 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
 
     }else if (modelConfigName == cModelConfigVariant5) {
         hydrologicalModel = cHydrologicalModelVariant1
-        meteoHindcast     = cMeteoHindcastVariant3
+        meteoHindcast     = cMeteoHindcastVariant5
         #meteoForecast     = cMeteoForecastVariant2
 
     }else if (modelConfigName == cModelConfigVariant6) {
         hydrologicalModel = cHydrologicalModelVariant3
-        meteoHindcast     = cMeteoHindcastVariant3
+        meteoHindcast     = cMeteoHindcastVariant5
         #meteoForecast     = cMeteoForecastVariant2
     }
 
