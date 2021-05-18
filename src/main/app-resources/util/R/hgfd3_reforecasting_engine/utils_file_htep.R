@@ -17,7 +17,9 @@ utils_file_get_requested_statefile_suffix <- function(meteo,meteoVersion=NULL,hi
     cMeteoHindcastVariant1 = "GFD 1.3"
     cMeteoHindcastVariant2 = "HydroGFD 2.0"
     cMeteoHindcastVariant3 = "HydroGFD 3.0"
-    cMeteoHindcastVariants = c(cMeteoHindcastVariant1,cMeteoHindcastVariant2,cMeteoHindcastVariant3)
+    cMeteoHindcastVariant4 = "HydroGFD 3.1"
+    cMeteoHindcastVariant5 = "HydroGFD 3.2"
+    cMeteoHindcastVariants = c(cMeteoHindcastVariant1,cMeteoHindcastVariant2,cMeteoHindcastVariant3,cMeteoHindcastVariant4,cMeteoHindcastVariant5)
 
     defMet    = "unknown"
     defMetVer = "0.0"
@@ -55,7 +57,7 @@ utils_file_get_requested_statefile_suffix <- function(meteo,meteoVersion=NULL,hi
     hcdate = gsub(pattern="-",replacement="",hindcastStartDate)
 
     # Example: -hydrogfd2.0-bdate20100101
-    requestedFileNameSuffix = paste0("-",met,meteoVersion,"-bdate",hcdate)
+    requestedFileNameSuffix = paste0("-",met,metVer,"-bdate",hcdate)
 
     return (requestedFileNameSuffix)
 } # utils_file_get_requested_statefile_suffix
