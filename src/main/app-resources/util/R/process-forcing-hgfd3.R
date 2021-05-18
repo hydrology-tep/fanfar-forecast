@@ -310,7 +310,8 @@ process_forcing_hydrogfd3_hindcast <- function(modelConfig, # Misc config data, 
                     part2_url=modelConfig$gfdHe5tmUrl,
                     part2_query=modelConfig$gfdHe5tmQuery,
                     hype_state_file_bdate=statefileHindcastDate,
-                    hype_state_files_path=paste0(modelFiles,"/statefiles")
+                    hype_state_files_path=paste0(modelFiles,"/statefiles"),
+                    meteo_variant=meteoHindcastType
                     )
     # Reduce one list layer
     #statefile_instate_date = intervals$statefile_instate_date # NULL or date
