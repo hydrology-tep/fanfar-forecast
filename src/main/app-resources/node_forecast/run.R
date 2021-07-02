@@ -350,6 +350,30 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
         }
     }
 
+    # From configuration file
+    enableResetSection = TRUE
+    if (! is.null(modelConfigData$enableResetSection)){
+        enableResetSection = modelConfigData$enableResetSection
+        print(paste0('enableResetSection from configuration file ',enableResetSection))
+    }
+    if (enableResetSection) {
+        reset_status = reset_qobs_section(
+            app_sys=app.sys,
+            in_file=paste0(app.setup$runDir,"/Qobs.txt"),
+            out_file=paste0(app.setup$runDir,"/Qobs.txt"),
+            idate=app.input$idate)
+        if (reset_status > 0) {
+            print('INFO: reset section, Qobs.txt not updated')
+        }else if (publishHindcastForcingFiles){
+            init_qobs_file = paste0(app.setup$runDir,"/Qobs.txt")
+            new_qobs_file  = paste0(app.setup$runDir,"/Qobs.txt-30")
+            if (file.exists(init_qobs_file)){
+                file.copy(from=init_qobs_file,to=new_qobs_file,overwrite=T)
+                rciop.publish(path=new_qobs_file,recursive=FALSE,metalink=TRUE)
+            }
+        }
+    }
+
     ## forcing data
     if (modelConfigData$meteoHindcast == cMeteoHindcastVariant1) { # ToDo: Use hydrologicalModel instead when certain that value is always set
         cmn.log("Forcing data: GFD1.3", logHandle, rciopStatus="INFO", rciopProcess=nameOfSrcFile_Run)

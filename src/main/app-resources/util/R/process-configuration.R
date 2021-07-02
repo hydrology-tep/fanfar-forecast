@@ -447,6 +447,7 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
     modelBinPath           <- NULL
     enableAnadia           <- NULL
     python3Dbfread         <- NULL
+    enableResetSection     <- NULL
     
 
     # Read model configuration
@@ -510,6 +511,10 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
         if (subdir == 'python3-dbfread') {
             # Optional path to python module dbfread. Used by python3 script.
             python3Dbfread <- main_config_data[r,'searchquery']
+        }
+        if (subdir == 'enable-reset-section') {
+            # Enable alternative functionality TRUE/FALSE
+            enableResetSection <- as.logical(main_config_data[r,'searchquery'])
         }
     }
 
@@ -684,7 +689,8 @@ process_configuration_application_inputs <- function(applRuntimeOptions=NULL) # 
                    "modelBin"=modelBin,
                    "modelBinPath"=modelBinPath,
                    "enableAnadia"=enableAnadia,
-                   "python3Dbfread"=python3Dbfread)
+                   "python3Dbfread"=python3Dbfread,
+                   "enableResetSection"=enableResetSection)
 
     return (output)
 } # process_configuration_application_inputs
