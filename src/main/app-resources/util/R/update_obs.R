@@ -409,6 +409,69 @@ subids_updated <- function(in_file='Qobs.txt',
 
 
 # External function
+# Reset until n_days before idate
+reset_qobs_section <- function(app_sys,
+                               in_file='Qobs.txt',  # Path + filename
+                               out_file='Qobs.txt', # Path + filename
+                               idate='20180507',    # Forecast issue date,w/o '-'
+                               n_days=30)           # Number of days preceding idate
+{
+    status=1 # NOK
+
+    if(! file.exists(in_file)){
+        print(paste('Qobs.txt missing, no reset will be made',in_file,sep=' '))
+        return (status)
+    }
+    if(is.null(out_file)){
+        print('out_file not specified')
+        return (status)
+    }
+    if(n_days < 1){
+        print('use default value')
+        return (status)
+    }
+
+    df=ReadPTQobs(in_file) # dates in df of class posixct
+    n_cols=ncol(df)
+    n_rows=nrow(df)
+    day_posixct=24*60*60
+
+    if (n_rows > 0){
+        
+        # Handle dates
+        if(app_sys == 'tep'){
+            format_input='%Y-%m-%d'
+        }else{
+            format_input='%Y%m%d'
+        }
+        
+        user_date_end=as.POSIXct(strptime(idate,format=format_input),tz='GMT')
+        user_date_end=user_date_end - 1*day_posixct # End of hindcast
+        user_date_start=user_date_end - n_days*day_posixct
+        
+        file_date_start=df$DATE[1]
+        file_date_end=df$DATE[n_rows]
+ 
+        if(user_date_start >= file_date_start & user_date_end <= file_date_end){
+            df[which(df$DATE == file_date_start):which(df$DATE == user_date_start),2:n_cols]=NA
+            status=0 # OK
+        }else{
+            print(paste('Continue without reset of section, time period not valid ',file_date_start,user_date_start,user_date_end,file_date_end,sep=' '))
+        }
+        
+        if (status == 0){
+            WritePTQobs(df,out_file,obsid=names(df)[2:length(names(df))])
+        }
+
+        rm(df)
+    }
+
+    return(status)
+
+}
+
+
+# External function
 # Wrapper for updating Qobs with discharge data from physical stations
 # Output: When successful, file 'Qobs.txt' updated in dir modelFilesRunDir
 update_obs_data_physical <- function(app_sys,             # Reduce global configuration settings (variable app.sys) if needed
