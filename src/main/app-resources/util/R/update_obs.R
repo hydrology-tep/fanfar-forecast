@@ -349,7 +349,7 @@ subids_updated <- function(in_file='Qobs.txt',
 
     if (! file.exists(in_file)){
         # Handle model configuration without Qobs file
-        print('subids_updated: No check of updated subids')
+        cmn.log('subids_updated: No check of updated subids', logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
         write(text_not_found,file=out_file)
         return (status)
     }
@@ -381,7 +381,7 @@ subids_updated <- function(in_file='Qobs.txt',
             csv_data_red = csv_data[which(csv_data$DATE == start_date_str):n_rows,]
         }else{
             # Handle model configuration without updated Qobs file
-            print('subids_updated: No recent data in Qobs.txt')
+            cmn.log('subids_updated: No recent data in Qobs.txt', logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
             write(text_not_found,file=out_file)
             return (status)
         }
@@ -407,7 +407,7 @@ subids_updated <- function(in_file='Qobs.txt',
         write.table(as.list(csv_data_red_cols),file=out_file,sep=',',row.names=F,col.names=F,quote=F) # All subid on a line
         status = 0 # OK
     }else{
-        print('subids_updated: No recent data in Qobs.txt after filtering')
+        cmn.log('subids_updated: No recent data in Qobs.txt after filtering', logHandle, rciopStatus='INFO', rciopProcess=nameOfSrcFile_EOP)
         write(text_not_found,file=out_file)
     }
 
