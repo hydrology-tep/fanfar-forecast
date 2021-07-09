@@ -344,11 +344,6 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
                         out_file=output_subid_file,
                         n_days=30,
                         variant=2)
-    if(app.sys == "tep"){
-        if (file.exists(output_subid_file)){
-            rciop.publish(path=output_subid_file,recursive=FALSE,metalink=TRUE)
-        }
-    }
 
     # From configuration file
     enableResetSection = TRUE
@@ -754,6 +749,12 @@ while(length(input <- readLines(stdin_f, n=1)) > 0) {
     #################################################################################
     ## 8 - Output
     ## ------------------------------------------------------------------------------
+    # Publish updated status
+    output_subid_file=paste0(TMPDIR,"/updated_subids.txt")
+    if (file.exists(output_subid_file)){
+        rciop.publish(path=output_subid_file,recursive=FALSE,metalink=TRUE)
+    }
+
     ## publish postprocessed results # ToDo: HYPE model and log files shall remain published, review what part that is the postprocessing stuff
     # ToDo: Remove postprocessing like trigger etc. Move up publish
 
