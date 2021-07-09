@@ -349,7 +349,7 @@ subids_updated <- function(in_file='Qobs.txt',
 
     if (! file.exists(in_file)){
         # Handle model configuration without Qobs file
-        print('No check of updated subids')
+        print('subids_updated: No check of updated subids')
         write(text_not_found,file=out_file)
         return (status)
     }
@@ -362,23 +362,26 @@ subids_updated <- function(in_file='Qobs.txt',
     if (variant == 1){
         # Last x days based on index
         csv_data_red = csv_data[(n_rows-n_days):n_rows,]
+        print('subids_updated: ERROR variant 1 enabled')
     }else{
         # Last x days from today based on timesteps
         today = Sys.Date()
         format='%Y-%m-%d'
         start_date = as.POSIXct(strptime(today,format=format),tz='GMT') - (n_days*24*60*60)
         start_date_str = strftime(start_date,format=format)
-        
+        print(start_date)
         # Last date in file
         end_date_str = csv_data$DATE[n_rows]
         end_date = as.POSIXct(strptime(end_date_str,format=format),tz='GMT')
+        print(end_date)
         
         if (start_date <= end_date){
+            print('subids_updated: Qobs contains newer data for the last 30 days')
             # Recent updated data
             csv_data_red = csv_data[which(csv_data$DATE == start_date_str):n_rows,]
         }else{
             # Handle model configuration without updated Qobs file
-            print('No recent data in Qobs.txt')
+            print('subids_updated: No recent data in Qobs.txt')
             write(text_not_found,file=out_file)
             return (status)
         }
@@ -386,6 +389,7 @@ subids_updated <- function(in_file='Qobs.txt',
     rm(csv_data)
     
     if (test_no_data_found){
+        print('subids_updated: ERROR test enabled')
         # Get only -9999
         csv_data_red = csv_data_red[,sapply(csv_data_red,max) < 0.0]
     }
@@ -393,14 +397,17 @@ subids_updated <- function(in_file='Qobs.txt',
     # Reduce/Filter columns: any value > 0.0
     csv_data_red      = csv_data_red[,sapply(csv_data_red,max) > 0.0]
     csv_data_red_cols = colnames(csv_data_red) # Character vector
+    print(length(csv_data_red_cols > 1))
+    print(csv_data_red_cols)
     if (length(csv_data_red_cols > 1)){
+        print('subids_updated: write file')
         # All columns except DATE
         csv_data_red_cols = csv_data_red_cols[csv_data_red_cols!='DATE']
         csv_data_red_cols = gsub('X','',csv_data_red_cols)
         write.table(as.list(csv_data_red_cols),file=out_file,sep=',',row.names=F,col.names=F,quote=F) # All subid on a line
         status = 0 # OK
     }else{
-        print('No recent data in Qobs.txt after filtering')
+        print('subids_updated: No recent data in Qobs.txt after filtering')
         write(text_not_found,file=out_file)
     }
 
